@@ -1198,23 +1198,23 @@ async function relancerRecherche(previousNames) {
 function showIdeesList() {
   const el = document.getElementById('idee-results');
   const idees50 = [
-    "1. Gestion réseaux sociaux pour PME","2. Création de visuels marketing","3. Coaching budget personnel",
-    "4. Cours particuliers en ligne","5. Vente de produits artisanaux","6. Service de livraison local",
-    "7. Rédaction de contenu web","8. Formation bureautique","9. Vente de repas faits maison",
-    "10. Service de coiffure à domicile","11. Jardinage et entretien","12. Garderie d'enfants",
-    "13. Traduction de documents","14. Assistant administratif freelance","15. Création de sites web simples",
-    "16. Photographie événementielle","17. Vente de plantes","18. Service de nettoyage",
-    "19. Coaching sportif","20. Vente de vêtements de seconde main","21. Couture et retouches",
-    "22. Podcast ou chaîne YouTube","23. Vente de produits naturels","24. Aide aux devoirs",
-    "25. Service de déménagement","26. Réparation de téléphones","27. Vente de légumes frais",
-    "28. Massage et bien-être","29. Création de bijoux artisanaux","30. Vente de formations en ligne",
-    "31. Service de baby-sitting","32. Vente de jus naturels","33. Comptabilité freelance",
-    "34. Vente de livres d'occasion","35. Service de peinture","36. Vente de produits importés",
-    "37. Coaching en développement personnel","38. Vente de gâteaux et pâtisseries","39. Service de gardiennage",
-    "40. Création de logos","41. Vente de légumes séchés","42. Rédaction de CV",
-    "43. Vente de savons naturels","44. Service de repassage","45. Création de contenu TikTok",
-    "46. Vente de meubles artisanaux","47. Service de garde d'animaux","48. Vente de thé et tisanes",
-    "49. Accompagnement scolaire","50. Vente de produits cosmétiques"
+    "1. Gestion réseaux sociaux pour PME","2. Création de visuels et contenu marketing","3. Coaching en développement personnel",
+    "4. Cours particuliers et soutien scolaire","5. Vente de produits artisanaux","6. Service de livraison express",
+    "7. Rédaction de contenu web et copywriting","8. Formation en ligne dans ton domaine","9. Vente de repas faits maison",
+    "10. Coiffure et soins capillaires à domicile","11. Jardinage et entretien espaces verts","12. Garde d'enfants à domicile",
+    "13. Traduction et interprétation","14. Assistant administratif freelance","15. Création de sites web simples",
+    "16. Photographie événementielle","17. Vente de plantes et fleurs","18. Service de nettoyage professionnel",
+    "19. Coaching sportif et fitness","20. Friperie et vêtements de seconde main","21. Couture et retouches sur mesure",
+    "22. Création de contenu YouTube / TikTok","23. Vente de produits cosmétiques naturels","24. Maraîchage et légumes frais",
+    "25. Service de déménagement et transport","26. Réparation de téléphones et électronique","27. Grossiste produits alimentaires",
+    "28. Massage et bien-être à domicile","29. Création de bijoux et accessoires","30. Vente de formations vidéo",
+    "31. Baby-sitting et garde d'enfants","32. Vente de jus naturels et smoothies","33. Comptabilité et gestion freelance",
+    "34. Librairie et vente de livres","35. Peinture et travaux de rénovation","36. Dropshipping et revente en ligne",
+    "37. Élevage de poulets de chair","38. Pâtisserie et gâteaux sur commande","39. Service de gardiennage",
+    "40. Création de logos et identité visuelle","41. Séchage et transformation alimentaire","42. Rédaction de CV et lettres de motivation",
+    "43. Savons et cosmétiques artisanaux","44. Service de repassage à domicile","45. Community management entreprises",
+    "46. Menuiserie et meubles artisanaux","47. Garde d'animaux de compagnie","48. Vente de tisanes et plantes médicinales",
+    "49. Transport de personnes VTC","50. Décoration et aménagement intérieur"
   ];
   el.innerHTML = `
     <div class="card">
@@ -1672,23 +1672,118 @@ async function ctxSend(chipEl, ctx, msg) {
 
 // ── START ────�
 // ── SIMULATION FUNCTIONS (remplacées par vraie API au déploiement) ──
+function getPrix(fcfaAmount, periode) {
+  const rates = {'FCFA':1,'MAD':0.009,'DZD':0.055,'TND':0.0013,'EUR':0.0015,'USD':0.0016,'GBP':0.0013,'CAD':0.0022,'GHS':0.019,'NGN':1.25,'KES':0.21,'ZAR':0.029,'EGP':0.079,'SAR':0.006,'AED':0.0059,'TRY':0.055};
+  const devise = STATE.devise || 'FCFA';
+  const rate = rates[devise] || 1;
+  let converted = Math.round(fcfaAmount * rate);
+  if(converted >= 1000) converted = Math.round(converted/100)*100;
+  else if(converted >= 100) converted = Math.round(converted/10)*10;
+  return converted.toLocaleString() + ' ' + devise + '/' + periode;
+}
+
 function simulerAnalyse(form, exclude) {
   const pays = form.pays || 'Sénégal';
-  const comp = form.competence || 'communiquer';
+  const comp = (form.competence || '').toLowerCase();
   const secteur = form.secteur || 'Services digitaux';
-  const pool = [
-    {nom:"Gestion réseaux sociaux pour PME",score:88,description:"Tu gères les pages Facebook, Instagram et WhatsApp Business de petites entreprises locales.",pourquoi:"Forte demande en "+pays+" et compétences en "+secteur+" très utiles.",tags:["Digital","Récurrent","Faible coût"],offre:"J'aide les PME à développer leur présence sur les réseaux sociaux",public:"Commerçants et petites entreprises locales",benefice:"Plus de visibilité et de clients sans effort",prix:"50 000 "+STATE.devise+"/mois"},
-    {nom:"Création de contenu marketing",score:84,description:"Tu crées des visuels, vidéos et textes publicitaires pour des entrepreneurs et PME.",pourquoi:"Ta compétence en "+comp+" est directement applicable à ce service.",tags:["Créatif","Freelance","Scalable"],offre:"J'aide les entrepreneurs à créer du contenu qui convertit",public:"Entrepreneurs et startups",benefice:"Communication professionnelle sans agence coûteuse",prix:"75 000 "+STATE.devise+"/projet"},
-    {nom:"Formation et coaching en ligne",score:79,description:"Tu formes des particuliers et professionnels via des sessions en ligne ou en présentiel.",pourquoi:"Le marché de la formation est en pleine croissance en Afrique francophone.",tags:["Formation","Expertise","Impact"],offre:"J'aide les professionnels à développer leurs compétences",public:"Salariés et entrepreneurs en développement",benefice:"Montée en compétences rapide et applicable",prix:"30 000 "+STATE.devise+"/session"},
-    {nom:"Service de livraison express locale",score:76,description:"Tu organises des livraisons rapides pour commerces et restaurants dans ta ville.",pourquoi:"Fort besoin en "+pays+" avec peu de solutions fiables disponibles.",tags:["Local","Cash rapide","Simple"],offre:"J'aide les commerces à livrer leurs clients rapidement",public:"Restaurants, boutiques et e-commerces locaux",benefice:"Livraison fiable en moins de 2h",prix:"2 000 "+STATE.devise+"/livraison"},
-    {nom:"Vente de produits artisanaux en ligne",score:73,description:"Tu vends des produits faits main ou sourcés localement via WhatsApp et réseaux sociaux.",pourquoi:"Le marché du made in Africa est en pleine expansion.",tags:["Artisanat","E-commerce","Authentique"],offre:"Je vends des produits locaux authentiques et de qualité",public:"Diaspora et consommateurs locaux premium",benefice:"Accès à des produits uniques et de qualité",prix:"15 000 "+STATE.devise+"/produit"},
-    {nom:"Assistant administratif freelance",score:71,description:"Tu gères emails, plannings, comptabilité simple et tâches admin pour entrepreneurs débordés.",pourquoi:"Les entrepreneurs cherchent à déléguer pour se concentrer sur leur cœur de métier.",tags:["Organisation","Fiable","Récurrent"],offre:"J'aide les entrepreneurs à gérer leur administratif",public:"Entrepreneurs solo et petites équipes",benefice:"Gain de temps et organisation optimale",prix:"40 000 "+STATE.devise+"/mois"},
-  ];
+  const temps = form.temps || '1h';
+  const budget = form.budget || '0 - 50 000';
+  const besoin = (form.besoin || '').toLowerCase();
+
+  // Full pool of 20 ideas categorized by sector
+  const POOL = {
+    'Services digitaux': [
+      {nom:"Gestion réseaux sociaux pour PME",score:88,description:"Tu gères les pages Facebook, Instagram et WhatsApp Business de petites entreprises locales.",pourquoi:"Forte demande en "+pays+", pas besoin de capital, juste un smartphone et de la créativité.",tags:["Digital","Récurrent","Faible coût"],offre:"J'aide les PME à développer leur présence en ligne",public:"Commerçants et petites entreprises",benefice:"Plus de clients sans effort publicitaire",prix:getPrix(50000,'mois')},
+      {nom:"Création de contenu et visuels marketing",score:84,description:"Tu crées des visuels Canva, vidéos courtes et textes de vente pour entrepreneurs.",pourquoi:"Chaque business a besoin de contenu. Ta compétence en "+comp+" est un atout direct.",tags:["Créatif","Freelance","Scalable"],offre:"Je crée du contenu marketing qui attire des clients",public:"Entrepreneurs et startups locaux",benefice:"Image professionnelle sans agence coûteuse",prix:getPrix(35000,'projet')},
+      {nom:"Assistant administratif freelance",score:79,description:"Tu gères emails, plannings et tâches admin pour des entrepreneurs débordés à distance.",pourquoi:"Les entrepreneurs cherchent à déléguer. C'est un besoin croissant en "+pays+".",tags:["Organisation","Récurrent","Simple"],offre:"Je libère les entrepreneurs de leur administratif",public:"Chefs d'entreprise solo et PME",benefice:"Plus de temps pour le cœur de métier",prix:getPrix(40000,'mois')},
+    ],
+    'Commerce / Revente': [
+      {nom:"Revente de produits importés",score:87,description:"Tu sources des produits en Chine ou en gros et les revends localement avec marge.",pourquoi:"Le commerce est le secteur le plus accessible en "+pays+" avec de bons revenus rapides.",tags:["Commerce","Cash rapide","Scalable"],offre:"Je vends des produits de qualité à prix accessible",public:"Particuliers et revendeurs locaux",benefice:"Accès à des produits pas disponibles localement",prix:getPrix(20000,'produit')},
+      {nom:"Dropshipping local WhatsApp",score:82,description:"Tu prends des commandes sur WhatsApp et livres via fournisseurs sans stock.",pourquoi:"Zéro capital requis, idéal pour commencer avec "+budget+" de budget.",tags:["Sans stock","WhatsApp","Simple"],offre:"Je livre des produits à domicile rapidement",public:"Ménages et familles locales",benefice:"Achat facile sans se déplacer",prix:getPrix(5000,'commande')},
+      {nom:"Grossiste produits alimentaires locaux",score:76,description:"Tu achètes en gros des produits locaux et les redistribues aux détaillants.",pourquoi:"Besoin constant en "+pays+", marges stables et clientèle fidèle.",tags:["Alimentaire","Local","Récurrent"],offre:"Je fournis les commerçants en produits frais locaux",public:"Boutiquiers et revendeurs",benefice:"Approvisionnement fiable et régulier",prix:getPrix(10000,'livraison')},
+    ],
+    'Alimentation / Cuisine': [
+      {nom:"Vente de repas faits maison",score:89,description:"Tu prépares des repas locaux et les livres aux salariés et familles du quartier.",pourquoi:"Fort besoin en "+pays+" — les salariés cherchent des repas sains et abordables.",tags:["Alimentaire","Récurrent","Local"],offre:"Je prépare des repas faits maison livrés chez vous",public:"Salariés et familles du quartier",benefice:"Manger bien sans cuisiner tous les jours",prix:getPrix(3000,'repas')},
+      {nom:"Vente de jus naturels et smoothies",score:83,description:"Tu prépares et vends des jus frais, smoothies et boissons naturelles.",pourquoi:"La tendance santé est forte. Peu de capital requis pour démarrer.",tags:["Santé","Simple","Local"],offre:"Je vends des jus naturels frais sans conservateurs",public:"Particuliers soucieux de leur santé",benefice:"Boissons saines et naturelles à prix abordable",prix:getPrix(1500,'bouteille')},
+      {nom:"Pâtisserie et gâteaux sur commande",score:78,description:"Tu prépares des gâteaux, biscuits et pâtisseries pour événements et particuliers.",pourquoi:"Les fêtes et célébrations sont fréquentes. Demande constante toute l'année.",tags:["Événementiel","Créatif","Récurrent"],offre:"Je crée des pâtisseries personnalisées pour vos événements",public:"Particuliers et organisateurs d'événements",benefice:"Gâteaux personnalisés sans effort",prix:getPrix(15000,'commande')},
+    ],
+    'Beauté / Bien-être': [
+      {nom:"Coiffure et soins capillaires à domicile",score:90,description:"Tu te déplaces chez les clients pour coiffure, tresses, soins et styling.",pourquoi:"Service très demandé, fidélisation facile, peu de matériel requis pour commencer.",tags:["Beauté","Domicile","Récurrent"],offre:"Je me déplace pour vous coiffer à domicile",public:"Femmes et familles qui manquent de temps",benefice:"Beauté soignée sans se déplacer au salon",prix:getPrix(10000,'séance')},
+      {nom:"Massage et bien-être à domicile",score:82,description:"Tu proposes des massages relaxants, soins du corps et bien-être à domicile.",pourquoi:"Le stress est élevé. La demande de bien-être explose en milieu urbain.",tags:["Bien-être","Premium","Fidélisation"],offre:"Je viens à domicile pour vos séances de relaxation",public:"Professionnels stressés et familles",benefice:"Relaxation profonde sans sortir de chez soi",prix:getPrix(20000,'séance')},
+      {nom:"Vente de produits cosmétiques naturels",score:77,description:"Tu crées ou revends des savons, crèmes et soins à base de produits naturels.",pourquoi:"Tendance naturel forte en "+pays+". Marges intéressantes, production simple.",tags:["Naturel","Artisanat","Tendance"],offre:"Je vends des cosmétiques naturels faits avec soin",public:"Femmes soucieuses de leur peau",benefice:"Prendre soin de sa peau naturellement",prix:getPrix(5000,'produit')},
+    ],
+    'Formation / Coaching': [
+      {nom:"Coaching en développement personnel",score:86,description:"Tu accompagnes des particuliers pour améliorer leur confiance, organisation et mindset.",pourquoi:"Ta compétence en "+comp+" se valorise parfaitement dans le coaching.",tags:["Impact","Expertise","Scalable"],offre:"J'accompagne les gens vers leur meilleure version",public:"Salariés et entrepreneurs en quête de changement",benefice:"Clarté, confiance et passage à l'action",prix:getPrix(25000,'séance')},
+      {nom:"Formation en ligne dans ton domaine",score:81,description:"Tu crées et vends des formations vidéo sur ton expertise via WhatsApp ou plateformes.",pourquoi:"Le digital permet de scaler sans limite. Une formation vendue 1000 fois sans effort supplémentaire.",tags:["Scalable","Passif","Expertise"],offre:"Je partage mon expertise en formation en ligne",public:"Professionnels qui veulent monter en compétence",benefice:"Apprendre à son rythme depuis chez soi",prix:getPrix(15000,'formation')},
+      {nom:"Cours particuliers et soutien scolaire",score:75,description:"Tu donnes des cours aux élèves et étudiants en difficulté dans ta matière.",pourquoi:"Besoin permanent partout en Afrique. Peu de matériel, forte demande de parents.",tags:["Éducation","Récurrent","Simple"],offre:"J'aide les élèves à progresser et réussir",public:"Élèves du primaire au lycée et leurs parents",benefice:"Meilleures notes et confiance en soi",prix:getPrix(8000,'heure')},
+    ],
+    'Artisanat / Création': [
+      {nom:"Couture et création de vêtements",score:85,description:"Tu crées des tenues personnalisées, retouches et confectionnes sur mesure.",pourquoi:"La mode africaine est en plein essor. Clients fidèles et bouche-à-oreille puissant.",tags:["Artisanat","Créatif","Sur mesure"],offre:"Je crée des tenues uniques qui te ressemblent",public:"Femmes et familles qui veulent s'habiller avec style",benefice:"Vêtements parfaitement ajustés à ta morphologie",prix:getPrix(20000,'tenue')},
+      {nom:"Bijoux et accessoires artisanaux",score:78,description:"Tu crées des bijoux, sacs, accessoires faits main et les vends localement et en ligne.",pourquoi:"Marché de l'artisanat africain en forte croissance à l'international.",tags:["Artisanat","Créatif","Export possible"],offre:"Je crée des bijoux africains authentiques et uniques",public:"Femmes et passionnés de mode africaine",benefice:"Porter des pièces uniques qui racontent une histoire",prix:getPrix(8000,'pièce')},
+      {nom:"Décoration et aménagement intérieur",score:74,description:"Tu conseilles et décores des intérieurs pour particuliers et professionnels.",pourquoi:"Le marché de la déco est en croissance avec l'urbanisation en "+pays+".",tags:["Créatif","Premium","Projet"],offre:"Je transforme vos espaces en cocons chaleureux",public:"Familles et professionnels qui emménagent",benefice:"Intérieur beau et fonctionnel sans stress",prix:getPrix(80000,'projet')},
+    ],
+    'Transport / Livraison': [
+      {nom:"Service de livraison express locale",score:88,description:"Tu livres rapidement colis, repas et courses pour commerces et particuliers.",pourquoi:"La demande de livraison explose dans toutes les villes d'Afrique.",tags:["Local","Cash rapide","Fort besoin"],offre:"Je livre vos colis et courses rapidement",public:"Commerces, restaurants et particuliers",benefice:"Livraison fiable en moins de 2h",prix:getPrix(2000,'livraison')},
+      {nom:"Transport de personnes VTC",score:82,description:"Tu transportes des personnes de façon sécurisée et confortable.",pourquoi:"Alternative aux taxis classiques, forte demande des classes moyennes.",tags:["Transport","Récurrent","Simple"],offre:"Je transporte mes passagers en sécurité et confort",public:"Professionnels et familles",benefice:"Transport fiable et ponctuel",prix:getPrix(5000,'trajet')},
+    ],
+    'Agriculture': [
+      {nom:"Maraîchage et vente de légumes frais",score:86,description:"Tu cultives ou sources des légumes frais et les vends directement aux consommateurs.",pourquoi:"Besoin alimentaire permanent. Marges bonnes en vente directe sans intermédiaire.",tags:["Agriculture","Récurrent","Essentiel"],offre:"Je fournis des légumes frais cultivés localement",public:"Ménages et restaurants",benefice:"Légumes frais et sains à prix juste",prix:getPrix(500,'kg')},
+      {nom:"Élevage de poulets de chair",score:79,description:"Tu élèves des poulets et les vends aux ménages et restaurants à intervalles réguliers.",pourquoi:"La demande en protéines animales est forte et croissante en Afrique.",tags:["Agriculture","Cycle court","Récurrent"],offre:"Je fournis des poulets frais élevés localement",public:"Ménages et restaurateurs",benefice:"Viande fraîche et locale de qualité",prix:getPrix(8000,'poulet')},
+    ],
+    'Autre': [
+      {nom:"Service de nettoyage et ménage",score:85,description:"Tu proposes des services de nettoyage pour bureaux, maisons et commerces.",pourquoi:"Besoin permanent, peu de capital requis, fidélisation facile.",tags:["Service","Récurrent","Local"],offre:"Je nettoie vos espaces pour qu'ils soient impeccables",public:"Bureaux, commerces et particuliers",benefice:"Espace propre sans effort",prix:getPrix(15000,'intervention')},
+      {nom:"Réparation de téléphones et électronique",score:83,description:"Tu répares smartphones, tablettes et appareils électroniques cassés.",pourquoi:"Tous le monde a un téléphone. La demande de réparation est constante partout.",tags:["Technique","Local","Récurrent"],offre:"Je répare vos appareils rapidement et à prix juste",public:"Particuliers et professionnels",benefice:"Appareil réparé sans acheter neuf",prix:getPrix(5000,'réparation')},
+      {nom:"Jardinage et entretien espaces verts",score:72,description:"Tu entretiens jardins, pelouses et espaces verts pour particuliers et entreprises.",pourquoi:"Service apprécié des classes moyennes et supérieures en milieu urbain.",tags:["Local","Récurrent","Simple"],offre:"J'entretiens vos espaces verts avec soin",public:"Particuliers avec jardin et entreprises",benefice:"Jardin beau sans s'en occuper",prix:getPrix(20000,'mois')},
+    ],
+  };
+
+  // Get ideas for selected sector
+  const sectorIdeas = POOL[secteur] || POOL['Services digitaux'];
+  
+  // Also get ideas from other sectors based on competence keywords
+  let bonusIdeas = [];
+  const compKeywords = {
+    'cuisine': POOL['Alimentation / Cuisine'],
+    'coiff': POOL['Beauté / Bien-être'],
+    'beaut': POOL['Beauté / Bien-être'],
+    'coutur': POOL['Artisanat / Création'],
+    'livr': POOL['Transport / Livraison'],
+    'vente': POOL['Commerce / Revente'],
+    'commerce': POOL['Commerce / Revente'],
+    'coach': POOL['Formation / Coaching'],
+    'form': POOL['Formation / Coaching'],
+    'digital': POOL['Services digitaux'],
+    'réseaux': POOL['Services digitaux'],
+    'agricult': POOL['Agriculture'],
+    'légume': POOL['Agriculture'],
+  };
+  for(const [kw, ideas] of Object.entries(compKeywords)) {
+    if(comp.includes(kw) || besoin.includes(kw)) {
+      bonusIdeas = bonusIdeas.concat(ideas);
+    }
+  }
+
+  // Merge and deduplicate
   const excluded = exclude ? exclude.split(', ') : [];
-  const available = pool.filter(i => !excluded.includes(i.nom));
-  const selected = available.slice(0,3).length === 3 ? available.slice(0,3) : pool.slice(0,3);
+  const allIdeas = [...sectorIdeas, ...bonusIdeas];
+  const seen = new Set();
+  const unique = allIdeas.filter(i => {
+    if(seen.has(i.nom) || excluded.includes(i.nom)) return false;
+    seen.add(i.nom); return true;
+  });
+
+  // Sort by score and take top 3
+  const sorted = unique.sort((a,b)=>b.score-a.score);
+  const selected = sorted.slice(0,3);
+  
+  // If not enough, fill from other sectors
+  if(selected.length < 3) {
+    const fallback = Object.values(POOL).flat().filter(i=>!seen.has(i.nom)&&!excluded.includes(i.nom));
+    while(selected.length < 3 && fallback.length > 0) selected.push(fallback.shift());
+  }
+
   return {
-    analyse: `Ton profil en ${pays} avec ta compétence en "${comp}" dans le secteur ${secteur} offre de belles opportunités. Avec ${form.temps}/jour et un budget de ${form.budget} ${STATE.devise}, voici les 3 idées les plus adaptées à ta situation. Ces recommendations sont basées sur la demande actuelle du marché africain francophone.`,
+    analyse: `Ton profil en ${pays} avec ta compétence en "${form.competence}" dans le secteur "${secteur}" offre de réelles opportunités. Avec ${temps}/jour et un budget de ${budget}, voici les 3 idées les plus adaptées à ta situation et au marché local.`,
     idees: selected
   };
 }
