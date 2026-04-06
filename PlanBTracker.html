@@ -311,11 +311,9 @@ body{background:var(--darker);color:var(--text);font-family:'DM Sans',sans-serif
           </div>
         </div>
         <div class="card">
-          <div class="card-title" style="font-size:15px;margin-bottom:12px">Activité 7 jours</div>
-          <div class="week-grid">
-            <div class="day done">L</div><div class="day done">M</div><div class="day done">M</div><div class="day done">J</div>
-            <div class="day today">V</div><div class="day">S</div><div class="day">D</div>
-          </div>
+          <div class="card-title" style="font-size:15px;margin-bottom:4px">Activité 7 jours</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Jours où tu as complété au moins une action</div>
+          <div class="week-grid" id="week-grid"></div>
         </div>
       </div>
     </div>
@@ -340,11 +338,12 @@ body{background:var(--darker);color:var(--text);font-family:'DM Sans',sans-serif
           <input class="fi" id="f-comp" placeholder="Ex: j'explique bien, je vends facilement...">
           <div class="err-msg" id="err-comp" style="display:none">⚠️ Ce champ est obligatoire.</div>
           <label class="field-label">Secteur préféré</label>
-          <select class="fs" id="f-secteur">
+          <select class="fs" id="f-secteur" onchange="toggleAutreSecteur(this)">
             <option>Services digitaux</option><option>Commerce / Revente</option><option>Alimentation / Cuisine</option>
             <option>Beauté / Bien-être</option><option>Formation / Coaching</option><option>Artisanat / Création</option>
             <option>Transport / Livraison</option><option>Agriculture</option><option>Autre</option>
           </select>
+          <input class="fi" id="f-secteur-autre" placeholder="Précise ton secteur..." style="display:none;margin-top:8px">
           <label class="field-label">Temps disponible par jour</label>
           <select class="fs" id="f-temps"><option>30 min</option><option>1h</option><option>2h</option><option>3h+</option></select>
           <label class="field-label" id="budget-label">Budget de départ (FCFA)</label>
@@ -468,9 +467,9 @@ body{background:var(--darker);color:var(--text);font-family:'DM Sans',sans-serif
     </div>
     <div class="tab-content active" id="revenus-tab-0">
       <div class="g3c">
-        <div class="stat-card"><div class="stat-label">Total revenus</div><div class="stat-value" id="total-revenus" style="font-size:26px">0</div><div class="stat-sub">FCFA</div></div>
-        <div class="stat-card"><div class="stat-label">Total dépenses</div><div class="stat-value" id="total-depenses" style="font-size:26px">0</div><div class="stat-sub">FCFA</div></div>
-        <div class="stat-card"><div class="stat-label">Solde net</div><div class="stat-value" id="solde-net" style="font-size:26px">0</div><div class="stat-sub">FCFA</div></div>
+        <div class="stat-card"><div class="stat-label">Total revenus</div><div class="stat-value" id="total-revenus" style="font-size:26px">0</div><div class="stat-sub" id="rev-devise-1">FCFA</div></div>
+        <div class="stat-card"><div class="stat-label">Total dépenses</div><div class="stat-value" id="total-depenses" style="font-size:26px">0</div><div class="stat-sub" id="rev-devise-2">FCFA</div></div>
+        <div class="stat-card"><div class="stat-label">Solde net</div><div class="stat-value" id="solde-net" style="font-size:26px">0</div><div class="stat-sub" id="rev-devise-3">FCFA</div></div>
       </div>
       <div class="card">
         <div class="card-title">Toutes les entrées</div>
@@ -869,10 +868,13 @@ function updateDashboard() {
     document.getElementById('dash-days-bar').style.width=Math.round((day/90)*100)+'%';
   }
   document.getElementById('dash-actions').textContent = `${done}/${total}`;
+  renderWeekGrid();
   document.getElementById('dash-actions-bar').style.width = pct+'%';
   document.getElementById('dash-score').textContent = pct+'%';
   document.getElementById('dash-score-bar').style.width = pct+'%';
   document.getElementById('dash-revenus').textContent = Math.round(totalR/1000)+'K';
+  // Update revenus sub label on dashboard
+  const rLabel = document.querySelector('#page-dashboard .stat-sub:nth-of-type(3)');
   document.getElementById('score-num').textContent = pct;
 
   const deg = Math.round((pct/100)*360);
@@ -1058,6 +1060,11 @@ function confirmDelRevenu() {
 }
 
 function renderRevenus() {
+  // Update devise labels
+  ['rev-devise-1','rev-devise-2','rev-devise-3'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.textContent = STATE.devise;
+  });
   const totalR = STATE.revenus.filter(r=>r.type==='revenu').reduce((s,r)=>s+r.montant,0);
   const totalD = STATE.revenus.filter(r=>r.type==='depense').reduce((s,r)=>s+r.montant,0);
   const solde = totalR - totalD;
@@ -1098,35 +1105,20 @@ async function analyserProfil() {
   const form = {
     pays: document.getElementById('f-pays').value,
     competence: comp,
-    secteur: document.getElementById('f-secteur').value,
+    secteur: getSecteur(),
     temps: document.getElementById('f-temps').value,
     budget: document.getElementById('f-budget').value,
     besoin: besoin,
   };
 
   try {
-    const schema = '{"analyse":"2-3 phrases","idees":[{"nom":"...","score":85,"description":"...","pourquoi":"...","tags":["t1","t2","t3"],"offre":"...","public":"...","benefice":"...","prix":"..."}]}';
-    const prompt = `Tu es Coach Redouane, expert entrepreneuriat africain. Analyse ce profil et recommande les 3 meilleures idees de Plan B. PROFIL: Pays:${form.pays}, Competence:${form.competence}, Secteur:${form.secteur}, Temps:${form.temps}/jour, Budget:${form.budget} FCFA, Besoin:${form.besoin}. Reponds UNIQUEMENT en JSON valide sans markdown, format exact: ${schema}. Exactement 3 idees, score 60-95, realistes pour Afrique francophone.`;
-
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({model:"claude-sonnet-4-20250514", max_tokens:1000, messages:[{role:"user",content:prompt}]})
-    });
-    const d = await res.json();
-    const text = d.content.map(x=>x.text||'').join('').replace(/```json|```/g,'').trim();
-    const data = JSON.parse(text);
-    renderIdeeResults(data, form);
-    switchTabById('idee', 1);
+    await new Promise(r=>setTimeout(r,1500));
+    const data = simulerAnalyse(form);
+    renderIdeeResults(data, form, data.idees);
   } catch(e) {
-    document.getElementById('err-api').textContent = 'Erreur de connexion. Réessaie dans un moment.';
-    document.getElementById('err-api').style.display = 'block';
+    el.innerHTML = '<div style="color:var(--danger);padding:20px">Erreur. Réessaie.</div>';
   }
-  document.getElementById('btn-analyse').disabled = false;
-  document.getElementById('btn-analyse').textContent = 'Analyser mon profil avec l\'IA →';
-  document.getElementById('analyse-loading').style.display = 'none';
 }
-
 function renderIdeeResults(data, form, previousIdees) {
   const el = document.getElementById('idee-results');
   const isActive = (nom) => STATE.ideaActive && STATE.ideaActive.nom === nom;
@@ -1169,26 +1161,18 @@ async function relancerRecherche(previousNames) {
   const form = {
     pays: document.getElementById('f-pays').value,
     competence: document.getElementById('f-comp').value,
-    secteur: document.getElementById('f-secteur').value,
+    secteur: getSecteur(),
     temps: document.getElementById('f-temps').value,
     budget: document.getElementById('f-budget').value,
     besoin: document.getElementById('f-besoin').value,
   };
   
   try {
-    const schema = '{"analyse":"2-3 phrases","idees":[{"nom":"...","score":85,"description":"...","pourquoi":"...","tags":["t1","t2","t3"],"offre":"...","public":"...","benefice":"...","prix":"..."}]}';
-    const excludeMsg = previousNames ? ' Exclus ces idees deja proposees: '+previousNames+'.' : '';
-    const prompt = 'Tu es Coach Redouane, expert entrepreneuriat africain. Propose 3 NOUVELLES idees de Plan B differentes.'+excludeMsg+' PROFIL: Pays:'+form.pays+', Competence:'+form.competence+', Secteur:'+form.secteur+', Temps:'+form.temps+'/jour, Budget:'+form.budget+', Besoin:'+form.besoin+'. Reponds UNIQUEMENT en JSON valide sans markdown: '+schema+'. Exactement 3 idees, score 60-95.';
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method:"POST", headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})
-    });
-    const d = await res.json();
-    const text = d.content.map(x=>x.text||'').join('').replace(/```json|```/g,'').trim();
-    const data = JSON.parse(text);
+    await new Promise(r=>setTimeout(r,1500));
+    const data = simulerAnalyse(form, previousNames);
     renderIdeeResults(data, form, data.idees);
   } catch(e) {
-    el.innerHTML = '<div style="color:var(--danger);padding:20px">Erreur de connexion. Réessaie.</div>';
+    el.innerHTML = '<div style="color:var(--danger);padding:20px">Erreur. Réessaie.</div>';
   }
 }
 
@@ -1232,10 +1216,11 @@ function showIdeesList() {
 }
 
 async function analyserIdeeDirecte(idea) {
-  document.getElementById('f-comp').value = idea.replace(/^\d+\. /,'');
-  document.getElementById('f-besoin').value = 'Idée sélectionnée depuis la liste des 50 meilleures';
+  const cleanIdea = idea.replace(/^\d+\. /,'');
+  document.getElementById('f-comp').value = cleanIdea;
+  document.getElementById('f-besoin').value = 'Je veux développer cette idée : ' + cleanIdea;
   switchTabById('idee', 0);
-  setTimeout(()=>analyserProfil(), 100);
+  setTimeout(()=>analyserProfil(), 200);
 }
 
 async function choisirIdee(idee, form) {
@@ -1256,23 +1241,13 @@ async function activerIdee(idee, form) {
   switchTabById('idee', 2);
   updateDashboard();
 
-  // Generate AI actions in background
+  // Generate actions (simulated for test — real API at deployment)
   document.getElementById('plan-gen-loading').style.display = 'flex';
-  try {
-    const schema = '{"actions":[{"text":"...","week":"Semaine 1"},{"text":"...","week":"Semaine 2"},{"text":"...","week":"Semaine 3"},{"text":"...","week":"Semaine 4"},{"text":"...","week":"Semaine 5"},{"text":"...","week":"Semaine 6"},{"text":"...","week":"Semaine 7"},{"text":"...","week":"Semaine 8"},{"text":"...","week":"Semaine 9"},{"text":"...","week":"Semaine 10"},{"text":"...","week":"Semaine 11"},{"text":"...","week":"Semaine 12"}]}';
-    const prompt = `Tu es Coach Redouane. Genere exactement 12 actions concretes sur 3 mois pour cette idee de Plan B. IDEE:${idee.nom}. OFFRE:${idee.offre||""}. PAYS:${form?.pays||"Senegal"}. TEMPS:${form?.temps||"1h"}/jour. Reponds UNIQUEMENT en JSON valide sans markdown, format exact: ${schema}. Actions simples et concretes.`;
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method:"POST", headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})
-    });
-    const d = await res.json();
-    const text = d.content.map(x=>x.text||'').join('').replace(/```json|```/g,'').trim();
-    const data = JSON.parse(text);
-    STATE.actions = data.actions.map((a,i)=>({id:STATE.nextId++,text:a.text,week:a.week,done:false}));
-    renderActionsList();
-    renderPhases();
-    updateDashboard();
-  } catch(e) {}
+  await new Promise(r=>setTimeout(r,1200));
+  STATE.actions = simulerActions(idee);
+  renderActionsList();
+  renderPhases();
+  updateDashboard();
   document.getElementById('plan-gen-loading').style.display = 'none';
 }
 
@@ -1316,6 +1291,21 @@ function confirmChangeIdea() {
 }
 
 // ── ARCHIVE ─────────────────────────────────────────
+function renderWeekGrid() {
+  const el = document.getElementById('week-grid');
+  if(!el) return;
+  const days = ['L','M','M','J','V','S','D'];
+  const today = new Date().getDay(); // 0=Sun,1=Mon...6=Sat
+  // Convert to Mon-based index (0=Mon, 6=Sun)
+  const todayIdx = today === 0 ? 6 : today - 1;
+  el.innerHTML = days.map((d,i) => {
+    const isPast = i < todayIdx;
+    const isToday = i === todayIdx;
+    const hasAction = isPast && STATE.actions.some(a=>a.done); // simplified
+    return `<div class="day ${isToday?'today':hasAction?'done':''}">${d}</div>`;
+  }).join('');
+}
+
 function renderArchive() {
   const el = document.getElementById('archive-list');
   if(STATE.archives.length === 0) {
@@ -1393,11 +1383,11 @@ function saveProfile() {
   STATE.user.situation = document.getElementById('edit-situation').value;
   STATE.user.objectif = document.getElementById('edit-objectif').value;
   STATE.devise = document.getElementById('edit-devise').value || getCurrency(STATE.user.pays);
-  // Update budget label
-  const bl = document.getElementById('budget-label');
-  if(bl) bl.textContent = 'Budget de départ ('+STATE.devise+')';
+  var budgetLabel = document.getElementById('budget-label');
+  if(budgetLabel) budgetLabel.textContent = 'Budget de départ (' + STATE.devise + ')';
   closeProfile();
   updateUserDisplay();
+  renderRevenus();
 }
 
 function cancelEdit() {
@@ -1457,6 +1447,20 @@ function showBugForm() {
 function showEscalade() {
   document.getElementById('faq-home').style.display = 'none';
   document.getElementById('faq-esc').style.display = 'block';
+}
+
+function toggleAutreSecteur(sel) {
+  const inp = document.getElementById('f-secteur-autre');
+  if(inp) inp.style.display = sel.value === 'Autre' ? 'block' : 'none';
+}
+
+function getSecteur() {
+  const sel = document.getElementById('f-secteur');
+  if(sel.value === 'Autre') {
+    const inp = document.getElementById('f-secteur-autre');
+    return inp && inp.value.trim() ? inp.value.trim() : 'Autre';
+  }
+  return sel.value;
 }
 
 function detectCountry() {
@@ -1562,15 +1566,11 @@ async function ctxSend(chipEl, ctx, msg) {
   const system = systems[ctx] + (userName ? ` L'utilisateur s'appelle ${userName}. Tutoie-le et utilise son prenom.` : '');
 
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method:"POST", headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({model:"claude-sonnet-4-20250514", max_tokens:400, system, messages:STATE.ctxHistory[ctx]})
-    });
-    const d = await res.json();
-    const reply = d.content.map(x=>x.text||'').join('');
+    await new Promise(r=>setTimeout(r,1000));
+    const reply = simulerChat(msg, ctx);
     STATE.ctxHistory[ctx].push({role:"assistant", content:reply});
     document.getElementById('ctx-loading-'+ctx).remove();
-    messagesEl.innerHTML += `<div class="ctx-msg bot">${reply.replace(/\n/g,'<br>')}</div>`;
+    messagesEl.innerHTML += `<div class="ctx-msg bot">${reply}</div>`;
   } catch(e) {
     document.getElementById('ctx-loading-'+ctx).remove();
     messagesEl.innerHTML += `<div class="ctx-msg bot">Désolé, problème de connexion. Réessaie.</div>`;
@@ -1579,6 +1579,74 @@ async function ctxSend(chipEl, ctx, msg) {
 }
 
 // ── START ────�
+// ── SIMULATION FUNCTIONS (remplacées par vraie API au déploiement) ──
+function simulerAnalyse(form, exclude) {
+  const pays = form.pays || 'Sénégal';
+  const comp = form.competence || 'communiquer';
+  const secteur = form.secteur || 'Services digitaux';
+  const pool = [
+    {nom:"Gestion réseaux sociaux pour PME",score:88,description:"Tu gères les pages Facebook, Instagram et WhatsApp Business de petites entreprises locales.",pourquoi:"Forte demande en "+pays+" et compétences en "+secteur+" très utiles.",tags:["Digital","Récurrent","Faible coût"],offre:"J'aide les PME à développer leur présence sur les réseaux sociaux",public:"Commerçants et petites entreprises locales",benefice:"Plus de visibilité et de clients sans effort",prix:"50 000 "+STATE.devise+"/mois"},
+    {nom:"Création de contenu marketing",score:84,description:"Tu crées des visuels, vidéos et textes publicitaires pour des entrepreneurs et PME.",pourquoi:"Ta compétence en "+comp+" est directement applicable à ce service.",tags:["Créatif","Freelance","Scalable"],offre:"J'aide les entrepreneurs à créer du contenu qui convertit",public:"Entrepreneurs et startups",benefice:"Communication professionnelle sans agence coûteuse",prix:"75 000 "+STATE.devise+"/projet"},
+    {nom:"Formation et coaching en ligne",score:79,description:"Tu formes des particuliers et professionnels via des sessions en ligne ou en présentiel.",pourquoi:"Le marché de la formation est en pleine croissance en Afrique francophone.",tags:["Formation","Expertise","Impact"],offre:"J'aide les professionnels à développer leurs compétences",public:"Salariés et entrepreneurs en développement",benefice:"Montée en compétences rapide et applicable",prix:"30 000 "+STATE.devise+"/session"},
+    {nom:"Service de livraison express locale",score:76,description:"Tu organises des livraisons rapides pour commerces et restaurants dans ta ville.",pourquoi:"Fort besoin en "+pays+" avec peu de solutions fiables disponibles.",tags:["Local","Cash rapide","Simple"],offre:"J'aide les commerces à livrer leurs clients rapidement",public:"Restaurants, boutiques et e-commerces locaux",benefice:"Livraison fiable en moins de 2h",prix:"2 000 "+STATE.devise+"/livraison"},
+    {nom:"Vente de produits artisanaux en ligne",score:73,description:"Tu vends des produits faits main ou sourcés localement via WhatsApp et réseaux sociaux.",pourquoi:"Le marché du made in Africa est en pleine expansion.",tags:["Artisanat","E-commerce","Authentique"],offre:"Je vends des produits locaux authentiques et de qualité",public:"Diaspora et consommateurs locaux premium",benefice:"Accès à des produits uniques et de qualité",prix:"15 000 "+STATE.devise+"/produit"},
+    {nom:"Assistant administratif freelance",score:71,description:"Tu gères emails, plannings, comptabilité simple et tâches admin pour entrepreneurs débordés.",pourquoi:"Les entrepreneurs cherchent à déléguer pour se concentrer sur leur cœur de métier.",tags:["Organisation","Fiable","Récurrent"],offre:"J'aide les entrepreneurs à gérer leur administratif",public:"Entrepreneurs solo et petites équipes",benefice:"Gain de temps et organisation optimale",prix:"40 000 "+STATE.devise+"/mois"},
+  ];
+  const excluded = exclude ? exclude.split(', ') : [];
+  const available = pool.filter(i => !excluded.includes(i.nom));
+  const selected = available.slice(0,3).length === 3 ? available.slice(0,3) : pool.slice(0,3);
+  return {
+    analyse: `Ton profil en ${pays} avec ta compétence en "${comp}" dans le secteur ${secteur} offre de belles opportunités. Avec ${form.temps}/jour et un budget de ${form.budget} ${STATE.devise}, voici les 3 idées les plus adaptées à ta situation. Ces recommendations sont basées sur la demande actuelle du marché africain francophone.`,
+    idees: selected
+  };
+}
+
+function simulerActions(idee) {
+  const nom = idee.nom || 'ton activité';
+  return [
+    {id:STATE.nextId++,text:`Définir précisément mon offre pour "${nom}"`,week:"Semaine 1",done:false},
+    {id:STATE.nextId++,text:"Identifier 5 premiers clients potentiels dans mon entourage",week:"Semaine 1",done:false},
+    {id:STATE.nextId++,text:"Créer mon message de présentation WhatsApp",week:"Semaine 2",done:false},
+    {id:STATE.nextId++,text:"Publier mon premier statut WhatsApp sur mon activité",week:"Semaine 2",done:false},
+    {id:STATE.nextId++,text:"Contacter mes 5 premiers prospects",week:"Semaine 3",done:false},
+    {id:STATE.nextId++,text:"Réaliser mon premier test client (service ou produit)",week:"Semaine 3",done:false},
+    {id:STATE.nextId++,text:"Collecter les retours de mon premier test",week:"Semaine 4",done:false},
+    {id:STATE.nextId++,text:"Ajuster mon offre selon les retours reçus",week:"Semaine 4",done:false},
+    {id:STATE.nextId++,text:"Fixer mon prix définitif et créer ma grille tarifaire",week:"Semaine 5",done:false},
+    {id:STATE.nextId++,text:"Ouvrir un compte dédié à mon activité",week:"Semaine 5",done:false},
+    {id:STATE.nextId++,text:"Viser mes 3 premiers clients payants",week:"Semaine 6",done:false},
+    {id:STATE.nextId++,text:"Établir ma routine hebdomadaire de suivi clients",week:"Semaine 7",done:false},
+    {id:STATE.nextId++,text:"Analyser mes revenus du premier mois et ajuster",week:"Semaine 8",done:false},
+    {id:STATE.nextId++,text:"Demander des témoignages à mes premiers clients",week:"Semaine 9",done:false},
+    {id:STATE.nextId++,text:"Lancer une promotion pour attirer de nouveaux clients",week:"Semaine 10",done:false},
+    {id:STATE.nextId++,text:"Viser la stabilité financière et préparer le mois 3",week:"Semaine 12",done:false},
+  ];
+}
+
+function simulerChat(msg, ctx) {
+  const name = STATE.user?.prenom || '';
+  const greet = name ? name+', ' : '';
+  const responses = {
+    idee: [
+      `${greet}bonne question ! Pour choisir ton idée, concentre-toi sur ce que tu fais naturellement bien et ce que les gens autour de toi demandent souvent. L'intersection entre tes compétences et les besoins du marché, c'est là que se trouve ta meilleure idée.`,
+      `${greet}l'idée réaliste est celle que tu peux lancer cette semaine avec ce que tu as déjà. Pas besoin d'attendre le moment parfait — commence petit, teste, et améliore.`,
+      `Pour valider rapidement ${greet}: propose ton service à 3 personnes de ton entourage gratuitement ou à prix réduit. Leurs retours te diront si tu es sur la bonne voie.`,
+    ],
+    plan: [
+      `${greet}si tu te sens bloqué, reviens à l'action la plus simple possible. Quelle est la toute petite chose que tu peux faire dans les prochaines 30 minutes ?`,
+      `La constance est plus importante que la vitesse ${greet}. Une action par jour, même petite, crée un mouvement réel sur 90 jours.`,
+      `Pour passer à la phase suivante ${greet}, assure-toi d'avoir coché au moins 3 actions de la phase actuelle. Ce n'est pas la perfection qui compte, c'est le mouvement.`,
+    ],
+    revenus: [
+      `${greet}pour fixer ton prix, calcule d'abord ton coût en temps et en ressources, puis multiplie par 2.5. C'est un bon point de départ pour un service en Afrique francophone.`,
+      `Le principe clé ${greet}: réinvestis 20% de chaque revenu dans ton activité. Le reste c'est ton bénéfice. Cette discipline fait la différence sur le long terme.`,
+      `Pour augmenter tes revenus ${greet}, la voie la plus rapide est d'aller chercher de nouveaux clients avec tes témoignages existants. Un client satisfait vaut mieux que toute la publicité du monde.`,
+    ],
+  };
+  const arr = responses[ctx] || responses.plan;
+  return arr[Math.floor(Math.random()*arr.length)];
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   renderOnbStep();
 });
