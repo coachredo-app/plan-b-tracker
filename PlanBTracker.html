@@ -1092,16 +1092,31 @@ async function analyserProfil() {
   const comp = document.getElementById('f-comp').value.trim();
   const besoin = document.getElementById('f-besoin').value.trim();
   let hasErr = false;
-  if(!comp) { document.getElementById('f-comp').classList.add('field-err'); document.getElementById('err-comp').style.display='block'; document.getElementById('f-comp').focus(); hasErr=true; }
-  else { document.getElementById('f-comp').classList.remove('field-err'); document.getElementById('err-comp').style.display='none'; }
-  if(!besoin) { document.getElementById('f-besoin').classList.add('field-err'); document.getElementById('err-besoin').style.display='block'; if(!hasErr) document.getElementById('f-besoin').focus(); hasErr=true; }
-  else { document.getElementById('f-besoin').classList.remove('field-err'); document.getElementById('err-besoin').style.display='none'; }
+  if(!comp) {
+    document.getElementById('f-comp').classList.add('field-err');
+    document.getElementById('err-comp').style.display='block';
+    document.getElementById('f-comp').focus();
+    hasErr=true;
+  } else {
+    document.getElementById('f-comp').classList.remove('field-err');
+    document.getElementById('err-comp').style.display='none';
+  }
+  if(!besoin) {
+    document.getElementById('f-besoin').classList.add('field-err');
+    document.getElementById('err-besoin').style.display='block';
+    if(!hasErr) document.getElementById('f-besoin').focus();
+    hasErr=true;
+  } else {
+    document.getElementById('f-besoin').classList.remove('field-err');
+    document.getElementById('err-besoin').style.display='none';
+  }
   if(hasErr) return;
 
-  document.getElementById('btn-analyse').disabled = true;
-  document.getElementById('btn-analyse').textContent = 'Recherche en cours...';
-  document.getElementById('analyse-loading').style.display = 'flex';
-  document.getElementById('err-api').style.display = 'none';
+  const btn = document.getElementById('btn-analyse');
+  const loading = document.getElementById('analyse-loading');
+  btn.disabled = true;
+  btn.textContent = 'Recherche en cours...';
+  loading.style.display = 'flex';
 
   const form = {
     pays: document.getElementById('f-pays').value,
@@ -1112,13 +1127,16 @@ async function analyserProfil() {
     besoin: besoin,
   };
 
-  try {
-    await new Promise(r=>setTimeout(r,1500));
-    const data = simulerAnalyse(form);
-    renderIdeeResults(data, form, data.idees);
-  } catch(e) {
-    el.innerHTML = '<div style="color:var(--danger);padding:20px">Erreur. Réessaie.</div>';
-  }
+  await new Promise(r=>setTimeout(r,1800));
+  
+  const data = simulerAnalyse(form);
+  renderIdeeResults(data, form);
+  
+  btn.disabled = false;
+  btn.textContent = "Analyser mon profil avec l'IA →";
+  loading.style.display = 'none';
+  
+  switchTabById('idee', 1);
 }
 function renderIdeeResults(data, form, previousIdees) {
   const el = document.getElementById('idee-results');
