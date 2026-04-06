@@ -2,8 +2,12 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Plan B Tracker — Coach Redouane</title>
+<!-- Version: 2.1.1711 -->
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -1685,108 +1689,88 @@ function getPrix(fcfaAmount, periode) {
 function simulerAnalyse(form, exclude) {
   const pays = form.pays || 'Sénégal';
   const comp = (form.competence || '').toLowerCase();
+  const besoin = (form.besoin || '').toLowerCase();
   const secteur = form.secteur || 'Services digitaux';
   const temps = form.temps || '1h';
-  const budget = form.budget || '0 - 50 000';
-  const besoin = (form.besoin || '').toLowerCase();
-
-  // Full pool of 20 ideas categorized by sector
-  const POOL = {
-    'Services digitaux': [
-      {nom:"Gestion réseaux sociaux pour PME",score:88,description:"Tu gères les pages Facebook, Instagram et WhatsApp Business de petites entreprises locales.",pourquoi:"Forte demande en "+pays+", pas besoin de capital, juste un smartphone et de la créativité.",tags:["Digital","Récurrent","Faible coût"],offre:"J'aide les PME à développer leur présence en ligne",public:"Commerçants et petites entreprises",benefice:"Plus de clients sans effort publicitaire",prix:getPrix(50000,'mois')},
-      {nom:"Création de contenu et visuels marketing",score:84,description:"Tu crées des visuels Canva, vidéos courtes et textes de vente pour entrepreneurs.",pourquoi:"Chaque business a besoin de contenu. Ta compétence en "+comp+" est un atout direct.",tags:["Créatif","Freelance","Scalable"],offre:"Je crée du contenu marketing qui attire des clients",public:"Entrepreneurs et startups locaux",benefice:"Image professionnelle sans agence coûteuse",prix:getPrix(35000,'projet')},
-      {nom:"Assistant administratif freelance",score:79,description:"Tu gères emails, plannings et tâches admin pour des entrepreneurs débordés à distance.",pourquoi:"Les entrepreneurs cherchent à déléguer. C'est un besoin croissant en "+pays+".",tags:["Organisation","Récurrent","Simple"],offre:"Je libère les entrepreneurs de leur administratif",public:"Chefs d'entreprise solo et PME",benefice:"Plus de temps pour le cœur de métier",prix:getPrix(40000,'mois')},
-    ],
-    'Commerce / Revente': [
-      {nom:"Revente de produits importés",score:87,description:"Tu sources des produits en Chine ou en gros et les revends localement avec marge.",pourquoi:"Le commerce est le secteur le plus accessible en "+pays+" avec de bons revenus rapides.",tags:["Commerce","Cash rapide","Scalable"],offre:"Je vends des produits de qualité à prix accessible",public:"Particuliers et revendeurs locaux",benefice:"Accès à des produits pas disponibles localement",prix:getPrix(20000,'produit')},
-      {nom:"Dropshipping local WhatsApp",score:82,description:"Tu prends des commandes sur WhatsApp et livres via fournisseurs sans stock.",pourquoi:"Zéro capital requis, idéal pour commencer avec "+budget+" de budget.",tags:["Sans stock","WhatsApp","Simple"],offre:"Je livre des produits à domicile rapidement",public:"Ménages et familles locales",benefice:"Achat facile sans se déplacer",prix:getPrix(5000,'commande')},
-      {nom:"Grossiste produits alimentaires locaux",score:76,description:"Tu achètes en gros des produits locaux et les redistribues aux détaillants.",pourquoi:"Besoin constant en "+pays+", marges stables et clientèle fidèle.",tags:["Alimentaire","Local","Récurrent"],offre:"Je fournis les commerçants en produits frais locaux",public:"Boutiquiers et revendeurs",benefice:"Approvisionnement fiable et régulier",prix:getPrix(10000,'livraison')},
-    ],
-    'Alimentation / Cuisine': [
-      {nom:"Vente de repas faits maison",score:89,description:"Tu prépares des repas locaux et les livres aux salariés et familles du quartier.",pourquoi:"Fort besoin en "+pays+" — les salariés cherchent des repas sains et abordables.",tags:["Alimentaire","Récurrent","Local"],offre:"Je prépare des repas faits maison livrés chez vous",public:"Salariés et familles du quartier",benefice:"Manger bien sans cuisiner tous les jours",prix:getPrix(3000,'repas')},
-      {nom:"Vente de jus naturels et smoothies",score:83,description:"Tu prépares et vends des jus frais, smoothies et boissons naturelles.",pourquoi:"La tendance santé est forte. Peu de capital requis pour démarrer.",tags:["Santé","Simple","Local"],offre:"Je vends des jus naturels frais sans conservateurs",public:"Particuliers soucieux de leur santé",benefice:"Boissons saines et naturelles à prix abordable",prix:getPrix(1500,'bouteille')},
-      {nom:"Pâtisserie et gâteaux sur commande",score:78,description:"Tu prépares des gâteaux, biscuits et pâtisseries pour événements et particuliers.",pourquoi:"Les fêtes et célébrations sont fréquentes. Demande constante toute l'année.",tags:["Événementiel","Créatif","Récurrent"],offre:"Je crée des pâtisseries personnalisées pour vos événements",public:"Particuliers et organisateurs d'événements",benefice:"Gâteaux personnalisés sans effort",prix:getPrix(15000,'commande')},
-    ],
-    'Beauté / Bien-être': [
-      {nom:"Coiffure et soins capillaires à domicile",score:90,description:"Tu te déplaces chez les clients pour coiffure, tresses, soins et styling.",pourquoi:"Service très demandé, fidélisation facile, peu de matériel requis pour commencer.",tags:["Beauté","Domicile","Récurrent"],offre:"Je me déplace pour vous coiffer à domicile",public:"Femmes et familles qui manquent de temps",benefice:"Beauté soignée sans se déplacer au salon",prix:getPrix(10000,'séance')},
-      {nom:"Massage et bien-être à domicile",score:82,description:"Tu proposes des massages relaxants, soins du corps et bien-être à domicile.",pourquoi:"Le stress est élevé. La demande de bien-être explose en milieu urbain.",tags:["Bien-être","Premium","Fidélisation"],offre:"Je viens à domicile pour vos séances de relaxation",public:"Professionnels stressés et familles",benefice:"Relaxation profonde sans sortir de chez soi",prix:getPrix(20000,'séance')},
-      {nom:"Vente de produits cosmétiques naturels",score:77,description:"Tu crées ou revends des savons, crèmes et soins à base de produits naturels.",pourquoi:"Tendance naturel forte en "+pays+". Marges intéressantes, production simple.",tags:["Naturel","Artisanat","Tendance"],offre:"Je vends des cosmétiques naturels faits avec soin",public:"Femmes soucieuses de leur peau",benefice:"Prendre soin de sa peau naturellement",prix:getPrix(5000,'produit')},
-    ],
-    'Formation / Coaching': [
-      {nom:"Coaching en développement personnel",score:86,description:"Tu accompagnes des particuliers pour améliorer leur confiance, organisation et mindset.",pourquoi:"Ta compétence en "+comp+" se valorise parfaitement dans le coaching.",tags:["Impact","Expertise","Scalable"],offre:"J'accompagne les gens vers leur meilleure version",public:"Salariés et entrepreneurs en quête de changement",benefice:"Clarté, confiance et passage à l'action",prix:getPrix(25000,'séance')},
-      {nom:"Formation en ligne dans ton domaine",score:81,description:"Tu crées et vends des formations vidéo sur ton expertise via WhatsApp ou plateformes.",pourquoi:"Le digital permet de scaler sans limite. Une formation vendue 1000 fois sans effort supplémentaire.",tags:["Scalable","Passif","Expertise"],offre:"Je partage mon expertise en formation en ligne",public:"Professionnels qui veulent monter en compétence",benefice:"Apprendre à son rythme depuis chez soi",prix:getPrix(15000,'formation')},
-      {nom:"Cours particuliers et soutien scolaire",score:75,description:"Tu donnes des cours aux élèves et étudiants en difficulté dans ta matière.",pourquoi:"Besoin permanent partout en Afrique. Peu de matériel, forte demande de parents.",tags:["Éducation","Récurrent","Simple"],offre:"J'aide les élèves à progresser et réussir",public:"Élèves du primaire au lycée et leurs parents",benefice:"Meilleures notes et confiance en soi",prix:getPrix(8000,'heure')},
-    ],
-    'Artisanat / Création': [
-      {nom:"Couture et création de vêtements",score:85,description:"Tu crées des tenues personnalisées, retouches et confectionnes sur mesure.",pourquoi:"La mode africaine est en plein essor. Clients fidèles et bouche-à-oreille puissant.",tags:["Artisanat","Créatif","Sur mesure"],offre:"Je crée des tenues uniques qui te ressemblent",public:"Femmes et familles qui veulent s'habiller avec style",benefice:"Vêtements parfaitement ajustés à ta morphologie",prix:getPrix(20000,'tenue')},
-      {nom:"Bijoux et accessoires artisanaux",score:78,description:"Tu crées des bijoux, sacs, accessoires faits main et les vends localement et en ligne.",pourquoi:"Marché de l'artisanat africain en forte croissance à l'international.",tags:["Artisanat","Créatif","Export possible"],offre:"Je crée des bijoux africains authentiques et uniques",public:"Femmes et passionnés de mode africaine",benefice:"Porter des pièces uniques qui racontent une histoire",prix:getPrix(8000,'pièce')},
-      {nom:"Décoration et aménagement intérieur",score:74,description:"Tu conseilles et décores des intérieurs pour particuliers et professionnels.",pourquoi:"Le marché de la déco est en croissance avec l'urbanisation en "+pays+".",tags:["Créatif","Premium","Projet"],offre:"Je transforme vos espaces en cocons chaleureux",public:"Familles et professionnels qui emménagent",benefice:"Intérieur beau et fonctionnel sans stress",prix:getPrix(80000,'projet')},
-    ],
-    'Transport / Livraison': [
-      {nom:"Service de livraison express locale",score:88,description:"Tu livres rapidement colis, repas et courses pour commerces et particuliers.",pourquoi:"La demande de livraison explose dans toutes les villes d'Afrique.",tags:["Local","Cash rapide","Fort besoin"],offre:"Je livre vos colis et courses rapidement",public:"Commerces, restaurants et particuliers",benefice:"Livraison fiable en moins de 2h",prix:getPrix(2000,'livraison')},
-      {nom:"Transport de personnes VTC",score:82,description:"Tu transportes des personnes de façon sécurisée et confortable.",pourquoi:"Alternative aux taxis classiques, forte demande des classes moyennes.",tags:["Transport","Récurrent","Simple"],offre:"Je transporte mes passagers en sécurité et confort",public:"Professionnels et familles",benefice:"Transport fiable et ponctuel",prix:getPrix(5000,'trajet')},
-    ],
-    'Agriculture': [
-      {nom:"Maraîchage et vente de légumes frais",score:86,description:"Tu cultives ou sources des légumes frais et les vends directement aux consommateurs.",pourquoi:"Besoin alimentaire permanent. Marges bonnes en vente directe sans intermédiaire.",tags:["Agriculture","Récurrent","Essentiel"],offre:"Je fournis des légumes frais cultivés localement",public:"Ménages et restaurants",benefice:"Légumes frais et sains à prix juste",prix:getPrix(500,'kg')},
-      {nom:"Élevage de poulets de chair",score:79,description:"Tu élèves des poulets et les vends aux ménages et restaurants à intervalles réguliers.",pourquoi:"La demande en protéines animales est forte et croissante en Afrique.",tags:["Agriculture","Cycle court","Récurrent"],offre:"Je fournis des poulets frais élevés localement",public:"Ménages et restaurateurs",benefice:"Viande fraîche et locale de qualité",prix:getPrix(8000,'poulet')},
-    ],
-    'Autre': [
-      {nom:"Service de nettoyage et ménage",score:85,description:"Tu proposes des services de nettoyage pour bureaux, maisons et commerces.",pourquoi:"Besoin permanent, peu de capital requis, fidélisation facile.",tags:["Service","Récurrent","Local"],offre:"Je nettoie vos espaces pour qu'ils soient impeccables",public:"Bureaux, commerces et particuliers",benefice:"Espace propre sans effort",prix:getPrix(15000,'intervention')},
-      {nom:"Réparation de téléphones et électronique",score:83,description:"Tu répares smartphones, tablettes et appareils électroniques cassés.",pourquoi:"Tous le monde a un téléphone. La demande de réparation est constante partout.",tags:["Technique","Local","Récurrent"],offre:"Je répare vos appareils rapidement et à prix juste",public:"Particuliers et professionnels",benefice:"Appareil réparé sans acheter neuf",prix:getPrix(5000,'réparation')},
-      {nom:"Jardinage et entretien espaces verts",score:72,description:"Tu entretiens jardins, pelouses et espaces verts pour particuliers et entreprises.",pourquoi:"Service apprécié des classes moyennes et supérieures en milieu urbain.",tags:["Local","Récurrent","Simple"],offre:"J'entretiens vos espaces verts avec soin",public:"Particuliers avec jardin et entreprises",benefice:"Jardin beau sans s'en occuper",prix:getPrix(20000,'mois')},
-    ],
-  };
-
-  // Get ideas for selected sector
-  const sectorIdeas = POOL[secteur] || POOL['Services digitaux'];
-  
-  // Also get ideas from other sectors based on competence keywords
-  let bonusIdeas = [];
-  const compKeywords = {
-    'cuisine': POOL['Alimentation / Cuisine'],
-    'coiff': POOL['Beauté / Bien-être'],
-    'beaut': POOL['Beauté / Bien-être'],
-    'coutur': POOL['Artisanat / Création'],
-    'livr': POOL['Transport / Livraison'],
-    'vente': POOL['Commerce / Revente'],
-    'commerce': POOL['Commerce / Revente'],
-    'coach': POOL['Formation / Coaching'],
-    'form': POOL['Formation / Coaching'],
-    'digital': POOL['Services digitaux'],
-    'réseaux': POOL['Services digitaux'],
-    'agricult': POOL['Agriculture'],
-    'légume': POOL['Agriculture'],
-  };
-  for(const [kw, ideas] of Object.entries(compKeywords)) {
-    if(comp.includes(kw) || besoin.includes(kw)) {
-      bonusIdeas = bonusIdeas.concat(ideas);
-    }
-  }
-
-  // Merge and deduplicate
+  const budget = form.budget || '';
   const excluded = exclude ? exclude.split(', ') : [];
-  const allIdeas = [...sectorIdeas, ...bonusIdeas];
-  const seen = new Set();
-  const unique = allIdeas.filter(i => {
-    if(seen.has(i.nom) || excluded.includes(i.nom)) return false;
-    seen.add(i.nom); return true;
-  });
 
-  // Sort by score and take top 3
-  const sorted = unique.sort((a,b)=>b.score-a.score);
-  const selected = sorted.slice(0,3);
-  
-  // If not enough, fill from other sectors
-  if(selected.length < 3) {
-    const fallback = Object.values(POOL).flat().filter(i=>!seen.has(i.nom)&&!excluded.includes(i.nom));
-    while(selected.length < 3 && fallback.length > 0) selected.push(fallback.shift());
+  // Full pool of ideas
+  const TOUTES_IDEES = [
+    // Digital
+    {nom:"Gestion réseaux sociaux pour PME",score:85,secteurs:["Services digitaux"],mots:["réseau","social","facebook","instagram","digital","communication","marketing","internet","contenu","créatif"],description:"Tu gères les pages Facebook, Instagram et WhatsApp Business de petites entreprises locales.",pourquoi:"Forte demande en "+pays+". Un smartphone suffit pour démarrer.",tags:["Digital","Récurrent","Faible coût"],offre:"J'aide les PME à développer leur présence en ligne",public:"Commerçants et petites entreprises",benefice:"Plus de clients sans effort publicitaire",prix:getPrix(50000,'mois')},
+    {nom:"Création de contenu marketing",score:82,secteurs:["Services digitaux"],mots:["créatif","contenu","design","photo","vidéo","canva","graphique","visuel","communication","marketing"],description:"Tu crées des visuels, vidéos courtes et textes de vente pour entrepreneurs.",pourquoi:"Chaque business a besoin de contenu professionnel en "+pays+".",tags:["Créatif","Freelance","Scalable"],offre:"Je crée du contenu marketing qui attire des clients",public:"Entrepreneurs et startups",benefice:"Image professionnelle sans agence coûteuse",prix:getPrix(35000,'projet')},
+    {nom:"Assistant administratif freelance",score:75,secteurs:["Services digitaux"],mots:["organisation","administratif","gestion","email","planning","bureautique","secrétaire","office","word","excel"],description:"Tu gères emails, plannings et tâches admin pour des entrepreneurs débordés.",pourquoi:"Les entrepreneurs cherchent à déléguer. Besoin croissant en "+pays+".",tags:["Organisation","Récurrent","Simple"],offre:"Je libère les entrepreneurs de leur administratif",public:"Chefs d'entreprise solo",benefice:"Plus de temps pour le cœur de métier",prix:getPrix(40000,'mois')},
+    {nom:"Rédaction de contenu web et copywriting",score:78,secteurs:["Services digitaux"],mots:["écriture","rédaction","texte","langue","communication","blog","article","copywriting","contenu","lettre"],description:"Tu rédiges des articles, descriptions et textes de vente pour entreprises.",pourquoi:"Le contenu écrit est essentiel pour tous les business en ligne.",tags:["Écriture","Freelance","Expertise"],offre:"Je rédige du contenu qui convainc et convertit",public:"Entrepreneurs et PME",benefice:"Textes professionnels qui vendent",prix:getPrix(25000,'article')},
+
+    // Commerce
+    {nom:"Revente de produits importés",score:86,secteurs:["Commerce / Revente"],mots:["commerce","vente","produit","importation","achat","revente","business","marché","boutique","client"],description:"Tu sources des produits en gros et les revends localement avec marge.",pourquoi:"Le commerce est le secteur le plus accessible en "+pays+" avec des revenus rapides.",tags:["Commerce","Cash rapide","Scalable"],offre:"Je vends des produits de qualité à prix accessible",public:"Particuliers et revendeurs",benefice:"Accès à des produits à bon prix",prix:getPrix(20000,'produit')},
+    {nom:"Dropshipping local via WhatsApp",score:80,secteurs:["Commerce / Revente"],mots:["vente","commerce","whatsapp","commande","livraison","produit","client","business","téléphone","réseau"],description:"Tu prends des commandes sur WhatsApp et livres via fournisseurs sans stock.",pourquoi:"Zéro capital requis pour commencer. Idéal avec peu de budget.",tags:["Sans stock","WhatsApp","Simple"],offre:"Je livre des produits à domicile rapidement",public:"Ménages et familles",benefice:"Achat facile sans se déplacer",prix:getPrix(5000,'commande')},
+    {nom:"Friperie et vêtements de seconde main",score:77,secteurs:["Commerce / Revente"],mots:["vêtement","mode","friperie","habit","tissu","couture","style","fashion","textile","boutique"],description:"Tu achètes et revends des vêtements de qualité à prix abordable.",pourquoi:"Fort marché en "+pays+". Clientèle large et fidèle.",tags:["Mode","Local","Récurrent"],offre:"Je vends des vêtements de qualité à petit prix",public:"Familles et jeunes",benefice:"S'habiller bien sans se ruiner",prix:getPrix(3000,'pièce')},
+
+    // Alimentation
+    {nom:"Vente de repas faits maison",score:90,secteurs:["Alimentation / Cuisine"],mots:["cuisine","cuisinier","repas","manger","nourriture","alimentation","recette","plat","restaurant","chef"],description:"Tu prépares des repas locaux et les livres aux salariés et familles.",pourquoi:"Les salariés cherchent des repas sains et abordables en "+pays+".",tags:["Alimentaire","Récurrent","Local"],offre:"Je prépare des repas faits maison livrés chez vous",public:"Salariés et familles du quartier",benefice:"Manger bien sans cuisiner tous les jours",prix:getPrix(3000,'repas')},
+    {nom:"Pâtisserie et gâteaux sur commande",score:83,secteurs:["Alimentation / Cuisine"],mots:["gâteau","pâtisserie","boulangerie","sucre","cuisine","cuire","four","fête","événement","célébration"],description:"Tu prépares des gâteaux et pâtisseries pour événements et particuliers.",pourquoi:"Les fêtes et cérémonies sont fréquentes. Demande constante.",tags:["Événementiel","Créatif","Récurrent"],offre:"Je crée des pâtisseries personnalisées pour vos fêtes",public:"Familles et organisateurs d'événements",benefice:"Gâteaux uniques sans effort",prix:getPrix(15000,'commande')},
+    {nom:"Vente de jus naturels et smoothies",score:78,secteurs:["Alimentation / Cuisine"],mots:["santé","fruit","jus","smoothie","naturel","bio","boisson","végétal","sain","diététique"],description:"Tu prépares et vends des jus frais, smoothies et boissons naturelles.",pourquoi:"La tendance santé est forte. Peu de capital requis.",tags:["Santé","Simple","Local"],offre:"Je vends des jus naturels sans conservateurs",public:"Particuliers soucieux de leur santé",benefice:"Boissons saines et fraîches",prix:getPrix(1500,'bouteille')},
+    {nom:"Traiteur pour événements",score:81,secteurs:["Alimentation / Cuisine"],mots:["cuisine","événement","mariage","cérémonie","fête","traiteur","banquet","buffet","repas","convives"],description:"Tu prépares et gères les repas pour mariages, conférences et réceptions.",pourquoi:"Les cérémonies sont nombreuses en "+pays+". Revenus élevés par événement.",tags:["Événementiel","Premium","Ponctuel"],offre:"Je gère la restauration complète de vos événements",public:"Organisateurs de mariages et entreprises",benefice:"Repas de qualité sans stress logistique",prix:getPrix(150000,'événement')},
+
+    // Beauté
+    {nom:"Coiffure et soins à domicile",score:91,secteurs:["Beauté / Bien-être"],mots:["coiffure","cheveux","beauté","tresse","soin","salon","esthétique","maquillage","beauté","femme"],description:"Tu te déplaces chez les clients pour coiffure, tresses et soins capillaires.",pourquoi:"Service très demandé. Fidélisation facile. Peu de matériel.",tags:["Beauté","Domicile","Récurrent"],offre:"Je me déplace pour vous coiffer à domicile",public:"Femmes et familles",benefice:"Beauté soignée sans se déplacer",prix:getPrix(10000,'séance')},
+    {nom:"Massage et bien-être à domicile",score:82,secteurs:["Beauté / Bien-être"],mots:["massage","détente","relaxation","bien-être","santé","corps","stress","thérapie","soin","spa"],description:"Tu proposes des massages relaxants et soins du corps à domicile.",pourquoi:"Le stress est élevé. La demande de bien-être explose en milieu urbain.",tags:["Bien-être","Premium","Fidélisation"],offre:"Je propose des séances de relaxation à domicile",public:"Professionnels stressés et familles",benefice:"Relaxation profonde sans sortir",prix:getPrix(20000,'séance')},
+    {nom:"Vente de cosmétiques naturels artisanaux",score:79,secteurs:["Beauté / Bien-être"],mots:["cosmétique","naturel","savon","crème","soin","beauté","peau","bio","huile","végétal"],description:"Tu crées ou revends des savons, crèmes et soins à base de produits naturels.",pourquoi:"Tendance naturel forte. Marges intéressantes, production simple.",tags:["Naturel","Artisanat","Tendance"],offre:"Je vends des cosmétiques naturels faits avec soin",public:"Femmes soucieuses de leur peau",benefice:"Prendre soin de sa peau naturellement",prix:getPrix(5000,'produit')},
+
+    // Formation
+    {nom:"Coaching en développement personnel",score:87,secteurs:["Formation / Coaching"],mots:["coach","accompagner","motiver","aider","conseiller","mentor","guider","former","développement","personnel"],description:"Tu accompagnes des particuliers pour améliorer leur confiance et leur mindset.",pourquoi:"Ta capacité à "+comp+" se valorise parfaitement dans le coaching.",tags:["Impact","Expertise","Scalable"],offre:"J'accompagne les gens vers leur meilleure version",public:"Salariés et entrepreneurs",benefice:"Clarté et confiance pour passer à l'action",prix:getPrix(25000,'séance')},
+    {nom:"Formation en ligne dans ton domaine",score:83,secteurs:["Formation / Coaching"],mots:["enseigner","former","expliquer","pédagogie","cours","leçon","apprentissage","formation","savoir","transmettre"],description:"Tu crées et vends des formations vidéo sur ton expertise via WhatsApp ou plateformes.",pourquoi:"Une formation vendue 1000 fois sans effort supplémentaire.",tags:["Scalable","Revenu passif","Expertise"],offre:"Je partage mon expertise en formation en ligne",public:"Professionnels qui veulent progresser",benefice:"Monter en compétences depuis chez soi",prix:getPrix(15000,'formation')},
+    {nom:"Cours particuliers et soutien scolaire",score:76,secteurs:["Formation / Coaching"],mots:["école","étude","élève","maths","science","cours","enseigner","apprendre","student","éducation"],description:"Tu donnes des cours aux élèves en difficulté dans ta matière.",pourquoi:"Besoin permanent partout en Afrique. Forte demande des parents.",tags:["Éducation","Récurrent","Simple"],offre:"J'aide les élèves à progresser et réussir",public:"Élèves du primaire au lycée",benefice:"Meilleures notes et confiance en soi",prix:getPrix(8000,'heure')},
+
+    // Artisanat
+    {nom:"Couture et création de vêtements sur mesure",score:86,secteurs:["Artisanat / Création"],mots:["couture","tissu","vêtement","mode","coudre","machine","tisser","habit","créatif","textile"],description:"Tu crées des tenues personnalisées et fais des retouches sur mesure.",pourquoi:"La mode africaine est en plein essor. Clients fidèles et bouche-à-oreille.",tags:["Artisanat","Créatif","Sur mesure"],offre:"Je crée des tenues uniques qui te ressemblent",public:"Femmes et familles stylées",benefice:"Vêtements parfaitement ajustés à ta morphologie",prix:getPrix(20000,'tenue')},
+    {nom:"Création de bijoux et accessoires artisanaux",score:78,secteurs:["Artisanat / Création"],mots:["bijou","accessoire","création","artisan","main","perle","collier","bracelet","art","décoration"],description:"Tu crées des bijoux, sacs et accessoires faits main.",pourquoi:"Marché de l'artisanat africain en forte croissance.",tags:["Artisanat","Créatif","Export possible"],offre:"Je crée des bijoux africains authentiques et uniques",public:"Femmes et passionnés de mode",benefice:"Porter des pièces uniques qui racontent une histoire",prix:getPrix(8000,'pièce')},
+    {nom:"Photographie événementielle",score:80,secteurs:["Artisanat / Création"],mots:["photo","photographie","image","caméra","événement","mariage","portrait","studio","appareil","visuel"],description:"Tu photographies mariages, baptêmes et événements professionnels.",pourquoi:"Chaque cérémonie a besoin d'un photographe. Revenus élevés par événement.",tags:["Créatif","Événementiel","Premium"],offre:"Je capture vos plus beaux moments en photo",public:"Familles et organisateurs d'événements",benefice:"Souvenirs inoubliables professionnellement capturés",prix:getPrix(50000,'événement')},
+
+    // Transport
+    {nom:"Service de livraison express locale",score:88,secteurs:["Transport / Livraison"],mots:["livraison","transport","moto","véhicule","conduire","déplacer","colis","course","rapide","logistique"],description:"Tu livres rapidement colis, repas et courses pour commerces et particuliers.",pourquoi:"La demande de livraison explose dans toutes les villes d'Afrique.",tags:["Local","Cash rapide","Fort besoin"],offre:"Je livre vos colis et courses rapidement",public:"Commerces, restaurants et particuliers",benefice:"Livraison fiable en moins de 2h",prix:getPrix(2000,'livraison')},
+    {nom:"Transport de personnes VTC",score:81,secteurs:["Transport / Livraison"],mots:["voiture","conduire","transport","véhicule","passager","chauffeur","taxi","route","déplacement","moto"],description:"Tu transportes des personnes de façon sécurisée et confortable.",pourquoi:"Alternative aux taxis classiques. Forte demande des classes moyennes.",tags:["Transport","Récurrent","Simple"],offre:"Je transporte mes passagers en sécurité",public:"Professionnels et familles",benefice:"Transport fiable et ponctuel",prix:getPrix(5000,'trajet')},
+
+    // Agriculture
+    {nom:"Maraîchage et vente de légumes frais",score:85,secteurs:["Agriculture"],mots:["agriculture","légume","plante","jardin","terre","cultiver","ferme","récolte","sol","végétal"],description:"Tu cultives ou sources des légumes frais et les vends directement.",pourquoi:"Besoin alimentaire permanent. Marges bonnes en vente directe.",tags:["Agriculture","Récurrent","Essentiel"],offre:"Je fournis des légumes frais cultivés localement",public:"Ménages et restaurants",benefice:"Légumes frais et sains à prix juste",prix:getPrix(500,'kg')},
+    {nom:"Élevage de poulets de chair",score:79,secteurs:["Agriculture"],mots:["élevage","poulet","animal","ferme","agriculture","viande","aviculture","basse-cour","volaille","production"],description:"Tu élèves des poulets et les vends aux ménages et restaurants.",pourquoi:"Demande en protéines animales forte et croissante en Afrique.",tags:["Agriculture","Cycle court","Récurrent"],offre:"Je fournis des poulets frais élevés localement",public:"Ménages et restaurateurs",benefice:"Viande fraîche et locale de qualité",prix:getPrix(8000,'poulet')},
+
+    // Autre / Général
+    {nom:"Service de nettoyage professionnel",score:83,secteurs:["Autre"],mots:["nettoyage","ménage","propre","entretien","hygiène","maison","bureau","commerce","balayer","ranger"],description:"Tu proposes des services de nettoyage pour bureaux, maisons et commerces.",pourquoi:"Besoin permanent. Peu de capital requis. Fidélisation facile.",tags:["Service","Récurrent","Local"],offre:"Je nettoie vos espaces pour qu'ils soient impeccables",public:"Bureaux, commerces et particuliers",benefice:"Espace propre sans effort",prix:getPrix(15000,'intervention')},
+    {nom:"Réparation de téléphones et électronique",score:84,secteurs:["Autre"],mots:["téléphone","réparation","électronique","technique","smartphone","tablette","écran","batterie","informatique","technicien"],description:"Tu répares smartphones, tablettes et appareils électroniques cassés.",pourquoi:"Tous ont un téléphone. Demande constante partout.",tags:["Technique","Local","Récurrent"],offre:"Je répare vos appareils rapidement et à prix juste",public:"Particuliers et professionnels",benefice:"Appareil réparé sans acheter neuf",prix:getPrix(5000,'réparation')},
+    {nom:"Garderie et garde d'enfants",score:77,secteurs:["Autre"],mots:["enfant","garde","parent","bébé","maternel","crèche","garderie","soin","famille","éducation"],description:"Tu gardes des enfants chez toi ou chez les parents pendant qu'ils travaillent.",pourquoi:"Les deux parents travaillent. Fort besoin de garde fiable en "+pays+".",tags:["Famille","Récurrent","Confiance"],offre:"Je garde vos enfants avec soin et bienveillance",public:"Parents qui travaillent",benefice:"Enfants en sécurité pendant le travail",prix:getPrix(30000,'mois')},
+  ];
+
+  // Score each idea based on competence and besoin keywords
+  function scoreIdee(idee) {
+    let score = idee.score;
+    // Sector match bonus
+    if(idee.secteurs.includes(secteur)) score += 15;
+    // Keyword match bonus
+    idee.mots.forEach(mot => {
+      if(comp.includes(mot)) score += 8;
+      if(besoin.includes(mot)) score += 6;
+    });
+    return score;
   }
 
-  return {
-    analyse: `Ton profil en ${pays} avec ta compétence en "${form.competence}" dans le secteur "${secteur}" offre de réelles opportunités. Avec ${temps}/jour et un budget de ${budget}, voici les 3 idées les plus adaptées à ta situation et au marché local.`,
-    idees: selected
-  };
+  // Filter excluded, score and sort
+  const scored = TOUTES_IDEES
+    .filter(i => !excluded.includes(i.nom))
+    .map(i => ({...i, finalScore: scoreIdee(i)}))
+    .sort((a,b) => b.finalScore - a.finalScore);
+
+  const selected = scored.slice(0,3);
+
+  // Build personalised analyse text
+  const topSecteur = selected[0]?.secteurs[0] || secteur;
+  const analyse = `Après analyse de ton profil en ${pays} — ta compétence "${form.competence}", ton besoin observé et ton secteur "${secteur}" — voici les 3 idées les plus adaptées à ta situation. Ces recommandations tiennent compte de tes forces naturelles et des opportunités du marché local.`;
+
+  return { analyse, idees: selected };
 }
+
 
 function simulerActions(idee) {
   const nom = idee.nom || 'ton activité';
