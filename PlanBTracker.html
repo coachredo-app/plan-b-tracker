@@ -1,0 +1,1587 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plan B Tracker — Coach Redouane</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--gold:#C9A84C;--dark:#0D0F1A;--darker:#080A12;--card:#13162A;--border:#1E2240;--text:#E8E4D9;--muted:#6B7094;--success:#2ECC71;--danger:#E74C3C}
+body{background:var(--darker);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh}
+.app{min-height:100vh;background:var(--darker)}
+
+/* ONBOARDING */
+.onb{position:fixed;inset:0;background:var(--darker);display:flex;align-items:center;justify-content:center;z-index:999;background-image:radial-gradient(ellipse at 30% 20%,rgba(201,168,76,.08),transparent 60%)}
+.onb-card{background:var(--card);border:1px solid rgba(201,168,76,.2);border-radius:20px;padding:40px;width:440px;max-width:90vw}
+.onb-logo{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:var(--gold);text-align:center;margin-bottom:4px}
+.onb-sub{font-size:11px;color:var(--muted);text-align:center;margin-bottom:22px;letter-spacing:1px;text-transform:uppercase}
+.progress-bar{height:4px;background:var(--border);border-radius:2px;margin-bottom:24px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--gold),#F0D080);border-radius:2px;transition:width .4s}
+.onb-title{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--text);text-align:center;margin-bottom:6px}
+.onb-desc{font-size:13px;color:var(--muted);text-align:center;margin-bottom:20px}
+.field-label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px;font-weight:600;margin-top:14px}
+.field-label .req{color:var(--danger)}
+.fi,.fs{width:100%;background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color .2s}
+.fi:focus,.fs:focus{border-color:rgba(201,168,76,.4)}
+.fs option{background:var(--card)}
+.cards-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
+.choice-card{padding:12px 14px;background:var(--darker);border:1px solid var(--border);border-radius:10px;cursor:pointer;font-size:13px;color:var(--text);text-align:center;transition:all .2s}
+.choice-card:hover{border-color:rgba(201,168,76,.3)}
+.choice-card.selected{background:rgba(201,168,76,.12);border-color:var(--gold);color:var(--gold);font-weight:600}
+.btn-primary{width:100%;background:linear-gradient(135deg,var(--gold),#A8842A);color:var(--dark);border:none;padding:13px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;margin-top:18px}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-back{width:100%;background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;font-family:'DM Sans',sans-serif;margin-top:10px}
+
+/* SIDEBAR */
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:260px;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100}
+.slogo{padding:28px 24px 24px;border-bottom:1px solid var(--border)}
+.slogo h1{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--gold)}
+.slogo p{font-size:11px;color:var(--muted);margin-top:4px;letter-spacing:1px;text-transform:uppercase}
+.snav{flex:1;padding:20px 12px;display:flex;flex-direction:column;gap:4px;overflow-y:auto}
+.snav-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:12px 12px 6px;font-weight:600}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:8px;cursor:pointer;transition:all .2s;font-size:14px;color:var(--muted);border:1px solid transparent}
+.nav-item:hover{background:rgba(201,168,76,.06);color:var(--text)}
+.nav-item.active{background:rgba(201,168,76,.12);color:var(--gold);border-color:rgba(201,168,76,.2);font-weight:500}
+.nav-badge{margin-left:auto;background:var(--gold);color:var(--dark);font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px}
+.suser{padding:16px 24px;border-top:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer}
+.suser:hover{background:rgba(201,168,76,.04)}
+.avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#8B6914);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;color:var(--dark);flex-shrink:0}
+.suser-name{font-size:13px;font-weight:500;color:var(--text)}
+.suser-sub{font-size:11px;color:var(--muted)}
+
+/* MAIN */
+.main{margin-left:260px;min-height:100vh;padding:32px 40px}
+.page-header{margin-bottom:28px}
+.page-header h2{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:700;color:var(--text)}
+.page-header p{font-size:14px;color:var(--muted);margin-top:6px}
+.page{display:none}.page.active{display:block}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px}
+.card-title{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--text);margin-bottom:4px}
+.card-sub{font-size:12px;color:var(--muted);margin-bottom:20px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
+.g3{display:grid;grid-template-columns:2fr 1fr;gap:20px;margin-bottom:20px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.g3c{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+
+/* STAT CARDS */
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold),transparent)}
+.stat-label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px;font-weight:600}
+.stat-value{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:700;color:var(--gold);line-height:1}
+.stat-sub{font-size:12px;color:var(--muted);margin-top:6px}
+.stat-bar-wrap{margin-top:12px;height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+.stat-bar{height:100%;background:linear-gradient(90deg,var(--gold),#F0D080);border-radius:2px}
+
+/* QUOTE */
+.quote-box{background:linear-gradient(135deg,rgba(201,168,76,.08),rgba(201,168,76,.03));border:1px solid rgba(201,168,76,.2);border-radius:10px;padding:16px 20px;margin-bottom:20px}
+.quote-text{font-family:'Cormorant Garamond',serif;font-size:16px;font-style:italic;color:var(--text);line-height:1.5}
+.quote-author{font-size:11px;color:var(--gold);margin-top:6px;font-weight:600}
+
+/* SCORE RING */
+.score-ring{display:flex;align-items:center;justify-content:center;flex-direction:column;padding:16px 0}
+.score-circle{width:88px;height:88px;border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative}
+.score-inner{width:66px;height:66px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;flex-direction:column;position:absolute}
+.score-num{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;color:var(--gold);line-height:1}
+.score-lbl{font-size:10px;color:var(--muted)}
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:12px}
+.day{aspect-ratio:1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;border:1px solid var(--border);background:var(--darker);color:var(--muted)}
+.day.done{background:rgba(46,204,113,.15);border-color:rgba(46,204,113,.4);color:var(--success)}
+.day.today{border-color:var(--gold);color:var(--text);font-weight:700}
+
+/* TABS */
+.tabs{display:flex;gap:4px;background:var(--darker);border-radius:10px;padding:4px;margin-bottom:24px;border:1px solid var(--border)}
+.tab-btn{flex:1;padding:8px 12px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;text-align:center;color:var(--muted);transition:all .2s;border:none;background:transparent;font-family:'DM Sans',sans-serif}
+.tab-btn.active{background:var(--card);color:var(--gold);border:1px solid rgba(201,168,76,.2)}
+.tab-content{display:none}.tab-content.active{display:block}
+
+/* ACTIONS */
+.action-item{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--darker);border:1px solid var(--border);border-radius:8px;margin-bottom:8px}
+.action-check{width:20px;height:20px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:all .2s;font-size:11px}
+.action-check.checked{background:var(--gold);border-color:var(--gold);color:var(--dark)}
+.action-text{flex:1;font-size:13px;color:var(--text);border:none;background:transparent;font-family:'DM Sans',sans-serif;outline:none}
+.action-text.done{color:var(--muted);text-decoration:line-through}
+.action-week{background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:11px;padding:3px 6px;font-family:'DM Sans',sans-serif;outline:none}
+.action-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:0 4px;line-height:1}
+.action-del:hover{color:var(--danger)}
+.add-action-btn{width:100%;padding:10px;background:transparent;border:1px dashed var(--border);border-radius:8px;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;margin-top:8px}
+.add-action-btn:hover{border-color:rgba(201,168,76,.3);color:var(--gold)}
+
+/* PHASES */
+.phase-card{background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;align-items:center;gap:16px;margin-bottom:10px;cursor:pointer;transition:all .2s}
+.phase-card:hover{border-color:rgba(201,168,76,.2)}
+.phase-card.active{border-color:var(--gold);background:rgba(201,168,76,.05)}
+.phase-num{width:36px;height:36px;border-radius:50%;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;color:var(--gold);flex-shrink:0}
+.phase-num.done{background:rgba(46,204,113,.15);border-color:rgba(46,204,113,.4);color:var(--success)}
+.phase-info{flex:1}
+.phase-name{font-size:14px;font-weight:500;color:var(--text)}
+.phase-desc{font-size:12px;color:var(--muted);margin-top:2px}
+.phase-count{font-size:11px;color:var(--muted);margin-top:3px}
+.badge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600}
+.badge-done{background:rgba(46,204,113,.15);color:var(--success)}
+.badge-active{background:rgba(201,168,76,.15);color:var(--gold)}
+.badge-pending{background:rgba(107,112,148,.15);color:var(--muted)}
+
+/* IDEA CARDS */
+.idea-card{background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:10px;display:flex;align-items:flex-start;gap:14px;transition:all .2s}
+.idea-card:hover{border-color:rgba(201,168,76,.3)}
+.idea-card.selected{border-color:var(--gold);background:rgba(201,168,76,.05)}
+.idea-score{min-width:44px;height:44px;border-radius:8px;background:rgba(201,168,76,.15);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:var(--gold);flex-shrink:0}
+.tag{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600;background:rgba(201,168,76,.1);color:var(--gold);display:inline-block;margin:2px}
+
+/* REVENUS */
+.revenu-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--darker);border-radius:8px;border:1px solid var(--border);margin-bottom:8px}
+
+/* BUTTONS */
+.btn-gold{background:linear-gradient(135deg,var(--gold),#A8842A);color:var(--dark);border:none;padding:12px 24px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;width:100%;margin-top:16px}
+.btn-gold:disabled{opacity:.5;cursor:not-allowed}
+.btn-outline{background:transparent;color:var(--gold);border:1px solid rgba(201,168,76,.4);padding:8px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer}
+.btn-outline:hover{background:rgba(201,168,76,.08)}
+.btn-danger{background:transparent;color:var(--danger);border:1px solid rgba(231,76,60,.3);padding:8px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:1000;display:none}
+.modal-overlay.open{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;width:440px;max-width:90vw;max-height:90vh;overflow-y:auto}
+.modal h3{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--text);margin-bottom:8px}
+.modal p{font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.6}
+.modal-btns{display:flex;gap:12px;margin-top:18px}
+
+/* WARN / ERR */
+.warn{background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.2);border-radius:10px;padding:14px 18px;font-size:13px;color:var(--gold);margin-bottom:20px}
+.err-msg{color:var(--danger);font-size:12px;margin-top:4px}
+.field-err{border-color:rgba(231,76,60,.6) !important}
+
+/* SPINNER */
+.spinner-wrap{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.2);border-radius:8px;margin-bottom:10px}
+.spinner{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ANALYSIS */
+.ai-badge{background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);padding:3px 10px;border-radius:20px;font-size:11px;color:var(--gold);font-weight:600;display:inline-block;margin-bottom:10px}
+.ai-result-box{background:var(--darker);border:1px solid rgba(201,168,76,.2);border-radius:10px;padding:16px;margin-bottom:16px}
+.ai-text{font-size:13px;color:var(--text);line-height:1.8}
+
+/* CHAT */
+.chat-btn{position:fixed;bottom:28px;right:28px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#A8842A);border:none;cursor:pointer;font-size:22px;box-shadow:0 4px 20px rgba(201,168,76,.4);z-index:200}
+.chat-panel{position:fixed;bottom:90px;right:28px;width:340px;height:480px;background:var(--card);border:1px solid rgba(201,168,76,.2);border-radius:16px;display:none;flex-direction:column;z-index:200;box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:hidden}
+.chat-panel.open{display:flex}
+.chat-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--darker)}
+.chat-avatar{width:30px;height:30px;border-radius:50%;background:rgba(201,168,76,.15);display:flex;align-items:center;justify-content:center;font-size:14px}
+.chat-body{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.chat-msg{padding:10px 13px;border-radius:10px;font-size:13px;line-height:1.7;max-width:88%}
+.chat-msg.bot{background:var(--darker);border:1px solid var(--border);color:var(--text);align-self:flex-start}
+.chat-msg.user{background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.2);color:var(--text);align-self:flex-end}
+.chat-input-row{padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:8px}
+.chat-input{flex:1;background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none}
+.chat-input:focus{border-color:rgba(201,168,76,.4)}
+.chat-send{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--gold),#A8842A);border:none;cursor:pointer;font-size:14px;flex-shrink:0}
+.chat-send:disabled{opacity:.4}
+.dots span{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--muted);margin:0 2px;animation:dot 1.2s infinite}
+.dots span:nth-child(2){animation-delay:.2s}
+.dots span:nth-child(3){animation-delay:.4s}
+@keyframes dot{0%,80%,100%{transform:scale(.6);opacity:.4}40%{transform:scale(1);opacity:1}}
+
+/* CTX CHAT */
+.ctx-chat{background:var(--darker);border:1px solid rgba(201,168,76,.15);border-radius:12px;padding:16px;margin-top:20px}
+.ctx-header{display:flex;align-items:center;gap:10px;cursor:pointer}
+.ctx-body{display:none;margin-top:10px}
+.ctx-body.open{display:block}
+.ctx-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.ctx-chip{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:11px;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif}
+.ctx-chip:hover{border-color:rgba(201,168,76,.3);color:var(--gold)}
+.ctx-messages{max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.ctx-msg{padding:8px 11px;border-radius:8px;font-size:12px;line-height:1.7}
+.ctx-msg.bot{background:var(--card);border:1px solid var(--border);color:var(--text)}
+.ctx-msg.user{background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.15);color:var(--text);text-align:right}
+.ctx-input-row{display:flex;gap:8px}
+.ctx-input{flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:7px 11px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;outline:none}
+.ctx-input:focus{border-color:rgba(201,168,76,.4)}
+.ctx-send{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--gold),#A8842A);border:none;cursor:pointer;font-size:13px;flex-shrink:0}
+
+/* PROFILE */
+.profile-modal{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;z-index:500}
+.profile-modal.open{display:flex}
+.profile-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:32px;width:460px;max-width:90vw;max-height:88vh;overflow-y:auto}
+.profile-ava{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#8B6914);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:var(--dark);margin:0 auto 12px}
+.profile-inf-row{background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:13px;margin-bottom:8px;display:flex;align-items:center;gap:12px}
+.profile-inf-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.profile-inf-value{font-size:14px;color:var(--text);font-weight:500;margin-top:2px}
+
+/* SUCCESS BANNER */
+.success-banner{background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.3);border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:12px;margin-bottom:20px}
+
+/* ARCHIVE */
+.archive-item{background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:10px}
+
+/* FAQ ITEMS */
+.faq-item{padding:10px 13px;background:var(--darker);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:13px;color:var(--text);display:flex;justify-content:space-between}
+.faq-item:hover{border-color:rgba(201,168,76,.2)}
+.faq-answer{background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;margin-top:8px}
+
+/* COMING SOON */
+.coming-soon{text-align:center;padding:60px}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.page.active{animation:fadeIn .3s ease}
+</style>
+</head>
+<body>
+
+<!-- ONBOARDING -->
+<div id="onboarding" class="onb">
+  <div class="onb-card">
+    <div class="onb-logo">Plan B Tracker</div>
+    <div class="onb-sub">by Coach Redouane</div>
+    <div class="progress-bar"><div class="progress-fill" id="onb-progress" style="width:25%"></div></div>
+    <div class="onb-title" id="onb-title">Bienvenue sur Plan B Tracker 👋</div>
+    <div class="onb-desc" id="onb-desc">La méthode de Coach Redouane</div>
+    <div id="onb-content"></div>
+    <button class="btn-primary" id="onb-next" onclick="onbNext()">Continuer →</button>
+    <button class="btn-back" id="onb-back" style="display:none" onclick="onbBack()">← Retour</button>
+  </div>
+</div>
+
+<!-- MAIN APP (hidden until onboarding done) -->
+<div id="main-app" style="display:none">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="slogo"><h1>Plan B Tracker</h1><p>by Coach Redouane</p></div>
+  <div class="snav">
+    <div class="snav-label">Navigation</div>
+    <div class="nav-item active" onclick="goTo('dashboard')"><span>◈</span> Tableau de bord</div>
+    <div class="nav-item" id="nav-idee" onclick="goTo('idee')"><span>💡</span> Trouve ton idée <span class="nav-badge" id="badge-idee" style="display:none">!</span></div>
+    <div class="nav-item" onclick="goTo('plan')"><span>📅</span> Plan 90 jours</div>
+    <div class="nav-item" onclick="goTo('archive')"><span>📁</span> Archive idées <span class="nav-badge" id="badge-archive" style="display:none">0</span></div>
+    <div class="nav-item" onclick="goTo('revenus')"><span>💰</span> Revenus & Dépenses</div>
+    <div class="nav-item" onclick="goTo('visibilite')"><span>📣</span> Visibilité</div>
+    <div class="nav-item" onclick="goTo('motivation')"><span>🔥</span> Motivation</div>
+  </div>
+  <div class="suser" onclick="openProfile()">
+    <div class="avatar" id="user-avatar">CR</div>
+    <div>
+      <div class="suser-name" id="user-name-display">Coach Redouane</div>
+      <div class="suser-sub" id="user-idea-display">Aucune idée active</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+  <div class="page-header">
+    <h2 id="page-title">Bonjour 👋</h2>
+    <p id="page-sub">Chargement...</p>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div class="quote-box">
+      <div class="quote-text">"L'Afrique grandit quand ses enfants se transforment de l'intérieur."</div>
+      <div class="quote-author">— Coach Redouane</div>
+    </div>
+    <div id="idea-banner" style="display:none" class="success-banner">
+      <span style="font-size:20px">🎯</span>
+      <span style="font-size:13px;color:var(--success);font-weight:500">Idée active : <strong id="banner-idea-name"></strong></span>
+    </div>
+    <div class="g4">
+      <div class="stat-card"><div class="stat-label">Jours écoulés</div><div class="stat-value" id="dash-days">1</div><div class="stat-sub">sur 90 jours</div><div class="stat-bar-wrap"><div class="stat-bar" id="dash-days-bar" style="width:1%"></div></div></div>
+      <div class="stat-card"><div class="stat-label">Actions complétées</div><div class="stat-value" id="dash-actions">0/8</div><div class="stat-sub">total</div><div class="stat-bar-wrap"><div class="stat-bar" id="dash-actions-bar" style="width:0%"></div></div></div>
+      <div class="stat-card"><div class="stat-label">Revenus ce mois</div><div class="stat-value" id="dash-revenus">0</div><div class="stat-sub">FCFA générés</div><div class="stat-bar-wrap"><div class="stat-bar" style="width:38%"></div></div></div>
+      <div class="stat-card"><div class="stat-label">Score discipline</div><div class="stat-value" id="dash-score">0%</div><div class="stat-sub">en progression</div><div class="stat-bar-wrap"><div class="stat-bar" id="dash-score-bar" style="width:0%"></div></div></div>
+    </div>
+    <div class="g3">
+      <div class="card">
+        <div class="card-title">Actions cette semaine</div>
+        <div class="card-sub">Clique pour cocher tes avancées</div>
+        <div id="dash-action-list"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="card">
+          <div class="score-ring">
+            <div class="score-circle" id="score-circle" style="background:conic-gradient(var(--gold) 0deg 0deg,var(--border) 0deg 360deg)">
+              <div class="score-inner">
+                <div class="score-num" id="score-num">0</div>
+                <div class="score-lbl">/ 100</div>
+              </div>
+            </div>
+            <div style="font-size:12px;color:var(--muted);margin-top:8px">Score Discipline</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="font-size:15px;margin-bottom:12px">Activité 7 jours</div>
+          <div class="week-grid">
+            <div class="day done">L</div><div class="day done">M</div><div class="day done">M</div><div class="day done">J</div>
+            <div class="day today">V</div><div class="day">S</div><div class="day">D</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TROUVE TON IDÉE -->
+  <div class="page" id="page-idee">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('idee',0,this)">Mon profil</button>
+      <button class="tab-btn" onclick="switchTab('idee',1,this)">Idées recommandées</button>
+      <button class="tab-btn" onclick="switchTab('idee',2,this)">Idée active</button>
+    </div>
+    <!-- Tab 0: Profil -->
+    <div class="tab-content active" id="idee-tab-0">
+      <div class="g2">
+        <div class="card">
+          <div class="card-title">Analyse IA de ton profil</div>
+          <div class="card-sub">Réponds aux questions — l'IA recommande tes meilleures idées</div>
+          <label class="field-label">Ton pays</label>
+          <select class="fs" id="f-pays"></select>
+          <label class="field-label">Ta compétence naturelle <span class="req">*</span></label>
+          <input class="fi" id="f-comp" placeholder="Ex: j'explique bien, je vends facilement...">
+          <div class="err-msg" id="err-comp" style="display:none">⚠️ Ce champ est obligatoire.</div>
+          <label class="field-label">Secteur préféré</label>
+          <select class="fs" id="f-secteur">
+            <option>Services digitaux</option><option>Commerce / Revente</option><option>Alimentation / Cuisine</option>
+            <option>Beauté / Bien-être</option><option>Formation / Coaching</option><option>Artisanat / Création</option>
+            <option>Transport / Livraison</option><option>Agriculture</option><option>Autre</option>
+          </select>
+          <label class="field-label">Temps disponible par jour</label>
+          <select class="fs" id="f-temps"><option>30 min</option><option>1h</option><option>2h</option><option>3h+</option></select>
+          <label class="field-label" id="budget-label">Budget de départ (FCFA)</label>
+          <select class="fs" id="f-budget"><option>0 - 50 000</option><option>50 000 - 100 000</option><option>100 000 - 300 000</option><option>300 000+</option></select>
+          <label class="field-label">Un besoin que tu observes <span class="req">*</span></label>
+          <textarea class="fi fta" id="f-besoin" placeholder="Décris un problème concret dans ton entourage..." style="resize:vertical;min-height:80px"></textarea>
+          <div class="err-msg" id="err-besoin" style="display:none">⚠️ Ce champ est obligatoire.</div>
+          <div class="err-msg" id="err-api" style="display:none;margin-top:10px"></div>
+          <button class="btn-gold" id="btn-analyse" onclick="analyserProfil()">Analyser mon profil avec l'IA →</button>
+          <div id="analyse-loading" style="display:none" class="spinner-wrap" style="margin-top:10px">
+            <div class="spinner"></div><span style="font-size:13px;color:var(--gold)">Recherche en cours...</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Les 3 angles de Coach Redouane</div>
+          <div class="card-sub">La méthode du chapitre 2</div>
+          <div style="padding:14px;background:var(--darker);border-radius:10px;border:1px solid var(--border);margin-bottom:10px">
+            <div style="font-size:20px;margin-bottom:6px">💡</div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">Ce que tu fais naturellement bien</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6">Tes talents invisibles sont précieux pour les autres. Observe ce qui te semble simple mais difficile pour ton entourage.</div>
+          </div>
+          <div style="padding:14px;background:var(--darker);border-radius:10px;border:1px solid var(--border);margin-bottom:10px">
+            <div style="font-size:20px;margin-bottom:6px">👁</div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">Les besoins autour de toi</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6">Quels problèmes reviennent souvent ? La demande est ton carburant. Écoute avant de créer.</div>
+          </div>
+          <div style="padding:14px;background:var(--darker);border-radius:10px;border:1px solid var(--border)">
+            <div style="font-size:20px;margin-bottom:6px">📊</div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">Ce qui se vend déjà</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6">Observe ce qui marche dans ton pays. Tu t'adaptes, tu n'inventes pas.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Tab 1: Résultats IA -->
+    <div class="tab-content" id="idee-tab-1">
+      <div id="idee-results"><div style="text-align:center;padding:60px;color:var(--muted)"><div style="font-size:40px;margin-bottom:14px">🤖</div><div style="font-family:'Cormorant Garamond',serif;font-size:20px">Lance l'analyse d'abord</div><button class="btn-outline" style="margin-top:18px" onclick="switchTabById('idee',0)">← Remplir mon profil</button></div></div>
+    </div>
+    <!-- Tab 2: Idée active -->
+    <div class="tab-content" id="idee-tab-2">
+      <div id="active-idea-view"></div>
+    </div>
+    <!-- Context Chat -->
+    <div class="ctx-chat">
+      <div class="ctx-header" onclick="toggleCtx(this)">
+        <div style="width:30px;height:30px;border-radius:50%;background:rgba(201,168,76,.12);display:flex;align-items:center;justify-content:center;font-size:13px">🤖</div>
+        <div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--text)">Affiner mon idée avec l'assistant</div><div style="font-size:11px;color:var(--muted)">Pose tes questions sur le choix de ton idée</div></div>
+        <span style="color:var(--muted)">▸</span>
+      </div>
+      <div class="ctx-body" id="ctx-idee">
+        <div class="ctx-chips">
+          <button class="ctx-chip" onclick="ctxSend(this,'idee','Comment choisir la meilleure idée ?')">Comment choisir la meilleure idée ?</button>
+          <button class="ctx-chip" onclick="ctxSend(this,'idee','Mon idée est-elle réaliste ?')">Mon idée est-elle réaliste ?</button>
+          <button class="ctx-chip" onclick="ctxSend(this,'idee','Comment valider rapidement ?')">Comment valider rapidement ?</button>
+        </div>
+        <div class="ctx-messages" id="ctx-msgs-idee"></div>
+        <div class="ctx-input-row">
+          <input class="ctx-input" id="ctx-inp-idee" placeholder="Écris ta question..." onkeydown="if(event.key==='Enter')ctxSend(null,'idee',null)">
+          <button class="ctx-send" onclick="ctxSend(null,'idee',null)">➤</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLAN 90 JOURS -->
+  <div class="page" id="page-plan">
+    <div id="plan-no-idea" class="warn" style="display:none">⚠️ Aucune idée active. Va dans "Trouve ton idée" pour commencer.</div>
+    <div id="plan-gen-loading" class="spinner-wrap" style="display:none"><div class="spinner"></div><span style="font-size:12px;color:var(--gold)">Génération du plan personnalisé...</span></div>
+    <div class="g2">
+      <div class="card">
+        <div class="card-title">Mes 3 phases</div>
+        <div class="card-sub">Clique sur une phase pour voir ses actions</div>
+        <div id="phases-list"></div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <div class="card-title" id="phase-actions-title" style="margin-bottom:0">Actions — Mois 2</div>
+          <span style="font-size:12px;color:var(--gold);font-weight:600" id="global-pct">0% global</span>
+        </div>
+        <div class="card-sub" id="phase-actions-sub">0/0 complétées</div>
+        <div id="actions-list" style="max-height:340px;overflow-y:auto"></div>
+        <button class="add-action-btn" onclick="addAction()">+ Ajouter une action</button>
+      </div>
+    </div>
+    <!-- Context Chat Plan -->
+    <div class="ctx-chat">
+      <div class="ctx-header" onclick="toggleCtx(this)">
+        <div style="width:30px;height:30px;border-radius:50%;background:rgba(201,168,76,.12);display:flex;align-items:center;justify-content:center;font-size:13px">🤖</div>
+        <div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--text)">Besoin d'aide sur ton plan ?</div><div style="font-size:11px;color:var(--muted)">Décris ton blocage — je t'aide à avancer</div></div>
+        <span style="color:var(--muted)">▸</span>
+      </div>
+      <div class="ctx-body" id="ctx-plan">
+        <div class="ctx-chips">
+          <button class="ctx-chip" onclick="ctxSend(this,'plan','Suggère-moi des actions concrètes')">Suggère-moi des actions</button>
+          <button class="ctx-chip" onclick="ctxSend(this,'plan','Je suis bloqué, que faire ?')">Je suis bloqué</button>
+          <button class="ctx-chip" onclick="ctxSend(this,'plan','Comment passer à la phase suivante ?')">Phase suivante ?</button>
+        </div>
+        <div class="ctx-messages" id="ctx-msgs-plan"></div>
+        <div class="ctx-input-row">
+          <input class="ctx-input" id="ctx-inp-plan" placeholder="Écris ta question..." onkeydown="if(event.key==='Enter')ctxSend(null,'plan',null)">
+          <button class="ctx-send" onclick="ctxSend(null,'plan',null)">➤</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARCHIVE -->
+  <div class="page" id="page-archive">
+    <div class="card">
+      <div class="card-title">Historique de mes idées</div>
+      <div class="card-sub">Toutes tes idées lancées</div>
+      <div id="archive-list"><div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:36px;margin-bottom:10px">📁</div><div style="font-size:14px">Aucune idée archivée pour l'instant</div></div></div>
+    </div>
+  </div>
+
+  <!-- REVENUS -->
+  <div class="page" id="page-revenus">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('revenus',0,this)">Suivi revenus</button>
+      <button class="tab-btn" onclick="switchTab('revenus',1,this)">Ajouter une entrée</button>
+    </div>
+    <div class="tab-content active" id="revenus-tab-0">
+      <div class="g3c">
+        <div class="stat-card"><div class="stat-label">Total revenus</div><div class="stat-value" id="total-revenus" style="font-size:26px">0</div><div class="stat-sub">FCFA</div></div>
+        <div class="stat-card"><div class="stat-label">Total dépenses</div><div class="stat-value" id="total-depenses" style="font-size:26px">0</div><div class="stat-sub">FCFA</div></div>
+        <div class="stat-card"><div class="stat-label">Solde net</div><div class="stat-value" id="solde-net" style="font-size:26px">0</div><div class="stat-sub">FCFA</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Toutes les entrées</div>
+        <div class="card-sub">Revenus et dépenses liés à ton Plan B</div>
+        <div id="revenus-list"></div>
+      </div>
+    </div>
+    <div class="tab-content" id="revenus-tab-1">
+      <div class="card" style="max-width:500px">
+        <div class="card-title">Nouvelle entrée</div>
+        <div class="card-sub">Revenu ou dépense liée à ton Plan B</div>
+        <label class="field-label">Type</label>
+        <select class="fs" id="r-type"><option value="revenu">Revenu</option><option value="depense">Dépense</option></select>
+        <label class="field-label">Description</label>
+        <input class="fi" id="r-label" placeholder="Ex: Vente Plan B Rentable...">
+        <label class="field-label">Montant (FCFA)</label>
+        <input class="fi" id="r-montant" type="number" placeholder="0">
+        <label class="field-label">Date</label>
+        <input class="fi" id="r-date" type="date">
+        <button class="btn-gold" onclick="addRevenu()">Enregistrer →</button>
+      </div>
+    </div>
+    <!-- Context Chat Revenus -->
+    <div class="ctx-chat">
+      <div class="ctx-header" onclick="toggleCtx(this)">
+        <div style="width:30px;height:30px;border-radius:50%;background:rgba(201,168,76,.12);display:flex;align-items:center;justify-content:center;font-size:13px">🤖</div>
+        <div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--text)">Besoin d'aide sur tes finances ?</div><div style="font-size:11px;color:var(--muted)">Pose tes questions sur la gestion de tes revenus</div></div>
+        <span style="color:var(--muted)">▸</span>
+      </div>
+      <div class="ctx-body" id="ctx-revenus">
+        <div class="ctx-chips">
+          <button class="ctx-chip" onclick="ctxSend(this,'revenus','Comment fixer mon prix de vente ?')">Comment fixer mon prix ?</button>
+          <button class="ctx-chip" onclick="ctxSend(this,'revenus','Comment augmenter mes revenus ?')">Augmenter mes revenus</button>
+          <button class="ctx-chip" onclick="ctxSend(this,'revenus','Quand réinvestir dans mon activité ?')">Quand réinvestir ?</button>
+        </div>
+        <div class="ctx-messages" id="ctx-msgs-revenus"></div>
+        <div class="ctx-input-row">
+          <input class="ctx-input" id="ctx-inp-revenus" placeholder="Écris ta question..." onkeydown="if(event.key==='Enter')ctxSend(null,'revenus',null)">
+          <button class="ctx-send" onclick="ctxSend(null,'revenus',null)">➤</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VISIBILITE / MOTIVATION -->
+  <div class="page" id="page-visibilite">
+    <div class="card coming-soon">
+      <div style="font-size:48px;margin-bottom:14px">📣</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--gold);margin-bottom:8px">Visibilité</div>
+      <div style="font-size:14px;color:var(--muted);margin-bottom:18px">WhatsApp · Facebook · Messages de présentation</div>
+      <div style="padding:10px 20px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.2);border-radius:8px;display:inline-block;font-size:13px;color:var(--gold)">Session 3 — Bientôt disponible</div>
+    </div>
+  </div>
+  <div class="page" id="page-motivation">
+    <div class="card coming-soon">
+      <div style="font-size:48px;margin-bottom:14px">🔥</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--gold);margin-bottom:8px">Motivation</div>
+      <div style="font-size:14px;color:var(--muted);margin-bottom:18px">Gestion des peurs · Rituel · Mantra personnel</div>
+      <div style="padding:10px 20px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.2);border-radius:8px;display:inline-block;font-size:13px;color:var(--gold)">Session 3 — Bientôt disponible</div>
+    </div>
+  </div>
+
+</div><!-- end main -->
+
+<!-- FAQ BOT -->
+<button class="chat-btn" onclick="toggleChat()" id="chat-toggle-btn">💬</button>
+<div class="chat-panel" id="chat-panel">
+  <div class="chat-header">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="chat-avatar">💬</div>
+      <div><div style="font-size:13px;font-weight:600;color:var(--text)">Aide & Support</div><div style="font-size:11px;color:var(--muted)">Plan B Tracker</div></div>
+    </div>
+    <button onclick="toggleChat()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px">✕</button>
+  </div>
+  <div class="chat-body" id="chat-body">
+    <div id="faq-home">
+      <div style="font-size:13px;color:var(--text);margin-bottom:14px;line-height:1.6">Bonjour 👋 Comment puis-je t'aider ?</div>
+      <div class="faq-item" onclick="showFaqList()"><span>💡 Questions fréquentes</span><span style="color:var(--muted)">›</span></div>
+      <div class="faq-item" onclick="showBugForm()"><span>🐛 Signaler un bug</span><span style="color:var(--muted)">›</span></div>
+      <div class="faq-item" onclick="showEscalade()"><span>📞 Contacter Coach Redouane</span><span style="color:var(--muted)">›</span></div>
+    </div>
+    <div id="faq-list" style="display:none">
+      <button onclick="showFaqHome()" style="background:none;border:none;color:var(--gold);cursor:pointer;font-size:13px;margin-bottom:12px;font-family:'DM Sans',sans-serif">← Retour</button>
+      <div id="faq-questions"></div>
+      <div id="faq-answer" style="display:none"></div>
+    </div>
+    <div id="faq-bug" style="display:none">
+      <button onclick="showFaqHome()" style="background:none;border:none;color:var(--gold);cursor:pointer;font-size:13px;margin-bottom:12px;font-family:'DM Sans',sans-serif">← Retour</button>
+      <div id="bug-form-content">
+        <div style="font-size:13px;color:var(--text);margin-bottom:10px">Décris le problème rencontré :</div>
+        <textarea id="bug-msg" placeholder="Ex: Quand je clique sur Analyser, page blanche..." style="width:100%;background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;resize:vertical;min-height:90px"></textarea>
+        <input type="file" id="bug-file" accept="image/*" style="display:none" onchange="handleBugFile(this)">
+        <button onclick="document.getElementById('bug-file').click()" style="width:100%;margin-top:8px;padding:9px;background:var(--darker);border:1px dashed var(--border);border-radius:8px;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer" id="bug-file-btn">📎 Joindre un screenshot (optionnel)</button>
+        <div id="bug-preview" style="display:none;margin-top:8px"></div>
+        <button onclick="sendBug()" style="width:100%;margin-top:10px;padding:11px;background:linear-gradient(135deg,#E74C3C,#C0392B);border:none;border-radius:8px;color:#fff;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer">Envoyer le signalement</button>
+      </div>
+      <div id="bug-sent" style="display:none;text-align:center;padding:20px">
+        <div style="font-size:36px;margin-bottom:10px">✅</div>
+        <div style="font-size:14px;font-weight:600;color:var(--success);margin-bottom:6px">Bug signalé !</div>
+        <div style="font-size:13px;color:var(--muted)">Coach Redouane a été notifié.</div>
+        <button onclick="showFaqHome()" style="margin-top:14px;padding:7px 18px;background:var(--darker);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif">Retour</button>
+      </div>
+    </div>
+    <div id="faq-esc" style="display:none">
+      <button onclick="showFaqHome()" style="background:none;border:none;color:var(--gold);cursor:pointer;font-size:13px;margin-bottom:12px;font-family:'DM Sans',sans-serif">← Retour</button>
+      <div style="text-align:center;padding:10px 0">
+        <div style="font-size:36px;margin-bottom:8px">👨‍💼</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--gold);margin-bottom:4px">Coach Redouane</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:18px">Disponible pour t'accompagner</div>
+        <a href="https://wa.me/+221710491314" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:#25D366;border-radius:10px;color:#fff;text-decoration:none;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;margin-bottom:10px">📱 WhatsApp</a>
+        <a href="/cdn-cgi/l/email-protection#bfdcd0d1cbdedccb91dcd0dedcd7cddadbd0caded1daffd8d2ded6d391dcd0d2" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:var(--darker);border:1px solid var(--border);border-radius:10px;color:var(--gold);text-decoration:none;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif">✉️ Email</a>
+        <div style="margin-top:14px;font-size:12px;color:var(--muted);line-height:1.6">Répond sous 24h. Urgences → WhatsApp.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILE MODAL -->
+<div class="profile-modal" id="profile-modal">
+  <div class="profile-card">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+      <button onclick="closeProfile()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px">✕</button>
+    </div>
+    <div class="profile-ava" id="prf-avatar">CR</div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--text);text-align:center;margin-bottom:4px" id="prf-name">Nom</div>
+    <div style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:22px" id="prf-since">Membre depuis</div>
+    <div class="g3c" style="margin-bottom:20px">
+      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;color:var(--gold)" id="prf-score">0%</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;text-transform:uppercase">Discipline</div>
+      </div>
+      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;color:var(--gold)" id="prf-actions">0</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;text-transform:uppercase">Actions faites</div>
+      </div>
+      <div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;color:var(--gold)" id="prf-revenus">0K</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;text-transform:uppercase">FCFA générés</div>
+      </div>
+    </div>
+    <div id="prf-view"></div>
+    <div id="prf-edit" style="display:none">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--text);margin-bottom:14px">Modifier mon profil</div>
+      <label class="field-label">Prénom</label><input class="fi" id="edit-prenom">
+      <label class="field-label">Pays</label><select class="fs" id="edit-pays"></select>
+      <label class="field-label">Situation</label>
+      <select class="fs" id="edit-situation">
+        <option>Salarié</option><option>Entrepreneur</option><option>Étudiant</option><option>Sans emploi</option><option>Retraité</option><option>Freelance</option>
+      </select>
+      <label class="field-label">Objectif</label>
+      <select class="fs" id="edit-objectif">
+        <option>Revenu complémentaire</option><option>Lancer mon business</option><option>Liberté financière</option><option>Quitter mon emploi</option><option>Investir et épargner</option>
+      </select>
+      <label class="field-label">Devise préférée</label>
+      <select class="fs" id="edit-devise">
+        <option>FCFA</option><option>MAD</option><option>DZD</option><option>TND</option><option>EUR</option><option>USD</option><option>GBP</option><option>CAD</option><option>CHF</option><option>NGN</option><option>GHS</option><option>KES</option><option>ZAR</option><option>EGP</option><option>SAR</option><option>AED</option><option>TRY</option>
+      </select>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button class="btn-gold" style="margin-top:0" onclick="saveProfile()">Enregistrer</button>
+        <button class="btn-outline" onclick="cancelEdit()">Annuler</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE ACTION MODAL -->
+<div class="modal-overlay" id="modal-del-action">
+  <div class="modal">
+    <h3>Supprimer cette action ?</h3>
+    <div id="del-action-text" style="background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:11px 14px;margin-bottom:14px;font-size:13px;color:var(--gold);font-style:italic"></div>
+    <p>Cette opération est irréversible.</p>
+    <div class="modal-btns">
+      <button class="btn-danger" style="flex:1;padding:11px;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600" onclick="confirmDelAction()">Oui, supprimer</button>
+      <button class="btn-outline" style="flex:1" onclick="closeModal('modal-del-action')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHANGE IDEA MODAL -->
+<div class="modal-overlay" id="modal-change-idea">
+  <div class="modal">
+    <h3>Changer d'idée ?</h3>
+    <p>Ton idée active sera archivée. Tu pourras la reprendre depuis l'Archive.</p>
+    <div class="modal-btns">
+      <button class="btn-danger" style="flex:1;padding:12px;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600" onclick="confirmChangeIdea()">Oui, archiver</button>
+      <button class="btn-outline" style="flex:1" onclick="closeModal('modal-change-idea')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT REVENU MODAL -->
+<div class="modal-overlay" id="modal-edit-revenu">
+  <div class="modal">
+    <h3>Modifier cette entrée</h3>
+    <label class="field-label">Type</label><select class="fs" id="er-type"><option value="revenu">Revenu</option><option value="depense">Dépense</option></select>
+    <label class="field-label">Description</label><input class="fi" id="er-label">
+    <label class="field-label">Montant</label><input class="fi" id="er-montant" type="number">
+    <label class="field-label">Date</label><input class="fi" id="er-date" type="date">
+    <div class="modal-btns">
+      <button class="btn-gold" style="margin-top:0" onclick="saveEditRevenu()">Enregistrer</button>
+      <button class="btn-outline" onclick="closeModal('modal-edit-revenu')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- DEL REVENU MODAL -->
+<div class="modal-overlay" id="modal-del-revenu">
+  <div class="modal">
+    <h3>Supprimer cette entrée ?</h3>
+    <div id="del-revenu-text" style="background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:11px 14px;margin-bottom:14px;font-size:13px;color:var(--gold);font-style:italic"></div>
+    <p>Cette opération est irréversible.</p>
+    <div class="modal-btns">
+      <button class="btn-danger" style="flex:1;padding:11px;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600" onclick="confirmDelRevenu()">Oui, supprimer</button>
+      <button class="btn-outline" style="flex:1" onclick="closeModal('modal-del-revenu')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- end main-app -->
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+// ── STATE ──────────────────────────────────────────
+const CURRENCY_MAP = {"Sénégal":"FCFA","Mali":"FCFA","Burkina Faso":"FCFA","Niger":"FCFA","Côte d'Ivoire":"FCFA","Togo":"FCFA","Bénin":"FCFA","Guinée-Bissau":"FCFA","Maroc":"MAD","Tunisie":"TND","Algérie":"DZD","Égypte":"EGP","Mauritanie":"MRU","Cameroun":"FCFA","Gabon":"FCFA","Congo":"FCFA","République Centrafricaine":"FCFA","Tchad":"FCFA","Guinée":"GNF","Madagascar":"MGA","Rwanda":"RWF","Burundi":"BIF","Djibouti":"DJF","Ghana":"GHS","Nigeria":"NGN","Kenya":"KES","Tanzanie":"TZS","Ouganda":"UGX","Éthiopie":"ETB","Mozambique":"MZN","Zambie":"ZMW","Angola":"AOA","Afrique du Sud":"ZAR","France":"EUR","Belgique":"EUR","Suisse":"CHF","Allemagne":"EUR","Espagne":"EUR","Italie":"EUR","Portugal":"EUR","Pays-Bas":"EUR","Autriche":"EUR","Royaume-Uni":"GBP","Canada":"CAD","Australie":"AUD","États-Unis":"USD","Mexique":"MXN","Brésil":"BRL","Argentine":"ARS","Chine":"CNY","Japon":"JPY","Inde":"INR","Singapour":"SGD","Malaisie":"MYR","Thaïlande":"THB","Vietnam":"VND","Indonésie":"IDR","Philippines":"PHP","Arabie Saoudite":"SAR","Émirats Arabes Unis":"AED","Koweït":"KWD","Qatar":"QAR","Israël":"ILS","Turquie":"TRY","Russie":"RUB","Pologne":"PLN","Norvège":"NOK","Suède":"SEK","Danemark":"DKK"};
+function getCurrency(pays){ return CURRENCY_MAP[pays] || "FCFA"; }
+
+const PAYS = ["Afghanistan","Afrique du Sud","Algérie","Allemagne","Angola","Arabie Saoudite","Argentine","Australie","Autriche","Belgique","Bénin","Birmanie","Bolivie","Brésil","Burkina Faso","Burundi","Cameroun","Canada","Chili","Chine","Colombie","Congo","Corée du Sud","Côte d'Ivoire","Cuba","Danemark","Djibouti","Égypte","Émirats Arabes Unis","Espagne","Éthiopie","Finlande","France","Gabon","Gambie","Ghana","Grèce","Guatemala","Guinée","Haïti","Inde","Indonésie","Irak","Iran","Irlande","Israël","Italie","Japon","Jordanie","Kenya","Koweït","Liban","Libye","Madagascar","Malaisie","Mali","Maroc","Mauritanie","Mexique","Mozambique","Namibie","Népal","Niger","Nigeria","Norvège","Nouvelle-Zélande","Oman","Ouganda","Pakistan","Panama","Pays-Bas","Pérou","Philippines","Pologne","Portugal","Qatar","Roumanie","Royaume-Uni","Russie","Rwanda","Sénégal","Sierra Leone","Singapour","Somalie","Soudan","Sri Lanka","Suède","Suisse","Syrie","Tanzanie","Tchad","Thaïlande","Togo","Tunisie","Turquie","Ukraine","Uruguay","Venezuela","Vietnam","Yémen","Zambie","Zimbabwe"];
+const PHASE_MAP = {0:["Semaine 1","Semaine 2","Semaine 3","Semaine 4"],1:["Semaine 5","Semaine 6","Semaine 7","Semaine 8"],2:["Semaine 9","Semaine 10","Semaine 11","Semaine 12"]};
+const FAQ_DATA = [
+  {q:"Comment ca marche ?",a:"Plan B Tracker suit la methode en 3 etapes. 1. Trouve ton idee via l'IA. 2. Suis ton plan 90 jours. 3. Suis tes revenus. Commence par Trouve ton idee dans le menu."},
+  {q:"Comment changer mon idee ?",a:"Va dans Trouve ton idee, onglet Idee active, puis clique Changer d idee. Ton ancienne idee sera archivee et tu pourras la reprendre."},
+  {q:"Comment modifier une action ?",a:"Va dans Plan 90 jours, clique sur la phase, puis modifie le texte directement, change la semaine, ou supprime et ajoute des actions."},
+  {q:"C est quoi le score discipline ?",a:"C est le pourcentage d actions completees. Plus tu coches, plus ton score monte. 70% et plus = tu es sur la bonne voie !"},
+  {q:"Comment suivre mes revenus ?",a:"Va dans Revenus et Depenses. Clique Ajouter une entree pour chaque vente ou depense. Le solde se calcule automatiquement."},
+  {q:"Comment les phases evoluent ?",a:"Automatiquement selon tes actions. A venir si 0 cochee, En cours si au moins 1, Termine si toutes cochees."},
+  {q:"L'IA ne repond pas",a:"Verifie ta connexion internet. Si ca persiste, signale un bug et Coach Redouane te contactera rapidement."},
+];
+
+let STATE = {
+  user: null,
+  actions: [],
+  revenus: [],
+  ideaActive: null,
+  devise: "FCFA",
+  archives: [],
+  nextId: 100,
+  currentPage: 'dashboard',
+  activePhase: 1,
+  pendingDelAction: null,
+  pendingDelRevenu: null,
+  pendingEditRevenu: null,
+  ctxHistory: {idee:[], plan:[], revenus:[]},
+};
+
+// ── ONBOARDING ──────────────────────────────────────
+const ONB_STEPS = [
+  {title:"Bienvenue sur Plan B Tracker 👋", desc:"La méthode de Coach Redouane", type:"input", field:"prenom", ph:"Ton prénom...", lbl:"Ton prénom"},
+  {title:"Ton adresse email", desc:"Pour recevoir tes rapports et être contacté", type:"input", field:"email", ph:"ton@email.com", lbl:"Ton email", inputType:"email"},
+  {title:"Où vis-tu ?", desc:"Pour personnaliser tes recommandations", type:"select", field:"pays", lbl:"Ton pays"},
+  {title:"Ta situation actuelle ?", desc:"Sois honnête — c'est pour mieux t'aider", type:"cards", field:"situation", opts:["Salarié","Entrepreneur","Étudiant","Sans emploi","Retraité","Freelance"]},
+  {title:"Ton objectif principal ?", desc:"Ce qui te motive à utiliser Plan B Tracker", type:"cards", field:"objectif", opts:["Revenu complémentaire","Lancer mon business","Liberté financière","Quitter mon emploi","Investir et épargner"]},
+];
+let onbStep = 0;
+let onbData = {prenom:"", email:"", pays:"Sénégal", situation:"Salarié", objectif:"Revenu complémentaire"};
+
+function renderOnbStep() {
+  const s = ONB_STEPS[onbStep];
+  document.getElementById('onb-title').textContent = s.title;
+  document.getElementById('onb-desc').textContent = s.desc;
+  document.getElementById('onb-progress').style.width = ((onbStep+1)/ONB_STEPS.length*100)+'%';
+  document.getElementById('onb-back').style.display = onbStep > 0 ? 'block' : 'none';
+  document.getElementById('onb-next').textContent = onbStep < ONB_STEPS.length-1 ? 'Continuer →' : 'Commencer mon Plan B 🚀';
+
+  let html = '';
+  if(s.type === 'input') {
+    const itype = s.inputType || 'text'; html = `<label class="field-label">${s.lbl} <span class="req">*</span></label><input class="fi" type="${itype}" id="onb-input" placeholder="${s.ph}" value="${onbData[s.field]}" style="font-size:16px;padding:12px 16px" onkeydown="if(event.key==='Enter')onbNext()">`;
+  } else if(s.type === 'select') {
+    html = `<label class="field-label">${s.lbl}</label><select class="fs" id="onb-select" style="font-size:15px;padding:11px 14px">${PAYS.map(p=>`<option${p===onbData[s.field]?' selected':''}>${p}</option>`).join('')}</select>`;
+  } else if(s.type === 'cards') {
+    html = `<div class="cards-grid">${s.opts.map(o=>`<div class="choice-card${onbData[s.field]===o?' selected':''}" onclick="selectCard(this,'${s.field}','${o}')">${o}</div>`).join('')}</div>`;
+  }
+  document.getElementById('onb-content').innerHTML = html;
+  if(s.type === 'input') setTimeout(()=>document.getElementById('onb-input')&&document.getElementById('onb-input').focus(), 100);
+}
+
+function selectCard(el, field, val) {
+  onbData[field] = val;
+  el.parentElement.querySelectorAll('.choice-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function onbNext() {
+  const s = ONB_STEPS[onbStep];
+  if(s.type === 'input') {
+    const v = document.getElementById('onb-input').value.trim();
+    if(!v) { document.getElementById('onb-input').style.borderColor='rgba(231,76,60,.6)'; return; }
+    onbData[s.field] = v;
+  } else if(s.type === 'select') {
+    onbData[s.field] = document.getElementById('onb-select').value;
+  }
+  if(onbStep < ONB_STEPS.length-1) {
+    onbStep++;
+    renderOnbStep();
+  } else {
+    finishOnboarding();
+  }
+}
+
+function onbBack() {
+  if(onbStep > 0) { onbStep--; renderOnbStep(); }
+}
+
+function finishOnboarding() {
+  STATE.user = {...onbData, depuis: new Date().toLocaleDateString('fr-FR')};
+  STATE.devise = getCurrency(onbData.pays);
+  document.getElementById('onboarding').style.display = 'none';
+  document.getElementById('main-app').style.display = 'block';
+  initApp();
+}
+
+// ── INIT ────────────────────────────────────────────
+function initApp() {
+  // Set devise from user's country
+  if(STATE.user?.pays) STATE.devise = getCurrency(STATE.user.pays);
+  
+  // Fill pays dropdowns
+  ['f-pays','edit-pays'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.innerHTML = PAYS.map(p=>`<option>${p}</option>`).join('');
+  });
+  
+  // Set correct page title immediately
+  document.getElementById('page-title').textContent = 'Bonjour, ' + (STATE.user?.prenom||'') + ' 👋';
+  const dayText = PAGE_INFO['dashboard'].p;
+  document.getElementById('page-sub').textContent = typeof dayText === 'function' ? dayText() : dayText;
+  
+  // Auto-detect country
+  detectCountry();
+  
+  updateUserDisplay();
+  updateDashboard();
+  renderPhases();
+  renderActionsList();
+  renderRevenus();
+  renderActiveIdeaView();
+  initFaqQuestions();
+}
+
+function updateUserDisplay() {
+  if(!STATE.user) return;
+  const u = STATE.user;
+  const init = (u.prenom||'CR').slice(0,2).toUpperCase();
+  document.getElementById('user-avatar').textContent = init;
+  document.getElementById('user-name-display').textContent = u.prenom || 'Coach';
+  document.getElementById('user-idea-display').textContent = STATE.ideaActive ? STATE.ideaActive.nom.slice(0,20)+'...' : 'Aucune idée active';
+  const hasUsed=STATE.actions.some(a=>a.done); document.getElementById('badge-idee').style.display=(!STATE.ideaActive&&hasUsed)?'inline':'none';
+}
+
+// ── NAVIGATION ──────────────────────────────────────
+const PAGE_INFO = {
+  dashboard: {h: ()=>`Bonjour, ${STATE.user?.prenom||''} 👋`, p: ()=>{ if(!STATE.user?.depuis) return "Bienvenue — Ton parcours commence aujourd'hui."; const p=STATE.user.depuis.split('/'); const s=new Date(p[2],p[1]-1,p[0]); const d=Math.min(Math.floor((new Date()-s)/86400000)+1,90); if(d<=1) return "Jour 1 sur 90 — Bienvenue ! Ton parcours commence maintenant."; if(d>=90) return "Jour 90 — Félicitations pour ton cycle terminé !"; return "Jour "+d+" sur 90 — Tu avances. Continue."; }},
+  idee: {h:"Trouve ton idée", p:"Analyse IA personnalisée selon ton profil et ton pays"},
+  plan: {h:"Plan 90 jours", p:"Tes actions — modifiables, ajoutables, supprimables"},
+  archive: {h:"Archive", p:"Historique complet de toutes tes idées lancées"},
+  revenus: {h:"Revenus & Dépenses", p:"Suivi financier de ton Plan B"},
+  visibilite: {h:"Visibilité", p:"WhatsApp · Facebook · Messages de présentation"},
+  motivation: {h:"Motivation", p:"Gestion des peurs · Rituel quotidien · Mantra"},
+};
+
+function goTo(page) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  event.currentTarget.classList.add('active');
+  STATE.currentPage = page;
+  const info = PAGE_INFO[page];
+  document.getElementById('page-title').textContent = typeof info.h === 'function' ? info.h() : info.h;
+  document.getElementById('page-sub').textContent = typeof info.p === 'function' ? info.p() : info.p;
+  if(page === 'plan') { renderPhases(); renderActionsList(); }
+  if(page === 'revenus') renderRevenus();
+  if(page === 'archive') renderArchive();
+  if(page === 'dashboard') updateDashboard();
+}
+
+// ── DASHBOARD ───────────────────────────────────────
+function updateDashboard() {
+  const done = STATE.actions.filter(a=>a.done).length;
+  const total = STATE.actions.length;
+  const pct = total > 0 ? Math.round((done/total)*100) : 0;
+  const totalR = STATE.revenus.filter(r=>r.type==='revenu').reduce((s,r)=>s+r.montant,0);
+
+  if(STATE.user?.depuis && document.getElementById('dash-days')){
+    const p=STATE.user.depuis.split('/');
+    const s=new Date(p[2],p[1]-1,p[0]);
+    const day=Math.min(Math.floor((new Date()-s)/86400000)+1,90);
+    document.getElementById('dash-days').textContent=day;
+    document.getElementById('dash-days-bar').style.width=Math.round((day/90)*100)+'%';
+  }
+  document.getElementById('dash-actions').textContent = `${done}/${total}`;
+  document.getElementById('dash-actions-bar').style.width = pct+'%';
+  document.getElementById('dash-score').textContent = pct+'%';
+  document.getElementById('dash-score-bar').style.width = pct+'%';
+  document.getElementById('dash-revenus').textContent = Math.round(totalR/1000)+'K';
+  document.getElementById('score-num').textContent = pct;
+
+  const deg = Math.round((pct/100)*360);
+  document.getElementById('score-circle').style.background = `conic-gradient(var(--gold) 0deg ${deg}deg, var(--border) ${deg}deg 360deg)`;
+
+  // Idea banner
+  if(STATE.ideaActive) {
+    document.getElementById('idea-banner').style.display = 'flex';
+    document.getElementById('banner-idea-name').textContent = STATE.ideaActive.nom;
+  } else {
+    document.getElementById('idea-banner').style.display = 'none';
+  }
+
+  // Dashboard action list (first 5)
+  const list = document.getElementById('dash-action-list');
+  list.innerHTML = STATE.actions.slice(0,5).map(a => `
+    <div class="action-item">
+      <div class="action-check ${a.done?'checked':''}" onclick="toggleAction(${a.id})">${a.done?'✓':''}</div>
+      <span style="flex:1;font-size:13px;color:${a.done?'var(--muted)':'var(--text)'};text-decoration:${a.done?'line-through':'none'}">${a.text}</span>
+      <span style="font-size:11px;color:var(--muted)">${a.week}</span>
+    </div>
+  `).join('');
+}
+
+// ── ACTIONS ─────────────────────────────────────────
+function toggleAction(id) {
+  const a = STATE.actions.find(x=>x.id===id);
+  if(a) a.done = !a.done;
+  renderActionsList();
+  renderPhases();
+  updateDashboard();
+}
+
+function addAction() {
+  STATE.actions.push({id:STATE.nextId++, text:"", week:PHASE_MAP[STATE.activePhase][0], done:false});
+  renderActionsList();
+}
+
+function delActionConfirm(id) {
+  STATE.pendingDelAction = id;
+  const a = STATE.actions.find(x=>x.id===id);
+  document.getElementById('del-action-text').textContent = '"'+(a?a.text:'Action sans titre')+'"';
+  openModal('modal-del-action');
+}
+
+function confirmDelAction() {
+  STATE.actions = STATE.actions.filter(a=>a.id!==STATE.pendingDelAction);
+  STATE.pendingDelAction = null;
+  closeModal('modal-del-action');
+  renderActionsList();
+  renderPhases();
+  updateDashboard();
+}
+
+function renderActionsList() {
+  const filtered = STATE.actions.filter(a=>PHASE_MAP[STATE.activePhase].includes(a.week));
+  const done = filtered.filter(a=>a.done).length;
+  const allDone = STATE.actions.filter(a=>a.done).length;
+  const allTotal = STATE.actions.length;
+  const pct = allTotal > 0 ? Math.round((allDone/allTotal)*100) : 0;
+  const phases = [{nm:"Mois 1 — Fondations"},{nm:"Mois 2 — Amélioration"},{nm:"Mois 3 — Stabilisation"}];
+
+  document.getElementById('phase-actions-title').textContent = 'Actions — '+phases[STATE.activePhase].nm;
+  document.getElementById('phase-actions-sub').textContent = `${done}/${filtered.length} complétées dans cette phase`;
+  document.getElementById('global-pct').textContent = pct+'% global';
+
+  const list = document.getElementById('actions-list');
+  if(filtered.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)"><div style="font-size:28px;margin-bottom:8px">📋</div><div style="font-size:13px">Aucune action dans cette phase</div></div>';
+    return;
+  }
+  list.innerHTML = filtered.map(a => `
+    <div class="action-item">
+      <div class="action-check ${a.done?'checked':''}" onclick="toggleAction(${a.id})">${a.done?'✓':''}</div>
+      <input class="action-text ${a.done?'done':''}" value="${a.text.replace(/"/g,'&quot;')}" onchange="updateActionText(${a.id},this.value)" placeholder="Écris ton action...">
+      <select class="action-week" onchange="updateActionWeek(${a.id},this.value)">
+        ${PHASE_MAP[STATE.activePhase].map(s=>`<option${s===a.week?' selected':''}>${s}</option>`).join('')}
+      </select>
+      <button class="action-del" onclick="delActionConfirm(${a.id})">×</button>
+    </div>
+  `).join('');
+}
+
+function updateActionText(id,val) { const a=STATE.actions.find(x=>x.id===id); if(a) a.text=val; updateDashboard(); }
+function updateActionWeek(id,val) { const a=STATE.actions.find(x=>x.id===id); if(a) a.week=val; }
+
+// ── PHASES ──────────────────────────────────────────
+function getPhaseStatus(idx) {
+  const total = STATE.actions.filter(a=>PHASE_MAP[idx].includes(a.week)).length;
+  const done = STATE.actions.filter(a=>PHASE_MAP[idx].includes(a.week)&&a.done).length;
+  if(total===0) return {s:'pending',l:'À venir'};
+  if(done===total) return {s:'done',l:'Terminé'};
+  if(done>0) return {s:'active',l:'En cours'};
+  return {s:'pending',l:'À venir'};
+}
+
+function selectPhase(idx) {
+  STATE.activePhase = idx;
+  renderPhases();
+  renderActionsList();
+}
+
+function renderPhases() {
+  const phases = [
+    {n:"01",nm:"Mois 1 — Fondations",d:"Clarifier l'offre, trouver les premiers testeurs",idx:0},
+    {n:"02",nm:"Mois 2 — Amélioration",d:"Collecter les retours, ajuster, développer la visibilité",idx:1},
+    {n:"03",nm:"Mois 3 — Stabilisation",d:"Premiers clients réguliers, tarif fixé",idx:2},
+  ];
+  const el = document.getElementById('phases-list');
+  const planNoIdea = document.getElementById('plan-no-idea');
+  if(planNoIdea) planNoIdea.style.display = STATE.ideaActive ? 'none' : 'block';
+
+  el.innerHTML = phases.map(p => {
+    const st = getPhaseStatus(p.idx);
+    const total = STATE.actions.filter(a=>PHASE_MAP[p.idx].includes(a.week)).length;
+    const done = STATE.actions.filter(a=>PHASE_MAP[p.idx].includes(a.week)&&a.done).length;
+    return `
+      <div class="phase-card ${STATE.activePhase===p.idx?'active':''}" onclick="selectPhase(${p.idx})">
+        <div class="phase-num ${st.s==='done'?'done':''}">${st.s==='done'?'✓':p.n}</div>
+        <div class="phase-info">
+          <div class="phase-name">${p.nm}</div>
+          <div class="phase-desc">${p.d}</div>
+          <div class="phase-count">${done}/${total} actions ${STATE.activePhase===p.idx?'<span style="color:var(--gold)">▶ Active</span>':''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          <span class="badge badge-${st.s}">${st.l}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ── REVENUS ─────────────────────────────────────────
+function addRevenu() {
+  const label = document.getElementById('r-label').value.trim();
+  const montant = parseInt(document.getElementById('r-montant').value);
+  const type = document.getElementById('r-type').value;
+  const date = document.getElementById('r-date').value;
+  if(!label || !montant) return;
+  STATE.revenus.push({id:STATE.nextId++, label, montant, type, date});
+  document.getElementById('r-label').value = '';
+  document.getElementById('r-montant').value = '';
+  renderRevenus();
+  switchTabById('revenus', 0);
+}
+
+function editRevenuConfirm(id) {
+  STATE.pendingEditRevenu = id;
+  const r = STATE.revenus.find(x=>x.id===id);
+  if(!r) return;
+  document.getElementById('er-type').value = r.type;
+  document.getElementById('er-label').value = r.label;
+  document.getElementById('er-montant').value = r.montant;
+  document.getElementById('er-date').value = r.date;
+  openModal('modal-edit-revenu');
+}
+
+function saveEditRevenu() {
+  const r = STATE.revenus.find(x=>x.id===STATE.pendingEditRevenu);
+  if(r) {
+    r.type = document.getElementById('er-type').value;
+    r.label = document.getElementById('er-label').value;
+    r.montant = parseInt(document.getElementById('er-montant').value);
+    r.date = document.getElementById('er-date').value;
+  }
+  closeModal('modal-edit-revenu');
+  renderRevenus();
+}
+
+function delRevenuConfirm(id) {
+  STATE.pendingDelRevenu = id;
+  const r = STATE.revenus.find(x=>x.id===id);
+  document.getElementById('del-revenu-text').textContent = '"'+(r?r.label:'')+'"';
+  openModal('modal-del-revenu');
+}
+
+function confirmDelRevenu() {
+  STATE.revenus = STATE.revenus.filter(r=>r.id!==STATE.pendingDelRevenu);
+  STATE.pendingDelRevenu = null;
+  closeModal('modal-del-revenu');
+  renderRevenus();
+  updateDashboard();
+}
+
+function renderRevenus() {
+  const totalR = STATE.revenus.filter(r=>r.type==='revenu').reduce((s,r)=>s+r.montant,0);
+  const totalD = STATE.revenus.filter(r=>r.type==='depense').reduce((s,r)=>s+r.montant,0);
+  const solde = totalR - totalD;
+  document.getElementById('total-revenus').textContent = totalR.toLocaleString();
+  document.getElementById('total-depenses').textContent = totalD.toLocaleString();
+  document.getElementById('solde-net').textContent = solde.toLocaleString();
+  document.getElementById('revenus-list').innerHTML = STATE.revenus.map(r => `
+    <div class="revenu-row">
+      <div><div style="font-size:13px;color:var(--text)">${r.label}</div><div style="font-size:11px;color:var(--muted)">${r.date}</div></div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:${r.type==='depense'?'var(--danger)':'var(--gold)'}">
+          ${r.type==='depense'?'- ':'+ '}${r.montant.toLocaleString()} FCFA
+        </div>
+        <button onclick="editRevenuConfirm(${r.id})" style="background:none;border:none;cursor:pointer;font-size:15px;padding:2px">✏️</button>
+        <button onclick="delRevenuConfirm(${r.id})" style="background:none;border:none;cursor:pointer;font-size:15px;padding:2px">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+  updateDashboard();
+}
+
+// ── ANALYSE IA ──────────────────────────────────────
+async function analyserProfil() {
+  const comp = document.getElementById('f-comp').value.trim();
+  const besoin = document.getElementById('f-besoin').value.trim();
+  let hasErr = false;
+  if(!comp) { document.getElementById('f-comp').classList.add('field-err'); document.getElementById('err-comp').style.display='block'; document.getElementById('f-comp').focus(); hasErr=true; }
+  else { document.getElementById('f-comp').classList.remove('field-err'); document.getElementById('err-comp').style.display='none'; }
+  if(!besoin) { document.getElementById('f-besoin').classList.add('field-err'); document.getElementById('err-besoin').style.display='block'; if(!hasErr) document.getElementById('f-besoin').focus(); hasErr=true; }
+  else { document.getElementById('f-besoin').classList.remove('field-err'); document.getElementById('err-besoin').style.display='none'; }
+  if(hasErr) return;
+
+  document.getElementById('btn-analyse').disabled = true;
+  document.getElementById('btn-analyse').textContent = 'Recherche en cours...';
+  document.getElementById('analyse-loading').style.display = 'flex';
+  document.getElementById('err-api').style.display = 'none';
+
+  const form = {
+    pays: document.getElementById('f-pays').value,
+    competence: comp,
+    secteur: document.getElementById('f-secteur').value,
+    temps: document.getElementById('f-temps').value,
+    budget: document.getElementById('f-budget').value,
+    besoin: besoin,
+  };
+
+  try {
+    const schema = '{"analyse":"2-3 phrases","idees":[{"nom":"...","score":85,"description":"...","pourquoi":"...","tags":["t1","t2","t3"],"offre":"...","public":"...","benefice":"...","prix":"..."}]}';
+    const prompt = `Tu es Coach Redouane, expert entrepreneuriat africain. Analyse ce profil et recommande les 3 meilleures idees de Plan B. PROFIL: Pays:${form.pays}, Competence:${form.competence}, Secteur:${form.secteur}, Temps:${form.temps}/jour, Budget:${form.budget} FCFA, Besoin:${form.besoin}. Reponds UNIQUEMENT en JSON valide sans markdown, format exact: ${schema}. Exactement 3 idees, score 60-95, realistes pour Afrique francophone.`;
+
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({model:"claude-sonnet-4-20250514", max_tokens:1000, messages:[{role:"user",content:prompt}]})
+    });
+    const d = await res.json();
+    const text = d.content.map(x=>x.text||'').join('').replace(/```json|```/g,'').trim();
+    const data = JSON.parse(text);
+    renderIdeeResults(data, form);
+    switchTabById('idee', 1);
+  } catch(e) {
+    document.getElementById('err-api').textContent = 'Erreur de connexion. Réessaie dans un moment.';
+    document.getElementById('err-api').style.display = 'block';
+  }
+  document.getElementById('btn-analyse').disabled = false;
+  document.getElementById('btn-analyse').textContent = 'Analyser mon profil avec l\'IA →';
+  document.getElementById('analyse-loading').style.display = 'none';
+}
+
+function renderIdeeResults(data, form, previousIdees) {
+  const el = document.getElementById('idee-results');
+  const isActive = (nom) => STATE.ideaActive && STATE.ideaActive.nom === nom;
+  const prevList = previousIdees ? previousIdees.map(i=>i.nom).join(', ') : '';
+  el.innerHTML = `
+    <div class="ai-result-box">
+      <span class="ai-badge">✨ ANALYSE IA</span>
+      <div class="ai-text">${data.analyse}</div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <div class="card-title" style="margin-bottom:0">Tes 3 meilleures idées</div>
+        <button class="btn-outline" style="font-size:11px;padding:6px 12px" onclick="relancerRecherche('${prevList.replace(/'/g,"\'")}')">🔄 Nouvelles idées</button>
+      </div>
+      <div class="card-sub">Clique Choisir pour activer une idée — ou demande de nouvelles suggestions</div>
+      ${data.idees.map(idee => `
+        <div class="idea-card ${isActive(idee.nom)?'selected':''}">
+          <div class="idea-score">${idee.score}</div>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:600;color:var(--text)">${idee.nom}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5">${idee.description}</div>
+            <div style="font-size:11px;color:var(--gold);margin-top:3px">${idee.pourquoi}</div>
+            <div style="margin-top:7px">${idee.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+          </div>
+          <button class="btn-outline" style="font-size:12px;flex-shrink:0" onclick='choisirIdee(${JSON.stringify(idee).replace(/'/g,"&#39;")}, ${JSON.stringify(form).replace(/'/g,"&#39;")})'>${isActive(idee.nom)?'✓ Active':'Choisir'}</button>
+        </div>
+      `).join('')}
+    </div>
+    <div style="text-align:center;padding:16px;border-top:1px solid var(--border);margin-top:4px">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Aucune de ces idées ne te convient ?</div>
+      <button class="btn-outline" style="font-size:12px" onclick="showIdeesList()">📋 Voir la liste des 50 meilleures idées</button>
+    </div>
+  `;
+}
+
+async function relancerRecherche(previousNames) {
+  const el = document.getElementById('idee-results');
+  el.innerHTML = '<div style="display:flex;align-items:center;gap:10px;padding:20px;color:var(--gold)"><div class="spinner" style="width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite"></div>Recherche de nouvelles idées...</div>';
+  
+  const form = {
+    pays: document.getElementById('f-pays').value,
+    competence: document.getElementById('f-comp').value,
+    secteur: document.getElementById('f-secteur').value,
+    temps: document.getElementById('f-temps').value,
+    budget: document.getElementById('f-budget').value,
+    besoin: document.getElementById('f-besoin').value,
+  };
+  
+  try {
+    const schema = '{"analyse":"2-3 phrases","idees":[{"nom":"...","score":85,"description":"...","pourquoi":"...","tags":["t1","t2","t3"],"offre":"...","public":"...","benefice":"...","prix":"..."}]}';
+    const excludeMsg = previousNames ? ' Exclus ces idees deja proposees: '+previousNames+'.' : '';
+    const prompt = 'Tu es Coach Redouane, expert entrepreneuriat africain. Propose 3 NOUVELLES idees de Plan B differentes.'+excludeMsg+' PROFIL: Pays:'+form.pays+', Competence:'+form.competence+', Secteur:'+form.secteur+', Temps:'+form.temps+'/jour, Budget:'+form.budget+', Besoin:'+form.besoin+'. Reponds UNIQUEMENT en JSON valide sans markdown: '+schema+'. Exactement 3 idees, score 60-95.';
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})
+    });
+    const d = await res.json();
+    const text = d.content.map(x=>x.text||'').join('').replace(/```json|```/g,'').trim();
+    const data = JSON.parse(text);
+    renderIdeeResults(data, form, data.idees);
+  } catch(e) {
+    el.innerHTML = '<div style="color:var(--danger);padding:20px">Erreur de connexion. Réessaie.</div>';
+  }
+}
+
+function showIdeesList() {
+  const el = document.getElementById('idee-results');
+  const idees50 = [
+    "1. Gestion réseaux sociaux pour PME","2. Création de visuels marketing","3. Coaching budget personnel",
+    "4. Cours particuliers en ligne","5. Vente de produits artisanaux","6. Service de livraison local",
+    "7. Rédaction de contenu web","8. Formation bureautique","9. Vente de repas faits maison",
+    "10. Service de coiffure à domicile","11. Jardinage et entretien","12. Garderie d'enfants",
+    "13. Traduction de documents","14. Assistant administratif freelance","15. Création de sites web simples",
+    "16. Photographie événementielle","17. Vente de plantes","18. Service de nettoyage",
+    "19. Coaching sportif","20. Vente de vêtements de seconde main","21. Couture et retouches",
+    "22. Podcast ou chaîne YouTube","23. Vente de produits naturels","24. Aide aux devoirs",
+    "25. Service de déménagement","26. Réparation de téléphones","27. Vente de légumes frais",
+    "28. Massage et bien-être","29. Création de bijoux artisanaux","30. Vente de formations en ligne",
+    "31. Service de baby-sitting","32. Vente de jus naturels","33. Comptabilité freelance",
+    "34. Vente de livres d'occasion","35. Service de peinture","36. Vente de produits importés",
+    "37. Coaching en développement personnel","38. Vente de gâteaux et pâtisseries","39. Service de gardiennage",
+    "40. Création de logos","41. Vente de légumes séchés","42. Rédaction de CV",
+    "43. Vente de savons naturels","44. Service de repassage","45. Création de contenu TikTok",
+    "46. Vente de meubles artisanaux","47. Service de garde d'animaux","48. Vente de thé et tisanes",
+    "49. Accompagnement scolaire","50. Vente de produits cosmétiques"
+  ];
+  el.innerHTML = `
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <div class="card-title" style="margin-bottom:0">50 idées de Plan B</div>
+        <button class="btn-outline" style="font-size:11px;padding:6px 12px" onclick="switchTabById('idee',0)">← Refaire l'analyse</button>
+      </div>
+      <div class="card-sub">Classées par popularité — clique sur une idée pour l'analyser avec l'IA</div>
+      <div style="max-height:500px;overflow-y:auto">
+        ${idees50.map((idea,i)=>`
+          <div style="padding:10px 14px;background:var(--darker);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:13px;color:var(--text);display:flex;justify-content:space-between;align-items:center" onclick="analyserIdeeDirecte('${idea.replace(/'/g,"\'")}')">
+            <span>${idea}</span><span style="color:var(--muted)">›</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+async function analyserIdeeDirecte(idea) {
+  document.getElementById('f-comp').value = idea.replace(/^\d+\. /,'');
+  document.getElementById('f-besoin').value = 'Idée sélectionnée depuis la liste des 50 meilleures';
+  switchTabById('idee', 0);
+  setTimeout(()=>analyserProfil(), 100);
+}
+
+async function choisirIdee(idee, form) {
+  if(STATE.ideaActive) { openModal('modal-change-idea'); STATE._pendingIdee = {idee, form}; return; }
+  activerIdee(idee, form);
+}
+
+async function activerIdee(idee, form) {
+  STATE.ideaActive = idee;
+  STATE.actions = [
+    {id:STATE.nextId++,text:"Définir mon offre : "+(idee.offre||idee.nom),week:"Semaine 1",done:false},
+    {id:STATE.nextId++,text:"Identifier 5 premiers testeurs",week:"Semaine 1",done:false},
+    {id:STATE.nextId++,text:"Créer mon message WhatsApp",week:"Semaine 2",done:false},
+    {id:STATE.nextId++,text:"Collecter les retours clients",week:"Semaine 3",done:false},
+  ];
+  updateUserDisplay();
+  renderActiveIdeaView();
+  switchTabById('idee', 2);
+  updateDashboard();
+
+  // Generate AI actions in background
+  document.getElementById('plan-gen-loading').style.display = 'flex';
+  try {
+    const schema = '{"actions":[{"text":"...","week":"Semaine 1"},{"text":"...","week":"Semaine 2"},{"text":"...","week":"Semaine 3"},{"text":"...","week":"Semaine 4"},{"text":"...","week":"Semaine 5"},{"text":"...","week":"Semaine 6"},{"text":"...","week":"Semaine 7"},{"text":"...","week":"Semaine 8"},{"text":"...","week":"Semaine 9"},{"text":"...","week":"Semaine 10"},{"text":"...","week":"Semaine 11"},{"text":"...","week":"Semaine 12"}]}';
+    const prompt = `Tu es Coach Redouane. Genere exactement 12 actions concretes sur 3 mois pour cette idee de Plan B. IDEE:${idee.nom}. OFFRE:${idee.offre||""}. PAYS:${form?.pays||"Senegal"}. TEMPS:${form?.temps||"1h"}/jour. Reponds UNIQUEMENT en JSON valide sans markdown, format exact: ${schema}. Actions simples et concretes.`;
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})
+    });
+    const d = await res.json();
+    const text = d.content.map(x=>x.text||'').join('').replace(/```json|```/g,'').trim();
+    const data = JSON.parse(text);
+    STATE.actions = data.actions.map((a,i)=>({id:STATE.nextId++,text:a.text,week:a.week,done:false}));
+    renderActionsList();
+    renderPhases();
+    updateDashboard();
+  } catch(e) {}
+  document.getElementById('plan-gen-loading').style.display = 'none';
+}
+
+function renderActiveIdeaView() {
+  const el = document.getElementById('active-idea-view');
+  if(!STATE.ideaActive) {
+    el.innerHTML = `<div class="card" style="text-align:center;padding:60px"><div style="font-size:40px;margin-bottom:14px">🎯</div><div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--muted)">Aucune idée active</div><button class="btn-outline" style="margin-top:18px" onclick="switchTabById('idee',0)">Trouver mon idée →</button></div>`;
+    return;
+  }
+  const i = STATE.ideaActive;
+  el.innerHTML = `
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px">
+        <div><div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--gold);margin-bottom:4px">${i.nom}</div><div style="font-size:13px;color:var(--muted)">Idée active — Cycle en cours</div></div>
+        <button class="btn-danger" onclick="openModal('modal-change-idea')">Changer d'idée</button>
+      </div>
+      <div class="g2">
+        ${[["Mon offre",i.offre||"—"],["Mon public",i.public||"—"],["Le bénéfice",i.benefice||"—"],["Prix de départ",i.prix||"—"]].map(([k,v])=>`
+          <div style="background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:14px">
+            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">${k}</div>
+            <div style="font-size:13px;color:var(--text)">${v}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function confirmChangeIdea() {
+  if(STATE.ideaActive) {
+    const done = STATE.actions.filter(a=>a.done).length;
+    STATE.archives.push({nom:STATE.ideaActive.nom, statut:'En pause', debut:new Date().toLocaleDateString('fr-FR'), done, total:STATE.actions.length, revenus:STATE.revenus.filter(r=>r.type==='revenu').reduce((s,r)=>s+r.montant,0)});
+    document.getElementById('badge-archive').style.display = 'inline';
+    document.getElementById('badge-archive').textContent = STATE.archives.length;
+  }
+  STATE.ideaActive = null;
+  STATE.actions = STATE.actions.slice(0,8);
+  closeModal('modal-change-idea');
+  if(STATE._pendingIdee) { activerIdee(STATE._pendingIdee.idee, STATE._pendingIdee.form); STATE._pendingIdee = null; }
+  else { renderActiveIdeaView(); updateUserDisplay(); updateDashboard(); }
+}
+
+// ── ARCHIVE ─────────────────────────────────────────
+function renderArchive() {
+  const el = document.getElementById('archive-list');
+  if(STATE.archives.length === 0) {
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:36px;margin-bottom:10px">📁</div><div style="font-size:14px">Aucune idée archivée pour l\'instant</div></div>';
+    return;
+  }
+  el.innerHTML = STATE.archives.map((a,i) => `
+    <div class="archive-item">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:15px;font-weight:600;color:var(--text)">${a.nom}</div>
+        <span class="badge badge-${a.statut==='Terminé'?'done':a.statut==='En cours'?'active':'pending'}">${a.statut}</span>
+      </div>
+      <div style="display:flex;gap:16px">
+        <div style="font-size:12px;color:var(--muted)">Début: <span style="color:var(--gold)">${a.debut}</span></div>
+        <div style="font-size:12px;color:var(--muted)">Actions: <span style="color:var(--gold)">${a.done}/${a.total}</span></div>
+        <div style="font-size:12px;color:var(--muted)">Revenus: <span style="color:var(--gold)">${a.revenus.toLocaleString()} FCFA</span></div>
+      </div>
+      ${a.statut!=='Terminé'?`<button class="btn-outline" style="margin-top:10px;font-size:12px" onclick="reprendreIdee(${i})">Reprendre cette idée</button>`:''}
+    </div>
+  `).join('');
+}
+
+function reprendreIdee(idx) {
+  const a = STATE.archives[idx];
+  STATE.ideaActive = {nom: a.nom};
+  updateUserDisplay();
+  renderActiveIdeaView();
+  goTo('idee');
+}
+
+// ── PROFILE ─────────────────────────────────────────
+function openProfile() {
+  if(!STATE.user) return;
+  const u = STATE.user;
+  const done = STATE.actions.filter(a=>a.done).length;
+  const pct = STATE.actions.length > 0 ? Math.round((done/STATE.actions.length)*100) : 0;
+  const totalR = STATE.revenus.filter(r=>r.type==='revenu').reduce((s,r)=>s+r.montant,0);
+  document.getElementById('prf-avatar').textContent = (u.prenom||'CR').slice(0,2).toUpperCase();
+  document.getElementById('prf-name').textContent = u.prenom;
+  document.getElementById('prf-since').textContent = 'Membre depuis le '+u.depuis;
+  document.getElementById('prf-score').textContent = pct+'%';
+  document.getElementById('prf-actions').textContent = done;
+  document.getElementById('prf-revenus').textContent = Math.round(totalR/1000)+'K';
+  document.getElementById('prf-view').innerHTML = [
+    ['🌍','Pays',u.pays], ['💼','Situation',u.situation], ['🎯','Objectif',u.objectif],
+    STATE.ideaActive ? ['💡','Idée active',STATE.ideaActive.nom] : null
+  ].filter(Boolean).map(([e,l,v])=>`
+    <div class="profile-inf-row">
+      <span style="font-size:18px;width:26px;text-align:center;flex-shrink:0">${e}</span>
+      <div><div class="profile-inf-label">${l}</div><div class="profile-inf-value">${v}</div></div>
+    </div>
+  `).join('') + `<button class="btn-outline" style="width:100%;margin-top:18px;padding:11px" onclick="startEditProfile()">Modifier mon profil</button>`;
+  document.getElementById('prf-edit').style.display = 'none';
+  document.getElementById('prf-view').style.display = 'block';
+  document.getElementById('profile-modal').classList.add('open');
+}
+
+function closeProfile() { document.getElementById('profile-modal').classList.remove('open'); }
+
+function startEditProfile() {
+  const u = STATE.user;
+  document.getElementById('edit-prenom').value = u.prenom;
+  document.getElementById('edit-pays').value = u.pays;
+  document.getElementById('edit-situation').value = u.situation;
+  document.getElementById('edit-objectif').value = u.objectif;
+  const devEl = document.getElementById('edit-devise');
+  if(devEl) devEl.value = STATE.devise || getCurrency(u.pays);
+  document.getElementById('prf-view').style.display = 'none';
+  document.getElementById('prf-edit').style.display = 'block';
+}
+
+function saveProfile() {
+  STATE.user.prenom = document.getElementById('edit-prenom').value;
+  STATE.user.pays = document.getElementById('edit-pays').value;
+  STATE.user.situation = document.getElementById('edit-situation').value;
+  STATE.user.objectif = document.getElementById('edit-objectif').value;
+  STATE.devise = document.getElementById('edit-devise').value || getCurrency(STATE.user.pays);
+  // Update budget label
+  const bl = document.getElementById('budget-label');
+  if(bl) bl.textContent = 'Budget de départ ('+STATE.devise+')';
+  closeProfile();
+  updateUserDisplay();
+}
+
+function cancelEdit() {
+  document.getElementById('prf-edit').style.display = 'none';
+  document.getElementById('prf-view').style.display = 'block';
+}
+
+// ── TABS ────────────────────────────────────────────
+function switchTab(page, idx, btn) {
+  const contents = document.querySelectorAll(`#page-${page} .tab-content`);
+  const btns = document.querySelectorAll(`#page-${page} .tab-btn`);
+  contents.forEach((c,i) => c.classList.toggle('active', i===idx));
+  btns.forEach((b,i) => b.classList.toggle('active', i===idx));
+}
+
+function switchTabById(page, idx) {
+  const contents = document.querySelectorAll(`#page-${page} .tab-content`);
+  const btns = document.querySelectorAll(`#page-${page} .tab-btn`);
+  contents.forEach((c,i) => c.classList.toggle('active', i===idx));
+  btns.forEach((b,i) => b.classList.toggle('active', i===idx));
+}
+
+// ── MODALS ──────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ── CHAT FAQ BOT ────────────────────────────────────
+function toggleChat() {
+  const p = document.getElementById('chat-panel');
+  const b = document.getElementById('chat-toggle-btn');
+  const isOpen = p.classList.contains('open');
+  p.classList.toggle('open');
+  b.textContent = isOpen ? '💬' : '✕';
+}
+
+function showFaqHome() {
+  document.getElementById('faq-home').style.display = 'block';
+  document.getElementById('faq-list').style.display = 'none';
+  document.getElementById('faq-bug').style.display = 'none';
+  document.getElementById('faq-esc').style.display = 'none';
+}
+
+function showFaqList() {
+  document.getElementById('faq-home').style.display = 'none';
+  document.getElementById('faq-list').style.display = 'block';
+  document.getElementById('faq-answer').style.display = 'none';
+  renderFaqQuestions();
+}
+
+function showBugForm() {
+  document.getElementById('faq-home').style.display = 'none';
+  document.getElementById('faq-bug').style.display = 'block';
+  document.getElementById('bug-form-content').style.display = 'block';
+  document.getElementById('bug-sent').style.display = 'none';
+}
+
+function showEscalade() {
+  document.getElementById('faq-home').style.display = 'none';
+  document.getElementById('faq-esc').style.display = 'block';
+}
+
+function detectCountry() {
+  fetch('https://ipapi.co/json/')
+    .then(r=>r.json())
+    .then(d=>{
+      if(d.country_name) {
+        // Map english to french country name if possible
+        const sel = document.getElementById('f-pays');
+        if(sel) {
+          const opts = Array.from(sel.options).map(o=>o.value);
+          // Try to find matching option
+          const match = opts.find(o=>o.toLowerCase().includes(d.country_name.toLowerCase().split(' ')[0]));
+          if(match) sel.value = match;
+        }
+      }
+    }).catch(()=>{}); // Silent fail - no problem if blocked
+}
+
+function initFaqQuestions() { renderFaqQuestions(); }
+
+function renderFaqQuestions() {
+  document.getElementById('faq-questions').innerHTML = FAQ_DATA.map((f,i) => `
+    <div class="faq-item" onclick="showFaqAnswer(${i})"><span>${f.q}</span><span style="color:var(--muted)">›</span></div>
+  `).join('');
+}
+
+function showFaqAnswer(idx) {
+  document.getElementById('faq-questions').style.display = 'none';
+  document.getElementById('faq-answer').style.display = 'block';
+  document.getElementById('faq-answer').innerHTML = `
+    <button onclick="document.getElementById('faq-questions').style.display='block';document.getElementById('faq-answer').style.display='none';" style="background:none;border:none;color:var(--gold);cursor:pointer;font-size:13px;margin-bottom:10px;font-family:'DM Sans',sans-serif">← Questions</button>
+    <div class="faq-answer">
+      <div style="font-size:13px;font-weight:600;color:var(--gold);margin-bottom:8px">${FAQ_DATA[idx].q}</div>
+      <div style="font-size:13px;color:var(--text);line-height:1.8">${FAQ_DATA[idx].a}</div>
+    </div>
+    <div style="margin-top:12px;text-align:center">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Cette réponse t'a aidé ?</div>
+      <div style="display:flex;gap:8px;justify-content:center">
+        <button onclick="document.getElementById('faq-questions').style.display='block';document.getElementById('faq-answer').style.display='none';" style="padding:5px 14px;background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.3);border-radius:20px;color:var(--success);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">👍 Oui</button>
+        <button onclick="showEscalade()" style="padding:5px 14px;background:var(--darker);border:1px solid var(--border);border-radius:20px;color:var(--muted);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">👎 Besoin d'aide</button>
+      </div>
+    </div>
+  `;
+}
+
+function handleBugFile(input) {
+  const f = input.files[0];
+  if(!f) return;
+  document.getElementById('bug-file-btn').textContent = '📎 '+f.name;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('bug-preview').style.display = 'block';
+    document.getElementById('bug-preview').innerHTML = `<img src="${e.target.result}" style="width:100%;border-radius:8px;border:1px solid var(--border);max-height:100px;object-fit:cover"><button onclick="clearBugFile()" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);border:none;border-radius:50%;width:20px;height:20px;color:#fff;cursor:pointer;font-size:12px">×</button>`;
+    document.getElementById('bug-preview').style.position = 'relative';
+  };
+  reader.readAsDataURL(f);
+}
+
+function clearBugFile() {
+  document.getElementById('bug-file').value = '';
+  document.getElementById('bug-file-btn').textContent = '📎 Joindre un screenshot (optionnel)';
+  document.getElementById('bug-preview').style.display = 'none';
+}
+
+function sendBug() {
+  const msg = document.getElementById('bug-msg').value.trim();
+  if(!msg) return;
+  const fileName = document.getElementById('bug-file').files[0]?.name || '';
+  const body = msg + (fileName ? '\n\n[Screenshot: '+fileName+']' : '');
+  window.open('mailto:contact.coachredouane@gmail.com?subject=Bug Plan B Tracker&body='+encodeURIComponent(body), '_blank');
+  document.getElementById('bug-form-content').style.display = 'none';
+  document.getElementById('bug-sent').style.display = 'block';
+}
+
+// ── CONTEXT CHAT ────────────────────────────────────
+function toggleCtx(header) {
+  const body = header.nextElementSibling;
+  const arrow = header.querySelector('span:last-child');
+  body.classList.toggle('open');
+  arrow.textContent = body.classList.contains('open') ? '▾' : '▸';
+}
+
+async function ctxSend(chipEl, ctx, msg) {
+  if(!msg) msg = document.getElementById('ctx-inp-'+ctx).value.trim();
+  if(!msg) return;
+  document.getElementById('ctx-inp-'+ctx).value = '';
+
+  const messagesEl = document.getElementById('ctx-msgs-'+ctx);
+  messagesEl.innerHTML += `<div class="ctx-msg user">${msg}</div>`;
+  messagesEl.innerHTML += `<div class="ctx-msg bot" id="ctx-loading-${ctx}"><div class="dots"><span></span><span></span><span></span></div></div>`;
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+
+  STATE.ctxHistory[ctx].push({role:"user", content:msg});
+
+  const systems = {
+    idee: "Tu es l'assistant de Coach Redouane dans Plan B Tracker. Aide a choisir et valider une idee de Plan B Rentable. Reponds en francais, max 120 mots, bienveillant et concret, adapte a l'Afrique francophone.",
+    plan: "Tu es l'assistant de Coach Redouane dans Plan B Tracker, section Plan 90 jours. Aide avec des conseils concrets sur les actions et la progression. Reponds en francais, max 120 mots, bienveillant et pratique.",
+    revenus: "Tu es l'assistant de Coach Redouane dans Plan B Tracker, section Revenus. Aide a gerer les finances, fixer les prix et optimiser les revenus. Reponds en francais, max 120 mots, concret et pratique.",
+  };
+
+  const userName = STATE.user?.prenom || '';
+  const system = systems[ctx] + (userName ? ` L'utilisateur s'appelle ${userName}. Tutoie-le et utilise son prenom.` : '');
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-20250514", max_tokens:400, system, messages:STATE.ctxHistory[ctx]})
+    });
+    const d = await res.json();
+    const reply = d.content.map(x=>x.text||'').join('');
+    STATE.ctxHistory[ctx].push({role:"assistant", content:reply});
+    document.getElementById('ctx-loading-'+ctx).remove();
+    messagesEl.innerHTML += `<div class="ctx-msg bot">${reply.replace(/\n/g,'<br>')}</div>`;
+  } catch(e) {
+    document.getElementById('ctx-loading-'+ctx).remove();
+    messagesEl.innerHTML += `<div class="ctx-msg bot">Désolé, problème de connexion. Réessaie.</div>`;
+  }
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+// ── START ────�
+document.addEventListener('DOMContentLoaded', function() {
+  renderOnbStep();
+});
+</script>
+</body>
+</html>
