@@ -1201,36 +1201,120 @@ async function relancerRecherche(previousNames) {
 
 function showIdeesList() {
   const el = document.getElementById('idee-results');
-  const idees50 = [
-    "1. Gestion réseaux sociaux pour PME","2. Création de visuels et contenu marketing","3. Coaching en développement personnel",
-    "4. Cours particuliers et soutien scolaire","5. Vente de produits artisanaux","6. Service de livraison express",
-    "7. Rédaction de contenu web et copywriting","8. Formation en ligne dans ton domaine","9. Vente de repas faits maison",
-    "10. Coiffure et soins capillaires à domicile","11. Jardinage et entretien espaces verts","12. Garde d'enfants à domicile",
-    "13. Traduction et interprétation","14. Assistant administratif freelance","15. Création de sites web simples",
-    "16. Photographie événementielle","17. Vente de plantes et fleurs","18. Service de nettoyage professionnel",
-    "19. Coaching sportif et fitness","20. Friperie et vêtements de seconde main","21. Couture et retouches sur mesure",
-    "22. Création de contenu YouTube / TikTok","23. Vente de produits cosmétiques naturels","24. Maraîchage et légumes frais",
-    "25. Service de déménagement et transport","26. Réparation de téléphones et électronique","27. Grossiste produits alimentaires",
-    "28. Massage et bien-être à domicile","29. Création de bijoux et accessoires","30. Vente de formations vidéo",
-    "31. Baby-sitting et garde d'enfants","32. Vente de jus naturels et smoothies","33. Comptabilité et gestion freelance",
-    "34. Librairie et vente de livres","35. Peinture et travaux de rénovation","36. Dropshipping et revente en ligne",
-    "37. Élevage de poulets de chair","38. Pâtisserie et gâteaux sur commande","39. Service de gardiennage",
-    "40. Création de logos et identité visuelle","41. Séchage et transformation alimentaire","42. Rédaction de CV et lettres de motivation",
-    "43. Savons et cosmétiques artisanaux","44. Service de repassage à domicile","45. Community management entreprises",
-    "46. Menuiserie et meubles artisanaux","47. Garde d'animaux de compagnie","48. Vente de tisanes et plantes médicinales",
-    "49. Transport de personnes VTC","50. Décoration et aménagement intérieur"
+  
+  // Build dynamic list from TOUTES_IDEES pool + extra ideas, sorted by relevance
+  const comp = document.getElementById('f-comp').value.trim().toLowerCase();
+  const besoin = document.getElementById('f-besoin').value.trim().toLowerCase();
+  const secteur = getSecteur();
+  const compWords = comp.split(/\s+/).filter(w=>w.length>2);
+  const besoinWords = besoin.split(/\s+/).filter(w=>w.length>2);
+
+  // Score function (same logic as simulerAnalyse)
+  function scoreItem(idee) {
+    let score = idee.score || 70;
+    if(idee.secteurs && idee.secteurs.includes(secteur)) score += 20;
+    if(idee.mots) {
+      idee.mots.forEach(mot => {
+        compWords.forEach(w => { if(w.includes(mot)||mot.includes(w)) score += 8; });
+        besoinWords.forEach(w => { if(w.includes(mot)||mot.includes(w)) score += 5; });
+        if(comp.includes(mot)) score += 6;
+        if(besoin.includes(mot)) score += 4;
+      });
+    }
+    compWords.forEach(w => { if(idee.nom.toLowerCase().includes(w)) score += 10; });
+    besoinWords.forEach(w => { if(idee.nom.toLowerCase().includes(w)) score += 7; });
+    return score;
+  }
+
+  // Extra ideas not in main pool
+  const EXTRA = [
+    {nom:"Jardinage et entretien espaces verts",score:70,secteurs:["Autre"],mots:["jardin","plante","entretien","vert","extérieur"],description:"Tu entretiens jardins et espaces verts."},
+    {nom:"Vente de savons artisanaux",score:71,secteurs:["Beauté / Bien-être"],mots:["savon","naturel","artisan","beauté","soin"],description:"Tu fabrique et vends des savons naturels."},
+    {nom:"Rédaction de CV et lettres",score:72,secteurs:["Services digitaux"],mots:["rédaction","écriture","CV","lettre","recrutement"],description:"Tu rédiges des CV et lettres de motivation professionnels."},
+    {nom:"Service de repassage à domicile",score:70,secteurs:["Autre"],mots:["repassage","vêtement","domicile","ménage","service"],description:"Tu repasses les vêtements à domicile."},
+    {nom:"Vente de thé et tisanes",score:71,secteurs:["Alimentation / Cuisine"],mots:["thé","tisane","plante","naturel","santé"],description:"Tu vends des thés et tisanes naturels."},
+    {nom:"Menuiserie et meubles artisanaux",score:73,secteurs:["Artisanat / Création"],mots:["bois","meuble","menuiserie","artisan","construction"],description:"Tu fabriques des meubles et objets en bois."},
+    {nom:"Garde d'animaux de compagnie",score:70,secteurs:["Autre"],mots:["animal","chien","chat","garde","compagnie"],description:"Tu gardes les animaux pendant l'absence des propriétaires."},
+    {nom:"Vente de plantes et fleurs",score:71,secteurs:["Agriculture"],mots:["plante","fleur","jardin","végétal","nature"],description:"Tu vends des plantes et fleurs décoratives."},
+    {nom:"Service de peinture et rénovation",score:72,secteurs:["Autre"],mots:["peinture","rénovation","maison","travaux","décoration"],description:"Tu peins et rénoves des maisons et bureaux."},
+    {nom:"Séchage et transformation alimentaire",score:73,secteurs:["Agriculture"],mots:["séchage","transformation","aliment","conservation","agriculture"],description:"Tu transformes et conserves des produits alimentaires locaux."},
+    {nom:"Vente de meubles et déco d'occasion",score:71,secteurs:["Commerce / Revente"],mots:["meuble","décoration","occasion","vente","commerce"],description:"Tu achètes et revends des meubles de qualité."},
+    {nom:"Photographie portrait et événement",score:75,secteurs:["Artisanat / Création"],mots:["photo","portrait","événement","image","caméra"],description:"Tu photographies portraits et événements."},
+    {nom:"Coaching en nutrition et bien-être",score:76,secteurs:["Formation / Coaching"],mots:["nutrition","alimentation","santé","bien-être","régime"],description:"Tu conseilles sur l'alimentation et le bien-être."},
+    {nom:"Vente en ligne sur réseaux sociaux",score:78,secteurs:["Commerce / Revente"],mots:["vente","ligne","réseau","social","digital"],description:"Tu vends tes produits directement sur Facebook et Instagram."},
+    {nom:"Service de déménagement local",score:74,secteurs:["Transport / Livraison"],mots:["déménagement","transport","colis","camion","logistique"],description:"Tu aides les gens à déménager avec ton véhicule."},
+    {nom:"Création de sites web simples",score:77,secteurs:["Services digitaux"],mots:["site","web","internet","digital","informatique"],description:"Tu crées des sites web simples pour petits commerces."},
+    {nom:"Comptabilité et gestion freelance",score:76,secteurs:["Services digitaux"],mots:["comptabilité","gestion","finance","chiffre","entrepreneur"],description:"Tu gères la comptabilité de petites entreprises."},
+    {nom:"Vente de livres et fournitures scolaires",score:70,secteurs:["Commerce / Revente"],mots:["livre","école","fourniture","scolaire","étude"],description:"Tu vends livres et matériel scolaire."},
+    {nom:"Animation enfants et événements",score:73,secteurs:["Autre"],mots:["enfant","animation","jeu","fête","événement"],description:"Tu animes des fêtes et événements pour enfants."},
+    {nom:"Transport et location de motos",score:80,secteurs:["Transport / Livraison"],mots:["moto","transport","location","véhicule","conduire"],description:"Tu loues ou transportes avec ta moto dans la ville."},
+    {nom:"Vente de pièces et accessoires moto",score:79,secteurs:["Commerce / Revente"],mots:["moto","pièce","accessoire","véhicule","mécanique"],description:"Tu vends des pièces et accessoires pour motos."},
+    {nom:"Réparation et entretien de motos",score:81,secteurs:["Autre"],mots:["moto","réparation","entretien","mécanique","véhicule"],description:"Tu répares et entretiens les motos du quartier."},
+    {nom:"Formation conduite et code de la route",score:74,secteurs:["Formation / Coaching"],mots:["conduite","route","permis","voiture","moto"],description:"Tu formes à la conduite et au code de la route."},
   ];
+
+  // Combine main pool ideas + extra ideas
+  let allIdees = [];
+  try {
+    // Get TOUTES_IDEES from simulerAnalyse context - rebuild mini version
+    allIdees = [
+      {nom:"Gestion réseaux sociaux pour PME",score:85,secteurs:["Services digitaux"],mots:["réseau","social","digital","marketing","contenu"],description:"Gère les pages réseaux sociaux de PME"},
+      {nom:"Création de contenu marketing",score:82,secteurs:["Services digitaux"],mots:["créatif","contenu","design","visuel","communication"],description:"Crée des visuels et textes marketing"},
+      {nom:"Assistant administratif freelance",score:75,secteurs:["Services digitaux"],mots:["organisation","administratif","gestion","email"],description:"Gestion administrative pour entrepreneurs"},
+      {nom:"Rédaction de contenu web",score:78,secteurs:["Services digitaux"],mots:["écriture","rédaction","texte","blog","article"],description:"Rédige des articles et textes web"},
+      {nom:"Revente de produits importés",score:86,secteurs:["Commerce / Revente"],mots:["commerce","vente","produit","importation","achat"],description:"Source et revend des produits"},
+      {nom:"Dropshipping local WhatsApp",score:80,secteurs:["Commerce / Revente"],mots:["vente","commerce","whatsapp","commande","livraison"],description:"Vente sans stock via WhatsApp"},
+      {nom:"Friperie et vêtements seconde main",score:77,secteurs:["Commerce / Revente"],mots:["vêtement","mode","habit","textile","boutique"],description:"Vente de vêtements de qualité"},
+      {nom:"Vente de repas faits maison",score:90,secteurs:["Alimentation / Cuisine"],mots:["cuisine","repas","manger","nourriture","chef"],description:"Prépare et livre des repas maison"},
+      {nom:"Pâtisserie et gâteaux sur commande",score:83,secteurs:["Alimentation / Cuisine"],mots:["gâteau","pâtisserie","sucre","cuisine","fête"],description:"Gâteaux pour événements"},
+      {nom:"Vente de jus naturels",score:78,secteurs:["Alimentation / Cuisine"],mots:["santé","fruit","jus","naturel","boisson"],description:"Jus et smoothies frais"},
+      {nom:"Traiteur pour événements",score:81,secteurs:["Alimentation / Cuisine"],mots:["cuisine","événement","mariage","traiteur","repas"],description:"Restauration pour cérémonies"},
+      {nom:"Coiffure et soins à domicile",score:91,secteurs:["Beauté / Bien-être"],mots:["coiffure","cheveux","beauté","tresse","salon"],description:"Coiffure à domicile"},
+      {nom:"Massage et bien-être à domicile",score:82,secteurs:["Beauté / Bien-être"],mots:["massage","détente","relaxation","bien-être","corps"],description:"Massages relaxants à domicile"},
+      {nom:"Cosmétiques naturels artisanaux",score:79,secteurs:["Beauté / Bien-être"],mots:["cosmétique","naturel","savon","crème","peau"],description:"Crèmes et savons naturels"},
+      {nom:"Coaching développement personnel",score:87,secteurs:["Formation / Coaching"],mots:["coach","accompagner","motiver","aider","mentor"],description:"Coaching personnel et professionnel"},
+      {nom:"Formation en ligne dans ton domaine",score:83,secteurs:["Formation / Coaching"],mots:["enseigner","former","expliquer","cours","apprentissage"],description:"Formations vidéo en ligne"},
+      {nom:"Cours particuliers soutien scolaire",score:76,secteurs:["Formation / Coaching"],mots:["école","étude","élève","cours","éducation"],description:"Soutien scolaire pour élèves"},
+      {nom:"Couture et vêtements sur mesure",score:86,secteurs:["Artisanat / Création"],mots:["couture","tissu","vêtement","coudre","textile"],description:"Tenues personnalisées sur mesure"},
+      {nom:"Bijoux et accessoires artisanaux",score:78,secteurs:["Artisanat / Création"],mots:["bijou","accessoire","artisan","perle","collier"],description:"Bijoux africains faits main"},
+      {nom:"Photographie événementielle",score:80,secteurs:["Artisanat / Création"],mots:["photo","photographie","image","caméra","événement"],description:"Photos de mariages et cérémonies"},
+      {nom:"Service de livraison express",score:88,secteurs:["Transport / Livraison"],mots:["livraison","transport","moto","véhicule","colis"],description:"Livraison rapide en ville"},
+      {nom:"Transport de personnes VTC",score:81,secteurs:["Transport / Livraison"],mots:["voiture","conduire","transport","véhicule","moto"],description:"Transport sécurisé de personnes"},
+      {nom:"Maraîchage et légumes frais",score:85,secteurs:["Agriculture"],mots:["agriculture","légume","jardin","cultiver","récolte"],description:"Vente de légumes frais locaux"},
+      {nom:"Élevage de poulets de chair",score:79,secteurs:["Agriculture"],mots:["élevage","poulet","animal","ferme","agriculture"],description:"Poulets frais élevés localement"},
+      {nom:"Service de nettoyage professionnel",score:83,secteurs:["Autre"],mots:["nettoyage","ménage","entretien","hygiène","maison"],description:"Nettoyage de maisons et bureaux"},
+      {nom:"Réparation téléphones et électronique",score:84,secteurs:["Autre"],mots:["téléphone","réparation","électronique","smartphone","écran"],description:"Réparation d'appareils électroniques"},
+      {nom:"Garderie et garde d'enfants",score:77,secteurs:["Autre"],mots:["enfant","garde","bébé","garderie","famille"],description:"Garde d'enfants à domicile"},
+      ...EXTRA
+    ];
+  } catch(e) { allIdees = EXTRA; }
+
+  // Remove duplicates by name
+  const seen = new Set();
+  const unique = allIdees.filter(i => { if(seen.has(i.nom)) return false; seen.add(i.nom); return true; });
+
+  // Score and sort
+  const sorted = unique
+    .map(i => ({...i, fs: scoreItem(i)}))
+    .sort((a,b) => b.fs - a.fs);
+
   el.innerHTML = `
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
         <div class="card-title" style="margin-bottom:0">50 idées de Plan B</div>
         <button class="btn-outline" style="font-size:11px;padding:6px 12px" onclick="switchTabById('idee',0)">← Refaire l'analyse</button>
       </div>
-      <div class="card-sub">Classées par popularité — clique sur une idée pour l'analyser avec l'IA</div>
+      <div class="card-sub">Triées selon ton profil — clique sur une idée pour l'analyser</div>
       <div style="max-height:500px;overflow-y:auto">
-        ${idees50.map((idea,i)=>`
-          <div style="padding:10px 14px;background:var(--darker);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:13px;color:var(--text);display:flex;justify-content:space-between;align-items:center" onclick="analyserIdeeDirecte('${idea.replace(/'/g,"\'")}')">
-            <span>${idea}</span><span style="color:var(--muted)">›</span>
+        ${sorted.slice(0,50).map((idea,i)=>`
+          <div style="padding:10px 14px;background:var(--darker);border:1px solid ${i<3?'rgba(201,168,76,.3)':'var(--border)'};border-radius:8px;margin-bottom:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:all .2s" onclick="analyserIdeeDirecte('${idea.nom.replace(/'/g,"&#39;")}')"
+            onmouseover="this.style.borderColor='rgba(201,168,76,.3)'" onmouseout="this.style.borderColor='${i<3?'rgba(201,168,76,.3)':'var(--border)'}'">
+            <div>
+              <span style="font-size:12px;color:var(--muted);margin-right:8px">${i+1}.</span>
+              <span style="font-size:13px;color:var(--text)">${idea.nom}</span>
+              ${i<3?'<span style="margin-left:8px;font-size:10px;background:rgba(201,168,76,.15);color:var(--gold);padding:2px 8px;border-radius:20px;font-weight:600">Recommandé</span>':''}
+            </div>
+            <span style="color:var(--muted);font-size:14px">›</span>
           </div>
         `).join('')}
       </div>
@@ -1743,16 +1827,42 @@ function simulerAnalyse(form, exclude) {
     {nom:"Garderie et garde d'enfants",score:77,secteurs:["Autre"],mots:["enfant","garde","parent","bébé","maternel","crèche","garderie","soin","famille","éducation"],description:"Tu gardes des enfants chez toi ou chez les parents pendant qu'ils travaillent.",pourquoi:"Les deux parents travaillent. Fort besoin de garde fiable en "+pays+".",tags:["Famille","Récurrent","Confiance"],offre:"Je garde vos enfants avec soin et bienveillance",public:"Parents qui travaillent",benefice:"Enfants en sécurité pendant le travail",prix:getPrix(30000,'mois')},
   ];
 
-  // Score each idea based on competence and besoin keywords
+  // Extract individual words from user input for flexible matching
+  const compWords = comp.split(/\s+/).filter(w => w.length > 3);
+  const besoinWords = besoin.split(/\s+/).filter(w => w.length > 3);
+
+  // Score each idea
   function scoreIdee(idee) {
     let score = idee.score;
-    // Sector match bonus
-    if(idee.secteurs.includes(secteur)) score += 15;
-    // Keyword match bonus
+
+    // Sector match = big bonus
+    if(idee.secteurs.includes(secteur)) score += 20;
+
+    // Match predefined keywords against user words
     idee.mots.forEach(mot => {
+      // Check if any user word contains this keyword or vice versa
+      compWords.forEach(w => {
+        if(w.includes(mot) || mot.includes(w)) score += 10;
+      });
+      besoinWords.forEach(w => {
+        if(w.includes(mot) || mot.includes(w)) score += 7;
+      });
+      // Direct substring match
       if(comp.includes(mot)) score += 8;
       if(besoin.includes(mot)) score += 6;
     });
+
+    // Check user words directly in idea name/description
+    compWords.forEach(w => {
+      if(idee.nom.toLowerCase().includes(w)) score += 12;
+      if(idee.description.toLowerCase().includes(w)) score += 5;
+      if(idee.tags.some(t => t.toLowerCase().includes(w))) score += 6;
+    });
+    besoinWords.forEach(w => {
+      if(idee.nom.toLowerCase().includes(w)) score += 9;
+      if(idee.description.toLowerCase().includes(w)) score += 4;
+    });
+
     return score;
   }
 
@@ -1764,9 +1874,9 @@ function simulerAnalyse(form, exclude) {
 
   const selected = scored.slice(0,3);
 
-  // Build personalised analyse text
-  const topSecteur = selected[0]?.secteurs[0] || secteur;
-  const analyse = `Après analyse de ton profil en ${pays} — ta compétence "${form.competence}", ton besoin observé et ton secteur "${secteur}" — voici les 3 idées les plus adaptées à ta situation. Ces recommandations tiennent compte de tes forces naturelles et des opportunités du marché local.`;
+  // Build personalised analyse text showing what was found
+  const topScore = selected[0]?.finalScore || 0;
+  const analyse = `Après analyse de ton profil en ${pays} — ta compétence en "${form.competence}", ton secteur "${secteur}" et le besoin que tu observes — voici les 3 idées les plus adaptées à ta situation et au marché local.`;
 
   return { analyse, idees: selected };
 }
