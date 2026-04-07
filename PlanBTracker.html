@@ -1174,18 +1174,15 @@ function renderIdeeResults(data, form, previousIdees) {
         <button class="btn-outline" style="font-size:11px;padding:6px 12px" onclick="relancerRecherche('${prevList.replace(/'/g,"\'")}')">🔄 Nouvelles idées</button>
       </div>
       <div class="card-sub">Clique Choisir pour activer une idée — ou demande de nouvelles suggestions</div>
-      ${data.idees.map(idee => `
-        <div class="idea-card ${isActive(idee.nom)?'selected':''}">
-          <div class="idea-score">${idee.score}</div>
-          <div style="flex:1">
-            <div style="font-size:14px;font-weight:600;color:var(--text)">${idee.nom}</div>
-            <div style="font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5">${idee.description}</div>
-            <div style="font-size:11px;color:var(--gold);margin-top:3px">${idee.pourquoi}</div>
-            <div style="margin-top:7px">${idee.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
-          </div>
-          <button class="btn-outline" style="font-size:12px;flex-shrink:0" onclick='choisirIdee(${JSON.stringify(idee).replace(/'/g,"&#39;")}, ${JSON.stringify(form).replace(/'/g,"&#39;")})'>${isActive(idee.nom)?'✓ Active':'Choisir'}</button>
-        </div>
-      `).join('')}
+      ${data.idees.map((idee,i) => {
+        STATE._lastIdeesList = STATE._lastIdeesList || data.idees;
+        STATE._lastForm = form;
+        const active = isActive(idee.nom);
+        const btnHtml = active
+          ? '<button class="btn-outline" style="font-size:12px;flex-shrink:0;opacity:.6;border-color:#2ECC71;color:#2ECC71" disabled>✓ Active</button>'
+          : '<button class="btn-outline" style="font-size:12px;flex-shrink:0" onclick="choisirIdeeByIndex('+i+')">Choisir</button>';
+        return '<div class="idea-card '+(active?'selected':'')+'"><div class="idea-score">'+idee.score+'</div><div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--text)">'+idee.nom+'</div><div style="font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5">'+idee.description+'</div><div style="font-size:11px;color:var(--gold);margin-top:3px">'+idee.pourquoi+'</div><div style="margin-top:7px">'+idee.tags.map(t=>'<span class="tag">'+t+'</span>').join('')+'</div></div>'+btnHtml+'</div>';
+      }).join('')}
     </div>
     <div style="text-align:center;padding:16px;border-top:1px solid var(--border);margin-top:4px">
       <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Aucune de ces idées ne te convient ?</div>
@@ -1368,6 +1365,12 @@ async function analyserIdeeDirecte(idea) {
   document.getElementById('f-besoin').value = 'Je veux développer cette idée : ' + cleanIdea;
   switchTabById('idee', 0);
   setTimeout(()=>analyserProfil(), 200);
+}
+
+function choisirIdeeByIndex(i) {
+  const idee = STATE._lastIdeesList && STATE._lastIdeesList[i];
+  const form = STATE._lastForm;
+  if(idee) choisirIdee(idee, form);
 }
 
 async function choisirIdee(idee, form) {
@@ -1842,31 +1845,34 @@ async function ctxSend(chipEl, ctx, msg) {
     revenus: "Tu es l'assistant de Coach Redouane dans Plan B Tracker, section Revenus. Aide a gerer les finances, fixer les prix et optimiser les revenus. Reponds en francais, max 120 mots, concret et pratique.",
   };
 
-  const userName = STATE.user?.prenom || '';
-  const system = systems[ctx] + (userName ? ` L'utilisateur s'appelle ${userName}. Tutoie-le et utilise son prenom.` : '');
+  const uName = STATE.user ? (STATE.user.prenom || '') : '';
+  const ideaCtx = STATE.ideaActive ? " Idee active de l utilisateur: " + STATE.ideaActive.nom + "." : "";
+  const sys = systems[ctx] + ideaCtx + (uName ? " L utilisateur s appelle " + uName + ". Tutoie-le et utilise son prenom." : " Tutoie l utilisateur.");
 
   try {
-    const userName = STATE.user?.prenom || '';
-    const sys = systems[ctx] + (userName ? " L'utilisateur s'appelle "+userName+". Tutoie-le et utilise son prenom naturellement." : " Tutoie l'utilisateur.");
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         system: sys,
         messages: STATE.ctxHistory[ctx],
-        max_tokens: 400
+        max_tokens: 500
       })
     });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
     const d = await res.json();
+    if(!d.content) throw new Error('No content in response');
     const reply = d.content.map(x=>x.text||'').join('');
     STATE.ctxHistory[ctx].push({role:"assistant", content:reply});
     document.getElementById('ctx-loading-'+ctx).remove();
-    messagesEl.innerHTML += `<div class="ctx-msg bot">${reply.replace(/\n/g,'<br>')}</div>`;
+    const replyHtml = reply.split('\n').join('<br>');
+    messagesEl.innerHTML += '<div class="ctx-msg bot">' + replyHtml + '</div>';
   } catch(e) {
+    console.error('Chat API error:', e.message);
     const reply = simulerChat(msg, ctx);
     STATE.ctxHistory[ctx].push({role:"assistant", content:reply});
     document.getElementById('ctx-loading-'+ctx).remove();
-    messagesEl.innerHTML += `<div class="ctx-msg bot">${reply}</div>`;
+    messagesEl.innerHTML += '<div class="ctx-msg bot">' + reply + '</div>';
   }
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
