@@ -1411,10 +1411,9 @@ async function activerIdee(idee, form) {
   } catch(e) {
     STATE.actions = simulerActions(idee);
   }
-  // Switch to phase 1 (month 1) when new idea selected
   STATE.activePhase = 0;
-  renderActionsList();
   renderPhases();
+  renderActionsList();
   updateDashboard();
   document.getElementById('plan-gen-loading').style.display = 'none';
 }
@@ -1502,12 +1501,17 @@ function renderArchive() {
         <div style="font-size:12px;color:var(--muted)">Actions: <span style="color:var(--gold)">${a.done}/${a.total}</span></div>
         <div style="font-size:12px;color:var(--muted)">Revenus: <span style="color:var(--gold)">${a.revenus.toLocaleString()} FCFA</span></div>
       </div>
-      ${a.statut!=='Terminé'?`<button class="btn-outline" style="margin-top:10px;font-size:12px" onclick="reprendreIdee(${i})">Reprendre cette idée</button>`:''}
+      ${a.statut!=='Terminé'?`<button class="btn-outline" style="margin-top:10px;font-size:12px" onclick="reprendreIdee(${i})">${STATE.ideaActive ? '⚠️ Archiver mon idée active d\'abord' : 'Reprendre cette idée'}</button>`:''}
     </div>
   `).join('');
 }
 
 function reprendreIdee(idx) {
+  // Block if an idea is already active
+  if(STATE.ideaActive) {
+    alert('Une idée est déjà active : "' + STATE.ideaActive.nom + '". Archive-la d\'abord avant de reprendre une autre idée.');
+    return;
+  }
   const a = STATE.archives[idx];
   STATE.ideaActive = {
     nom: a.nom,
