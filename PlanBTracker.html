@@ -1157,6 +1157,7 @@ async function analyserProfil() {
   loading.style.display = 'none';
 }
 function renderIdeeResults(data, form, previousIdees) {
+  STATE.lastForm = form; // Store for 50 ideas list
   const el = document.getElementById('idee-results');
   const isActive = (nom) => STATE.ideaActive && STATE.ideaActive.nom === nom;
   const prevList = previousIdees ? previousIdees.map(i=>i.nom).join(', ') : '';
@@ -1225,6 +1226,7 @@ async function relancerRecherche(previousNames) {
 
 function showIdeesList() {
   const el = document.getElementById('idee-results');
+  const form = STATE.lastForm || {pays:'',competence:'',besoin:'',secteur:'Services digitaux',temps:'1h',budget:''};
   
   // Build dynamic list from TOUTES_IDEES pool + extra ideas, sorted by relevance
   const comp = document.getElementById('f-comp').value.trim().toLowerCase();
@@ -1326,7 +1328,10 @@ function showIdeesList() {
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
         <div class="card-title" style="margin-bottom:0">50 idées de Plan B</div>
-        <button class="btn-outline" style="font-size:11px;padding:6px 12px" onclick="switchTabById('idee',0)">← Refaire l'analyse</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn-outline" style="font-size:11px;padding:6px 12px" onclick="switchTabById('idee',1)">← Voir mes 3 idées</button>
+          <button class="btn-outline" style="font-size:11px;padding:6px 12px" onclick="switchTabById('idee',0)">Refaire l'analyse</button>
+        </div>
       </div>
       <div class="card-sub">Triées selon ton profil — clique sur une idée pour l'analyser</div>
       <div style="max-height:500px;overflow-y:auto">
@@ -1422,12 +1427,23 @@ function renderActiveIdeaView() {
 function confirmChangeIdea() {
   if(STATE.ideaActive) {
     const done = STATE.actions.filter(a=>a.done).length;
-    STATE.archives.push({nom:STATE.ideaActive.nom, statut:'En pause', debut:new Date().toLocaleDateString('fr-FR'), done, total:STATE.actions.length, revenus:STATE.revenus.filter(r=>r.type==='revenu').reduce((s,r)=>s+r.montant,0)});
+    STATE.archives.push({
+          nom: STATE.ideaActive.nom,
+          offre: STATE.ideaActive.offre||'',
+          public: STATE.ideaActive.public||'',
+          benefice: STATE.ideaActive.benefice||'',
+          prix: STATE.ideaActive.prix||'',
+          statut:'En pause',
+          debut:new Date().toLocaleDateString('fr-FR'),
+          done, total:STATE.actions.length,
+          revenus:STATE.revenus.filter(r=>r.type==='revenu').reduce((s,r)=>s+r.montant,0),
+          actions:[...STATE.actions]
+        });
     document.getElementById('badge-archive').style.display = 'inline';
     document.getElementById('badge-archive').textContent = STATE.archives.length;
   }
   STATE.ideaActive = null;
-  STATE.actions = STATE.actions.slice(0,8);
+  STATE.actions = []; // Clear all actions when archiving
   closeModal('modal-change-idea');
   if(STATE._pendingIdee) { activerIdee(STATE._pendingIdee.idee, STATE._pendingIdee.form); STATE._pendingIdee = null; }
   else { renderActiveIdeaView(); updateUserDisplay(); updateDashboard(); }
@@ -1473,10 +1489,25 @@ function renderArchive() {
 
 function reprendreIdee(idx) {
   const a = STATE.archives[idx];
-  STATE.ideaActive = {nom: a.nom};
+  STATE.ideaActive = {
+    nom: a.nom,
+    offre: a.offre || '',
+    public: a.public || '',
+    benefice: a.benefice || '',
+    prix: a.prix || ''
+  };
+  // Restore archived actions if saved
+  if(a.actions && a.actions.length > 0) {
+    STATE.actions = a.actions.map(ac => ({...ac, id: STATE.nextId++}));
+  } else {
+    STATE.actions = simulerActions(STATE.ideaActive);
+  }
   updateUserDisplay();
   renderActiveIdeaView();
-  goTo('idee');
+  renderPhases();
+  renderActionsList();
+  updateDashboard();
+  switchTabById('idee', 2);
 }
 
 // ── PROFILE ─────────────────────────────────────────
