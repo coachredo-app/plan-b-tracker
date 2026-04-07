@@ -1157,9 +1157,11 @@ async function analyserProfil() {
   loading.style.display = 'none';
 }
 function renderIdeeResults(data, form, previousIdees) {
-  STATE.lastForm = form; // Store for 50 ideas list
+  STATE.lastForm = form;
+  STATE.lastIdees = data.idees;
   const el = document.getElementById('idee-results');
   const isActive = (nom) => STATE.ideaActive && STATE.ideaActive.nom === nom;
+  // Will store HTML after render
   const prevList = previousIdees ? previousIdees.map(i=>i.nom).join(', ') : '';
   el.innerHTML = `
     <div class="ai-result-box">
@@ -1190,8 +1192,8 @@ function renderIdeeResults(data, form, previousIdees) {
       <button class="btn-outline" style="font-size:12px" onclick="showIdeesList()">📋 Voir la liste des 50 meilleures idées</button>
     </div>
   `;
+  setTimeout(()=>{ STATE.lastResultsHTML = document.getElementById('idee-results').innerHTML; }, 50);
 }
-
 async function relancerRecherche(previousNames) {
   const el = document.getElementById('idee-results');
   el.innerHTML = '<div style="display:flex;align-items:center;gap:10px;padding:20px;color:var(--gold)"><div class="spinner" style="width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite"></div>Recherche de nouvelles idées...</div>';
@@ -1224,9 +1226,18 @@ async function relancerRecherche(previousNames) {
   }
 }
 
+function backToResults() {
+  if(STATE.lastResultsHTML) {
+    document.getElementById('idee-results').innerHTML = STATE.lastResultsHTML;
+  }
+  switchTabById('idee', 1);
+}
+
 function showIdeesList() {
   const el = document.getElementById('idee-results');
   const form = STATE.lastForm || {pays:'',competence:'',besoin:'',secteur:'Services digitaux',temps:'1h',budget:''};
+  // Get the 3 analysed ideas to put them first
+  const top3Names = STATE.lastIdees ? STATE.lastIdees.map(i=>i.nom) : [];
   
   // Build dynamic list from TOUTES_IDEES pool + extra ideas, sorted by relevance
   const comp = document.getElementById('f-comp').value.trim().toLowerCase();
@@ -1320,16 +1331,18 @@ function showIdeesList() {
   const unique = allIdees.filter(i => { if(seen.has(i.nom)) return false; seen.add(i.nom); return true; });
 
   // Score and sort
-  const sorted = unique
-    .map(i => ({...i, fs: scoreItem(i)}))
-    .sort((a,b) => b.fs - a.fs);
+  const scored = unique.map(i => ({...i, fs: scoreItem(i)}));
+  // Put the 3 analysed ideas first, then rest sorted by score
+  const top3 = scored.filter(i => top3Names.includes(i.nom)).sort((a,b) => top3Names.indexOf(a.nom) - top3Names.indexOf(b.nom));
+  const rest = scored.filter(i => !top3Names.includes(i.nom)).sort((a,b) => b.fs - a.fs);
+  const sorted = [...top3, ...rest];
 
   el.innerHTML = `
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
         <div class="card-title" style="margin-bottom:0">50 idées de Plan B</div>
         <div style="display:flex;gap:8px">
-          <button class="btn-outline" style="font-size:11px;padding:6px 12px" onclick="switchTabById('idee',1)">← Voir mes 3 idées</button>
+          <button class="btn-outline" style="font-size:11px;padding:6px 12px" onclick="backToResults()">← Voir mes 3 idées</button>
           <button class="btn-outline" style="font-size:11px;padding:6px 12px" onclick="switchTabById('idee',0)">Refaire l'analyse</button>
         </div>
       </div>
@@ -1378,21 +1391,28 @@ async function activerIdee(idee, form) {
   // Generate AI actions via backend
   document.getElementById('plan-gen-loading').style.display = 'flex';
   try {
-    const schema = '{"actions":[{"text":"action concrete","week":"Semaine 1"},{"text":"...","week":"Semaine 2"},{"text":"...","week":"Semaine 3"},{"text":"...","week":"Semaine 4"},{"text":"...","week":"Semaine 5"},{"text":"...","week":"Semaine 6"},{"text":"...","week":"Semaine 7"},{"text":"...","week":"Semaine 8"},{"text":"...","week":"Semaine 9"},{"text":"...","week":"Semaine 10"},{"text":"...","week":"Semaine 11"},{"text":"...","week":"Semaine 12"}]}';
-    const prompt = "Tu es Coach Redouane. Genere exactement 12 actions concretes sur 3 mois pour cette idee de Plan B. IDEE:"+idee.nom+". OFFRE:"+(idee.offre||"")+". PAYS:"+(form&&form.pays||"Senegal")+". TEMPS:"+(form&&form.temps||"1h")+"/jour. Reponds UNIQUEMENT en JSON valide sans markdown, format exact: "+schema+". Actions simples, concretes, adaptees a l'Afrique francophone.";
+    const schema12 = '{"actions":[{"text":"...","week":"Semaine 1"},{"text":"...","week":"Semaine 2"},{"text":"...","week":"Semaine 3"},{"text":"...","week":"Semaine 4"},{"text":"...","week":"Semaine 5"},{"text":"...","week":"Semaine 6"},{"text":"...","week":"Semaine 7"},{"text":"...","week":"Semaine 8"},{"text":"...","week":"Semaine 9"},{"text":"...","week":"Semaine 10"},{"text":"...","week":"Semaine 11"},{"text":"...","week":"Semaine 12"}]}';
+    const prompt = "Tu es Coach Redouane. Genere exactement 12 actions concretes sur 3 mois pour cette idee. IDEE:" + idee.nom + ". OFFRE:" + (idee.offre||"") + ". PAYS:" + (form&&form.pays||"Senegal") + ". TEMPS:" + (form&&form.temps||"1h") + "/jour. Reponds UNIQUEMENT en JSON valide sans markdown, format: " + schema12 + ". Une action par semaine, de Semaine 1 a Semaine 12.";
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({messages: [{role:'user', content: prompt}], max_tokens: 1000})
+      body: JSON.stringify({messages: [{role:'user', content: prompt}], max_tokens: 1500})
     });
     const d = await res.json();
     const text = d.content.map(x=>x.text||'').join('').replace(/```json|```/g,'').trim();
     const result = JSON.parse(text);
-    STATE.actions = result.actions.map((a,i)=>({id:STATE.nextId++, text:a.text, week:a.week, done:false}));
+    const apiActions = result.actions.map((a,i)=>({id:STATE.nextId++, text:a.text, week:a.week, done:false}));
+    // Ensure we have actions for all 3 months - fill missing with defaults
+    const weeks = ["Semaine 1","Semaine 2","Semaine 3","Semaine 4","Semaine 5","Semaine 6","Semaine 7","Semaine 8","Semaine 9","Semaine 10","Semaine 11","Semaine 12"];
+    const covered = new Set(apiActions.map(a=>a.week));
+    const missing = weeks.filter(w=>!covered.has(w));
+    const defaults = simulerActions(idee).filter(a=>missing.includes(a.week));
+    STATE.actions = [...apiActions, ...defaults].sort((a,b)=> weeks.indexOf(a.week)-weeks.indexOf(b.week));
   } catch(e) {
-    // Fallback to simulation
     STATE.actions = simulerActions(idee);
   }
+  // Switch to phase 1 (month 1) when new idea selected
+  STATE.activePhase = 0;
   renderActionsList();
   renderPhases();
   updateDashboard();
@@ -1496,14 +1516,23 @@ function reprendreIdee(idx) {
     benefice: a.benefice || '',
     prix: a.prix || ''
   };
-  // Restore archived actions if saved
+  // Restore archived actions
   if(a.actions && a.actions.length > 0) {
     STATE.actions = a.actions.map(ac => ({...ac, id: STATE.nextId++}));
   } else {
     STATE.actions = simulerActions(STATE.ideaActive);
   }
+  // Remove from archive
+  STATE.archives.splice(idx, 1);
+  // Update archive badge
+  const badge = document.getElementById('badge-archive');
+  if(badge) {
+    badge.textContent = STATE.archives.length;
+    badge.style.display = STATE.archives.length > 0 ? 'inline' : 'none';
+  }
   updateUserDisplay();
   renderActiveIdeaView();
+  renderArchive();
   renderPhases();
   renderActionsList();
   updateDashboard();
