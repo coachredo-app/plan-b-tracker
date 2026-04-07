@@ -233,6 +233,8 @@ body{background:var(--darker);color:var(--text);font-family:'DM Sans',sans-serif
 
 /* ── MOBILE RESPONSIVE ─────────────────────────── */
 @media (max-width: 768px) {
+  html, body { overflow-x: hidden !important; max-width: 100vw !important; }
+  * { max-width: 100% !important; }
   /* Hide sidebar, show bottom nav */
   .sidebar { display: none !important; }
   .main { margin-left: 0 !important; padding: 16px 16px 80px !important; }
@@ -327,8 +329,12 @@ body{background:var(--darker);color:var(--text);font-family:'DM Sans',sans-serif
   .modal { width: 95vw !important; padding: 20px !important; margin: 0 auto; }
 
   /* Chat button above mobile nav */
-  .chat-btn { bottom: 72px !important; right: 16px !important; }
-  .chat-panel { bottom: 140px !important; right: 8px !important; width: calc(100vw - 16px) !important; }
+  .chat-btn { bottom: 76px !important; right: 16px !important; z-index: 150 !important; }
+  .chat-panel { bottom: 144px !important; right: 4px !important; width: calc(100vw - 8px) !important; max-height: 60vh !important; }
+  /* Context chat send button visible */
+  .ctx-chat { position: relative; z-index: 1; }
+  .ctxir { padding-bottom: 8px; }
+  .ctx-input-row { padding-bottom: 4px; }
 
   /* Profile modal */
   .profile-card { width: 95vw !important; padding: 20px !important; }
@@ -893,7 +899,7 @@ const ONB_STEPS = [
   {title:"Ton objectif principal ?", desc:"Ce qui te motive à utiliser Plan B Tracker", type:"cards", field:"objectif", opts:["Revenu complémentaire","Lancer mon business","Liberté financière","Quitter mon emploi","Investir et épargner"]},
 ];
 let onbStep = 0;
-let onbData = {prenom:"", email:"", pays:"Sénégal", situation:"Salarié", objectif:"Revenu complémentaire"};
+let onbData = {prenom:"", email:"", pays:"", situation:"Salarié", objectif:"Revenu complémentaire"};
 
 function renderOnbStep() {
   const s = ONB_STEPS[onbStep];
@@ -928,7 +934,12 @@ function onbNext() {
     if(!v) { document.getElementById('onb-input').style.borderColor='rgba(231,76,60,.6)'; return; }
     onbData[s.field] = v;
   } else if(s.type === 'select') {
-    onbData[s.field] = document.getElementById('onb-select').value;
+    const selVal = document.getElementById('onb-select').value;
+    if(!selVal) { 
+      document.getElementById('onb-select').style.borderColor='rgba(231,76,60,.6)'; 
+      return; 
+    }
+    onbData[s.field] = selVal;
   }
   if(onbStep < ONB_STEPS.length-1) {
     onbStep++;
@@ -2035,18 +2046,19 @@ async function ctxSend(chipEl, ctx, msg) {
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         system: sys,
-        messages: STATE.ctxHistory[ctx],
+        messages: STATE.ctxHistory[ctx].slice(-10),
         max_tokens: 500
       })
     });
-    if(!res.ok) {
-      const errText = await res.text();
-      throw new Error('HTTP ' + res.status + ': ' + errText);
-    }
     const d = await res.json();
-    if(d.error) throw new Error(d.error.message || 'API error');
-    if(!d.content || !d.content.length) throw new Error('Reponse vide');
-    const reply = d.content.map(x=>x.text||'').join('');
+    let reply = '';
+    if(d.content && d.content.length > 0) {
+      reply = d.content.map(x=>x.text||'').join('');
+    } else if(d.error) {
+      throw new Error(d.error.message || JSON.stringify(d.error));
+    } else {
+      throw new Error('Reponse inattendue: ' + JSON.stringify(d).slice(0,100));
+    }
     STATE.ctxHistory[ctx].push({role:"assistant", content:reply});
     document.getElementById('ctx-loading-'+ctx).remove();
     const replyHtml = reply.split('\n').join('<br>');
@@ -2054,7 +2066,8 @@ async function ctxSend(chipEl, ctx, msg) {
   } catch(e) {
     console.error('Chat API error:', e.message);
     document.getElementById('ctx-loading-'+ctx).remove();
-    messagesEl.innerHTML += '<div class="ctx-msg bot" style="color:var(--danger)">Probleme de connexion. Verifie ta connexion internet et reessaie.</div>';
+    // Show the actual error for debugging
+    messagesEl.innerHTML += '<div class="ctx-msg bot" style="color:var(--danger);font-size:11px">Erreur: ' + e.message + '</div>';
   }
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
