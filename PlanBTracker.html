@@ -296,8 +296,16 @@ body{background:var(--darker);color:var(--text);font-family:'DM Sans',sans-serif
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     flex-wrap: nowrap;
+    scrollbar-width: none;
   }
-  .tab-btn { min-width: 100px; white-space: nowrap; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab-btn { 
+    min-width: 90px; 
+    white-space: nowrap; 
+    flex-shrink: 0;
+    font-size: 12px;
+    padding: 7px 10px;
+  }
 
   /* Cards */
   .card { padding: 16px; }
@@ -899,7 +907,7 @@ function renderOnbStep() {
   if(s.type === 'input') {
     const itype = s.inputType || 'text'; html = `<label class="field-label">${s.lbl} <span class="req">*</span></label><input class="fi" type="${itype}" id="onb-input" placeholder="${s.ph}" value="${onbData[s.field]}" style="font-size:16px;padding:12px 16px" onkeydown="if(event.key==='Enter')onbNext()">`;
   } else if(s.type === 'select') {
-    html = `<label class="field-label">${s.lbl}</label><select class="fs" id="onb-select" style="font-size:15px;padding:11px 14px">${PAYS.map(p=>`<option${p===onbData[s.field]?' selected':''}>${p}</option>`).join('')}</select>`;
+    html = `<label class="field-label">${s.lbl}</label><select class="fs" id="onb-select" style="font-size:15px;padding:11px 14px"><option value="" disabled ${!onbData[s.field]?'selected':''}>— Choisir ton pays —</option>${PAYS.map(p=>`<option${p===onbData[s.field]?' selected':''}>${p}</option>`).join('')}</select>`;
   } else if(s.type === 'cards') {
     html = `<div class="cards-grid">${s.opts.map(o=>`<div class="choice-card${onbData[s.field]===o?' selected':''}" onclick="selectCard(this,'${s.field}','${o}')">${o}</div>`).join('')}</div>`;
   }
@@ -950,7 +958,7 @@ function initApp() {
   // Fill pays dropdowns
   ['f-pays','edit-pays'].forEach(id => {
     const el = document.getElementById(id);
-    if(el) el.innerHTML = PAYS.map(p=>`<option>${p}</option>`).join('');
+    if(el) el.innerHTML = '<option value="" disabled selected>— Choisir ton pays —</option>' + PAYS.map(p=>`<option>${p}</option>`).join('');
   });
   
   // Set correct page title immediately
@@ -1305,6 +1313,7 @@ async function analyserProfil() {
     renderIdeeResults(data, form);
     switchTabById('idee', 1);
   } catch(e) {
+    console.error('Analyse API error:', e.message);
     // Fallback to simulation if API fails
     const data = simulerAnalyse(form);
     renderIdeeResults(data, form);
@@ -2030,9 +2039,13 @@ async function ctxSend(chipEl, ctx, msg) {
         max_tokens: 500
       })
     });
-    if(!res.ok) throw new Error('HTTP ' + res.status);
+    if(!res.ok) {
+      const errText = await res.text();
+      throw new Error('HTTP ' + res.status + ': ' + errText);
+    }
     const d = await res.json();
-    if(!d.content) throw new Error('No content in response');
+    if(d.error) throw new Error(d.error.message || 'API error');
+    if(!d.content || !d.content.length) throw new Error('Reponse vide');
     const reply = d.content.map(x=>x.text||'').join('');
     STATE.ctxHistory[ctx].push({role:"assistant", content:reply});
     document.getElementById('ctx-loading-'+ctx).remove();
@@ -2040,10 +2053,8 @@ async function ctxSend(chipEl, ctx, msg) {
     messagesEl.innerHTML += '<div class="ctx-msg bot">' + replyHtml + '</div>';
   } catch(e) {
     console.error('Chat API error:', e.message);
-    const reply = simulerChat(msg, ctx);
-    STATE.ctxHistory[ctx].push({role:"assistant", content:reply});
     document.getElementById('ctx-loading-'+ctx).remove();
-    messagesEl.innerHTML += '<div class="ctx-msg bot">' + reply + '</div>';
+    messagesEl.innerHTML += '<div class="ctx-msg bot" style="color:var(--danger)">Probleme de connexion. Verifie ta connexion internet et reessaie.</div>';
   }
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
