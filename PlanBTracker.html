@@ -1138,23 +1138,100 @@ function confirmDelAction() {
   updateDashboard();
 }
 
+function getWeekInfo(weekNum) {
+  for(const phase of PLAN90_DATA.phases) {
+    for(const sem of phase.semaines) {
+      if(sem.num === weekNum) return sem;
+    }
+  }
+  return null;
+}
+
 function renderActionsList() {
   const filtered = STATE.actions.filter(a=>PHASE_MAP[STATE.activePhase].includes(a.week));
   const done = filtered.filter(a=>a.done).length;
   const allDone = STATE.actions.filter(a=>a.done).length;
   const allTotal = STATE.actions.length;
   const pct = allTotal > 0 ? Math.round((allDone/allTotal)*100) : 0;
-  const phases = [{nm:"Mois 1 — Fondations"},{nm:"Mois 2 — Amélioration"},{nm:"Mois 3 — Stabilisation"}];
+  const phaseData = PLAN90_DATA.phases[STATE.activePhase];
 
-  document.getElementById('phase-actions-title').textContent = 'Actions — '+phases[STATE.activePhase].nm;
-  document.getElementById('phase-actions-sub').textContent = `${done}/${filtered.length} complétées dans cette phase`;
+  document.getElementById('phase-actions-title').textContent = phaseData ? phaseData.titre : 'Actions';
+  document.getElementById('phase-actions-sub').textContent = done+'/'+filtered.length+' actions — '+( phaseData ? phaseData.objectif : '');
   document.getElementById('global-pct').textContent = pct+'% global';
 
   const list = document.getElementById('actions-list');
+  // Show week objectives and KPIs grouped by week
+  const weekNums = PHASE_MAP[STATE.activePhase].map(w => parseInt(w.replace('Semaine ','')));
+  
+  // Check if phase 1 and no sales at week 4
+  const phase1Done = STATE.activePhase === 0 && STATE.actions.filter(a=>PHASE_MAP[0].includes(a.week)&&a.done).length >= STATE.actions.filter(a=>PHASE_MAP[0].includes(a.week)).length * 0.8;
+  const hasRevenu = STATE.revenus && STATE.revenus.filter(r=>r.type==='revenu').length > 0;
+  
+  // Build KPI header for current phase
+  let kpiHtml = '<div style="background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.15);border-radius:10px;padding:12px 14px;margin-bottom:12px">';
+  kpiHtml += '<div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--gold);font-weight:600;margin-bottom:8px">📊 KPIs de cette phase</div>';
+  weekNums.forEach(wn => {
+    const kpi = KPIS[wn];
+    const weekActions = STATE.actions.filter(a=>a.week==='Semaine '+wn);
+    const weekDone = weekActions.filter(a=>a.done).length;
+    const weekComplete = weekActions.length > 0 && weekDone === weekActions.length;
+    kpiHtml += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">';
+    kpiHtml += '<span style="font-size:12px;'+(weekComplete?'color:var(--success)':'color:var(--muted)')+'">'+( weekComplete?'✓':'○')+'</span>';
+    kpiHtml += '<span style="font-size:11px;color:'+(weekComplete?'var(--success)':'var(--text)')+'"><strong>S'+wn+':</strong> '+kpi+'</span>';
+    kpiHtml += '</div>';
+  });
+  kpiHtml += '</div>';
+
+  // Secours alert for phase 1
+  let secoursHtml = '';
+  if(STATE.activePhase === 0 && phase1Done && !hasRevenu) {
+    const s = PLAN90_DATA.phases[0].secours;
+    secoursHtml = '<div style="background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.25);border-radius:10px;padding:14px;margin-bottom:12px">';
+    secoursHtml += '<div style="font-size:13px;font-weight:600;color:var(--danger);margin-bottom:6px">🚨 '+s.titre+'</div>';
+    secoursHtml += '<div style="font-size:12px;color:var(--text);margin-bottom:8px;font-style:italic">'+s.message+'</div>';
+    secoursHtml += '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:600">Actions correctives :</div>';
+    s.actions.forEach(a => { secoursHtml += '<div style="font-size:11px;color:var(--text);margin-bottom:3px">→ '+a+'</div>'; });
+    secoursHtml += '</div>';
+  }
+
   if(filtered.length === 0) {
-    list.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)"><div style="font-size:28px;margin-bottom:8px">📋</div><div style="font-size:13px">Aucune action dans cette phase</div></div>';
+    list.innerHTML = kpiHtml + '<div style="text-align:center;padding:24px;color:var(--muted)"><div style="font-size:28px;margin-bottom:8px">📋</div><div style="font-size:13px">Aucune action dans cette phase</div></div>';
     return;
   }
+
+  // Group actions by week with week header
+  let actionsHtml = kpiHtml + secoursHtml;
+  let currentWeek = '';
+  filtered.forEach(a => {
+    if(a.week !== currentWeek) {
+      currentWeek = a.week;
+      const wNum = parseInt(a.week.replace('Semaine ',''));
+      const wInfo = getWeekInfo(wNum);
+      if(wInfo) {
+        const wActions = filtered.filter(x=>x.week===a.week);
+        const wDone = wActions.filter(x=>x.done).length;
+        const wComplete = wDone === wActions.length && wActions.length > 0;
+        actionsHtml += '<div style="margin-bottom:4px;margin-top:12px;padding:8px 12px;background:var(--darker);border-radius:8px;border-left:3px solid '+(wComplete?'var(--success)':'var(--gold)')+'">';
+        actionsHtml += '<div style="font-size:12px;font-weight:600;color:'+(wComplete?'var(--success)':'var(--gold)')+'">'+a.week+' — '+wInfo.titre+(wComplete?' ✓':'')+'</div>';
+        actionsHtml += '<div style="font-size:11px;color:var(--muted);margin-top:2px">🎯 '+wInfo.objectif+'</div>';
+        actionsHtml += '<div style="font-size:10px;color:var(--gold);margin-top:2px;opacity:.8">✅ KPI : '+wInfo.kpi+'</div>';
+        actionsHtml += '</div>';
+      }
+    }
+    actionsHtml += '<div class="action-item">'
+      + '<div class="action-check '+(a.done?'checked':'')+'" onclick="toggleAction('+a.id+')">'+(a.done?'✓':'')+'</div>'
+      + '<input class="action-text '+(a.done?'done':'')+'" value="'+a.text.replace(/"/g,'&quot;')+'" onchange="updateActionText('+a.id+',this.value)" placeholder="Écris ton action...">'
+      + '<select class="action-week" onchange="updateActionWeek('+a.id+',this.value)">'
+      + PHASE_MAP[STATE.activePhase].map(s=>'<option'+(s===a.week?' selected':'')+'>'+s+'</option>').join('')
+      + '</select>'
+      + '<button class="action-del" onclick="delActionConfirm('+a.id+')">×</button>'
+      + '</div>';
+  });
+
+  list.innerHTML = actionsHtml;
+  return;
+
+  // Dead code kept for structure
   list.innerHTML = filtered.map(a => `
     <div class="action-item">
       <div class="action-check ${a.done?'checked':''}" onclick="toggleAction(${a.id})">${a.done?'✓':''}</div>
@@ -1165,6 +1242,7 @@ function renderActionsList() {
       <button class="action-del" onclick="delActionConfirm(${a.id})">×</button>
     </div>
   `).join('');
+// end dead code
 }
 
 function updateActionText(id,val) { const a=STATE.actions.find(x=>x.id===id); if(a) a.text=val; updateDashboard(); }
@@ -1187,11 +1265,12 @@ function selectPhase(idx) {
 }
 
 function renderPhases() {
-  const phases = [
-    {n:"01",nm:"Mois 1 — Fondations",d:"Clarifier l'offre, trouver les premiers testeurs",idx:0},
-    {n:"02",nm:"Mois 2 — Amélioration",d:"Collecter les retours, ajuster, développer la visibilité",idx:1},
-    {n:"03",nm:"Mois 3 — Stabilisation",d:"Premiers clients réguliers, tarif fixé",idx:2},
-  ];
+  const phases = PLAN90_DATA.phases.map((p,i) => ({
+    n: String(i+1).padStart(2,'0'),
+    nm: p.titre,
+    d: p.objectif + ' — ' + p.jours,
+    idx: i
+  }));
   const el = document.getElementById('phases-list');
   const planNoIdea = document.getElementById('plan-no-idea');
   if(planNoIdea) planNoIdea.style.display = STATE.ideaActive ? 'none' : 'block';
@@ -2054,11 +2133,11 @@ const CTX_FAQ = {
     {q:"Comment convaincre mes premiers clients ?", a:"Tes premiers clients viennent de ton entourage proche. Envoie un message WhatsApp simple et direct : 'Je lance [ton service], je cherche 3 personnes pour un test à prix réduit.' Le bouche-à-oreille fera le reste."},
   ],
   plan: [
-    {q:"Je suis bloqué, que faire ?", a:"Reviens à l'action la plus simple possible. Pas besoin de tout faire parfaitement — une seule petite action aujourd'hui crée de l'élan. Quelle est la chose la plus facile que tu peux faire dans les 30 prochaines minutes ?"},
-    {q:"Comment passer à la phase suivante ?", a:"Tu passes à la phase suivante quand tu as coché au moins 70% des actions de la phase actuelle. Ce n'est pas la perfection qui compte, c'est le mouvement. Coche ce que tu as fait et avance."},
-    {q:"Comment rester constant sur 90 jours ?", a:"La constance vient de la routine. Fixe un moment précis chaque jour (ex: 19h-21h) dédié à ton Plan B. Commence par 30 minutes par jour. Une action par jour pendant 90 jours = 90 actions = un business lancé."},
-    {q:"Mes actions sont-elles bien choisies ?", a:"Une bonne action est SMART : Spécifique, Mesurable, Atteignable en moins d'1 semaine, Réaliste avec tes ressources actuelles. Si une action est trop vague ou trop grande, découpe-la en 2 ou 3 actions plus petites."},
-    {q:"Comment gérer le découragement ?", a:"Le découragement est normal — il arrive à J15, J30 et J60. L'astuce : revois tes actions cochées pour voir le chemin parcouru. Chaque action cochée est une preuve que tu avances. Partage ta progression avec 1 ami de confiance."},
+    {q:"Je suis bloqué, que faire ?", a:"La règle du Bonus 3 : avancer même imparfait. Reviens à l'action la plus petite possible. Quelle est la chose la plus simple que tu peux faire dans les 30 prochaines minutes ? Fais-la, puis passe à la suivante."},
+    {q:"Comment passer à la phase suivante ?", a:"Tu passes à la phase suivante quand tu as coché la majorité des actions ET atteint le KPI de la semaine. Exemples : S1 = 10 personnes identifiées, S4 = 1 paiement reçu. Coche ce que tu as fait et avance sans te juger."},
+    {q:"Comment rester constant sur 90 jours ?", a:"La méthode : mesure ce que tu fais, pas ce que tu ressens. Une routine quotidienne de 30 min minimum. Règle absolue : on continue, on n'abandonne pas. Le découragement arrive à J15, J30 et J60 — c'est normal, c'est là que les autres abandonnent."},
+    {q:"Aucune vente à J30, que faire ?", a:"Ce n'est pas un échec, c'est un ajustement. 3 questions : Ai-je contacté assez de personnes ? Mon offre est-elle claire ? Ai-je vraiment proposé ? Actions : augmenter le volume, simplifier l'offre, baisser temporairement le prix. On continue."},
+    {q:"Comment atteindre mes KPIs ?", a:"Les KPIs sont progressifs : S1=10 contacts, S2=5 réponses, S3=1 engagement, S4=1 paiement. Chaque KPI se construit sur le précédent. Si tu bloques sur un KPI, reviens au KPI précédent et augmente le volume d'actions."},
   ],
   revenus: [
     {q:"Comment fixer mon prix de vente ?", a:"Calcule : Coût de revient + Ton temps (valorise 1h à 2 000-5 000 FCFA) + Marge (30-50%). Exemple : si tu dépenses 5 000 FCFA en matière première et 3h de travail, ton prix minimum est 5 000 + 9 000 + 4 000 = 18 000 FCFA."},
@@ -2121,28 +2200,227 @@ function ctxSend(chipEl, ctx, msg) {
 
 // ── START ────�
 // ── SIMULATION FUNCTIONS (remplacées par vraie API au déploiement) ──
+// ── BONUS 3 — PLAN 90 JOURS MÉTHODE COMPLÈTE ────────
+const PLAN90_DATA = {
+  phases: [
+    {
+      idx: 0,
+      titre: "Phase 1 — Lancer & Encaisser",
+      objectif: "Obtenir le 1er paiement (peu importe le montant)",
+      jours: "Jours 1 à 30",
+      semaines: [
+        {
+          num: 1,
+          titre: "Décision & Préparation rapide",
+          objectif: "Choisir UNE idée et la rendre vendable",
+          kpi: "10 personnes identifiées = semaine réussie",
+          actions: [
+            "Choisir UNE seule idée (pas deux, pas trois)",
+            "Rédiger mon offre en 1 phrase simple et claire",
+            "Fixer UN prix précis pour mon offre",
+            "Lister 10 personnes à contacter (famille, amis, collègues)",
+          ]
+        },
+        {
+          num: 2,
+          titre: "Exposition contrôlée",
+          objectif: "Faire savoir que tu existes",
+          kpi: "5 réponses minimum (oui ou non, peu importe)",
+          actions: [
+            "Publier 3 statuts WhatsApp sur mon activité",
+            "Envoyer 5 messages personnalisés à ma liste",
+            "Proposer une offre test à prix réduit",
+            "Lancer 5 conversations réelles avec des prospects",
+          ]
+        },
+        {
+          num: 3,
+          titre: "Offre & Retour terrain",
+          objectif: "Proposer clairement et écouter",
+          kpi: "1 client ou 1 engagement sérieux",
+          actions: [
+            "Présenter mon offre clairement à 5 personnes",
+            "Écouter les retours sans me justifier",
+            "Ajuster mon offre si nécessaire selon les retours",
+            "Identifier 1 personne vraiment intéressée",
+          ]
+        },
+        {
+          num: 4,
+          titre: "Première vente",
+          objectif: "Encaisser (le montant n'a aucune importance)",
+          kpi: "Au moins 1 vente — le montant importe peu",
+          actions: [
+            "Relancer 3 personnes de ma liste initiale",
+            "Finaliser et conclure au moins une vente",
+            "Livrer correctement et dans les délais",
+            "Enregistrer mon premier paiement dans Revenus",
+          ]
+        },
+      ],
+      secours: {
+        titre: "Plan de secours si aucune vente à J30",
+        message: "Ce n'est pas un échec — c'est un ajustement.",
+        questions: [
+          "Ai-je contacté assez de personnes ?",
+          "Mon offre est-elle vraiment claire ?",
+          "Ai-je explicitement proposé d'acheter ?",
+        ],
+        actions: [
+          "Augmenter le volume de messages envoyés",
+          "Simplifier encore plus mon offre",
+          "Baisser temporairement le prix",
+          "Utiliser les scripts WhatsApp du Bonus 4",
+        ]
+      }
+    },
+    {
+      idx: 1,
+      titre: "Phase 2 — Répéter & Structurer",
+      objectif: "Consolider et installer une routine",
+      jours: "Jours 31 à 60",
+      semaines: [
+        {
+          num: 5,
+          titre: "Répétition — ce qui a marché",
+          objectif: "Refaire ce qui a fonctionné en phase 1",
+          kpi: "2 à 3 ventes cumulées depuis le début",
+          actions: [
+            "Refaire exactement ce qui a généré ma première vente",
+            "Contacter 10 nouvelles personnes de mon réseau",
+            "Publier 3 nouveaux statuts WhatsApp",
+            "Demander 1 retour client écrit ou audio",
+          ]
+        },
+        {
+          num: 6,
+          titre: "Répétition — amplification",
+          objectif: "Élargir le cercle de prospects",
+          kpi: "2 à 3 ventes cumulées depuis le début",
+          actions: [
+            "Demander 2 recommandations à mes clients existants",
+            "Contacter les personnes recommandées",
+            "Publier un témoignage client (avec permission)",
+            "Proposer un pack ou offre groupée",
+          ]
+        },
+        {
+          num: 7,
+          titre: "Organisation — clarifier le message",
+          objectif: "Installer une routine simple et efficace",
+          kpi: "Process clair — savoir quoi faire sans réfléchir",
+          actions: [
+            "Clarifier et simplifier mon message de vente",
+            "Créer une routine quotidienne de 30 min minimum",
+            "Suivre revenus et dépenses dans l'app",
+            "Définir mes horaires fixes dédiés au Plan B",
+          ]
+        },
+        {
+          num: 8,
+          titre: "Organisation — structurer",
+          objectif: "Réduire le stress et avancer sans pression",
+          kpi: "Routine installée + moins de stress ressenti",
+          actions: [
+            "Analyser mes revenus et dépenses du mois 1",
+            "Identifier ce qui prend le plus de temps",
+            "Optimiser : automatiser ou déléguer une tâche",
+            "Planifier les objectifs du mois 3",
+          ]
+        },
+      ]
+    },
+    {
+      idx: 2,
+      titre: "Phase 3 — Optimiser & Sécuriser",
+      objectif: "Augmenter la valeur et sécuriser l'activité",
+      jours: "Jours 61 à 90",
+      semaines: [
+        {
+          num: 9,
+          titre: "Optimisation — plus de valeur",
+          objectif: "Augmenter la valeur offerte par client",
+          kpi: "Plus de valeur par client — même client, meilleure offre",
+          actions: [
+            "Augmenter légèrement mon prix (+10 à 20%)",
+            "Ajouter un bonus simple à mon offre existante",
+            "Améliorer la qualité de livraison",
+            "Contacter 5 anciens clients avec la nouvelle offre",
+          ]
+        },
+        {
+          num: 10,
+          titre: "Optimisation — améliorer",
+          objectif: "Affiner ce qui fonctionne",
+          kpi: "Plus de valeur par client — même client, meilleure offre",
+          actions: [
+            "Identifier mon client idéal (profil type)",
+            "Adapter mon message à ce profil précis",
+            "Tester un nouveau canal d'acquisition",
+            "Collecter 2 témoignages clients supplémentaires",
+          ]
+        },
+        {
+          num: 11,
+          titre: "Consolidation — stabiliser",
+          objectif: "Identifier ce qui est stable et qui marche",
+          kpi: "Vision claire sur la suite + décision assumée",
+          actions: [
+            "Lister mes 3 actions les plus rentables",
+            "Supprimer ou réduire ce qui ne rapporte pas",
+            "Créer une offre récurrente (abonnement ou forfait mensuel)",
+            "Planifier les 3 prochains mois par écrit",
+          ]
+        },
+        {
+          num: 12,
+          titre: "Consolidation — décider",
+          objectif: "Décider : continuer, améliorer ou changer",
+          kpi: "Vision 3 mois claire + décision prise sans hésitation",
+          actions: [
+            "Faire le bilan complet des 90 jours",
+            "Calculer mes revenus totaux et mon taux horaire",
+            "Décider clairement : continuer / améliorer / changer",
+            "Lancer le cycle suivant avec les apprentissages acquis",
+          ]
+        },
+      ]
+    }
+  ]
+};
+
+// KPIs par semaine
+const KPIS = {
+  1: "10 personnes identifiées",
+  2: "5 réponses obtenues",
+  3: "1 client ou engagement sérieux",
+  4: "1 paiement reçu",
+  5: "2-3 ventes cumulées",
+  6: "2-3 ventes cumulées",
+  7: "Process clair + routine installée",
+  8: "Routine installée + moins de stress",
+  9: "Valeur par client augmentée",
+  10: "Valeur par client augmentée",
+  11: "Vision 3 mois + décision prise",
+  12: "Vision 3 mois + décision prise",
+};
+
 function simulerActions(idee) {
   const nom = idee ? (idee.nom || 'ton activite') : 'ton activite';
-  return [
-    {id:STATE.nextId++,text:'Definir mon offre pour '+nom,week:"Semaine 1",done:false},
-    {id:STATE.nextId++,text:"Identifier 5 premiers clients potentiels",week:"Semaine 1",done:false},
-    {id:STATE.nextId++,text:"Creer mon message de presentation WhatsApp",week:"Semaine 2",done:false},
-    {id:STATE.nextId++,text:"Publier mon premier statut WhatsApp",week:"Semaine 2",done:false},
-    {id:STATE.nextId++,text:"Contacter mes 5 premiers prospects",week:"Semaine 3",done:false},
-    {id:STATE.nextId++,text:"Realiser mon premier test client",week:"Semaine 3",done:false},
-    {id:STATE.nextId++,text:"Collecter les retours de mon premier test",week:"Semaine 4",done:false},
-    {id:STATE.nextId++,text:"Ajuster mon offre selon les retours",week:"Semaine 4",done:false},
-    {id:STATE.nextId++,text:"Fixer mon prix definitif et ma grille tarifaire",week:"Semaine 5",done:false},
-    {id:STATE.nextId++,text:"Ouvrir un compte dedie a mon activite",week:"Semaine 5",done:false},
-    {id:STATE.nextId++,text:"Viser mes 3 premiers clients payants",week:"Semaine 6",done:false},
-    {id:STATE.nextId++,text:"Publier des temoignages de mes premiers clients",week:"Semaine 6",done:false},
-    {id:STATE.nextId++,text:"Etablir ma routine hebdomadaire de suivi",week:"Semaine 7",done:false},
-    {id:STATE.nextId++,text:"Analyser mes revenus du premier mois",week:"Semaine 8",done:false},
-    {id:STATE.nextId++,text:"Demander des temoignages a mes clients",week:"Semaine 9",done:false},
-    {id:STATE.nextId++,text:"Lancer une promotion pour attirer de nouveaux clients",week:"Semaine 10",done:false},
-    {id:STATE.nextId++,text:"Developper un deuxieme canal d acquisition",week:"Semaine 11",done:false},
-    {id:STATE.nextId++,text:"Viser la stabilite financiere et planifier le mois 3",week:"Semaine 12",done:false},
-  ];
+  const allActions = [];
+  PLAN90_DATA.phases.forEach(phase => {
+    phase.semaines.forEach(sem => {
+      sem.actions.forEach(txt => {
+        allActions.push({
+          id: STATE.nextId++,
+          text: txt,
+          week: "Semaine " + sem.num,
+          done: false
+        });
+      });
+    });
+  });
+  return allActions;
 }
 
 function simulerChat(msg, ctx) {
