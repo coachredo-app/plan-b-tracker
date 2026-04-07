@@ -551,9 +551,11 @@ body{background:var(--darker);color:var(--text);font-family:'DM Sans',sans-serif
       </div>
       <div class="ctx-body" id="ctx-idee">
         <div class="ctx-chips">
-          <button class="ctx-chip" onclick="ctxSend(this,'idee','Comment choisir la meilleure idée ?')">Comment choisir la meilleure idée ?</button>
-          <button class="ctx-chip" onclick="ctxSend(this,'idee','Mon idée est-elle réaliste ?')">Mon idée est-elle réaliste ?</button>
-          <button class="ctx-chip" onclick="ctxSend(this,'idee','Comment valider rapidement ?')">Comment valider rapidement ?</button>
+          <button class="ctx-chip" onclick="ctxSend(this,'idee','Comment choisir la meilleure idée ?')">Choisir la meilleure idée</button>
+          <button class="ctx-chip" onclick="ctxSend(this,'idee','Mon idée est-elle réaliste ?')">Mon idée est réaliste ?</button>
+          <button class="ctx-chip" onclick="ctxSend(this,'idee','Comment valider rapidement ?')">Valider rapidement</button>
+          <button class="ctx-chip" onclick="ctxSend(this,'idee','Quelle idée pour mon budget ?')">Idée selon budget</button>
+          <button class="ctx-chip" onclick="ctxSend(this,'idee','Comment convaincre mes premiers clients ?')">Premiers clients</button>
         </div>
         <div class="ctx-messages" id="ctx-msgs-idee"></div>
         <div class="ctx-input-row">
@@ -593,9 +595,11 @@ body{background:var(--darker);color:var(--text);font-family:'DM Sans',sans-serif
       </div>
       <div class="ctx-body" id="ctx-plan">
         <div class="ctx-chips">
-          <button class="ctx-chip" onclick="ctxSend(this,'plan','Suggère-moi des actions concrètes')">Suggère-moi des actions</button>
           <button class="ctx-chip" onclick="ctxSend(this,'plan','Je suis bloqué, que faire ?')">Je suis bloqué</button>
           <button class="ctx-chip" onclick="ctxSend(this,'plan','Comment passer à la phase suivante ?')">Phase suivante ?</button>
+          <button class="ctx-chip" onclick="ctxSend(this,'plan','Comment rester constant sur 90 jours ?')">Rester constant</button>
+          <button class="ctx-chip" onclick="ctxSend(this,'plan','Comment gérer le découragement ?')">Découragement</button>
+          <button class="ctx-chip" onclick="ctxSend(this,'plan','Mes actions sont-elles bien choisies ?')">Mes actions OK ?</button>
         </div>
         <div class="ctx-messages" id="ctx-msgs-plan"></div>
         <div class="ctx-input-row">
@@ -657,9 +661,11 @@ body{background:var(--darker);color:var(--text);font-family:'DM Sans',sans-serif
       </div>
       <div class="ctx-body" id="ctx-revenus">
         <div class="ctx-chips">
-          <button class="ctx-chip" onclick="ctxSend(this,'revenus','Comment fixer mon prix de vente ?')">Comment fixer mon prix ?</button>
+          <button class="ctx-chip" onclick="ctxSend(this,'revenus','Comment fixer mon prix de vente ?')">Fixer mon prix</button>
           <button class="ctx-chip" onclick="ctxSend(this,'revenus','Comment augmenter mes revenus ?')">Augmenter mes revenus</button>
           <button class="ctx-chip" onclick="ctxSend(this,'revenus','Quand réinvestir dans mon activité ?')">Quand réinvestir ?</button>
+          <button class="ctx-chip" onclick="ctxSend(this,'revenus','Comment gérer mes dépenses ?')">Gérer mes dépenses</button>
+          <button class="ctx-chip" onclick="ctxSend(this,'revenus','Comment savoir si mon Plan B est rentable ?')">Suis-je rentable ?</button>
         </div>
         <div class="ctx-messages" id="ctx-msgs-revenus"></div>
         <div class="ctx-input-row">
@@ -2038,57 +2044,78 @@ function toggleCtx(header) {
   arrow.textContent = body.classList.contains('open') ? '▾' : '▸';
 }
 
-async function ctxSend(chipEl, ctx, msg) {
+// Context chat FAQ data per page
+const CTX_FAQ = {
+  idee: [
+    {q:"Comment choisir la meilleure idée ?", a:"Choisis l'idée qui combine 3 éléments : ce que tu sais faire naturellement, ce dont les gens autour de toi ont besoin, et ce que tu peux lancer avec ton budget actuel. L'intersection de ces 3 éléments = ton meilleure Plan B."},
+    {q:"Mon idée est-elle réaliste ?", a:"Une idée est réaliste si tu peux la tester cette semaine avec moins de 10 000 FCFA. Propose ton service à 3 personnes de ton entourage gratuitement ou à prix réduit. Leur réaction te dira si tu es sur la bonne voie."},
+    {q:"Comment valider rapidement ?", a:"Valide en 3 étapes : 1. Décris ton offre en 1 phrase. 2. Envoie-la à 5 contacts WhatsApp. 3. Si au moins 1 personne répond avec intérêt, ton idée est validée. N'attends pas la perfection pour tester."},
+    {q:"Quelle idée pour mon budget ?", a:"Avec moins de 50 000 FCFA, privilégie les services (coiffure, livraison, cours, gestion réseaux sociaux) — zéro stock, zéro risque. Avec plus de budget, tu peux envisager le commerce ou la revente de produits."},
+    {q:"Comment convaincre mes premiers clients ?", a:"Tes premiers clients viennent de ton entourage proche. Envoie un message WhatsApp simple et direct : 'Je lance [ton service], je cherche 3 personnes pour un test à prix réduit.' Le bouche-à-oreille fera le reste."},
+  ],
+  plan: [
+    {q:"Je suis bloqué, que faire ?", a:"Reviens à l'action la plus simple possible. Pas besoin de tout faire parfaitement — une seule petite action aujourd'hui crée de l'élan. Quelle est la chose la plus facile que tu peux faire dans les 30 prochaines minutes ?"},
+    {q:"Comment passer à la phase suivante ?", a:"Tu passes à la phase suivante quand tu as coché au moins 70% des actions de la phase actuelle. Ce n'est pas la perfection qui compte, c'est le mouvement. Coche ce que tu as fait et avance."},
+    {q:"Comment rester constant sur 90 jours ?", a:"La constance vient de la routine. Fixe un moment précis chaque jour (ex: 19h-21h) dédié à ton Plan B. Commence par 30 minutes par jour. Une action par jour pendant 90 jours = 90 actions = un business lancé."},
+    {q:"Mes actions sont-elles bien choisies ?", a:"Une bonne action est SMART : Spécifique, Mesurable, Atteignable en moins d'1 semaine, Réaliste avec tes ressources actuelles. Si une action est trop vague ou trop grande, découpe-la en 2 ou 3 actions plus petites."},
+    {q:"Comment gérer le découragement ?", a:"Le découragement est normal — il arrive à J15, J30 et J60. L'astuce : revois tes actions cochées pour voir le chemin parcouru. Chaque action cochée est une preuve que tu avances. Partage ta progression avec 1 ami de confiance."},
+  ],
+  revenus: [
+    {q:"Comment fixer mon prix de vente ?", a:"Calcule : Coût de revient + Ton temps (valorise 1h à 2 000-5 000 FCFA) + Marge (30-50%). Exemple : si tu dépenses 5 000 FCFA en matière première et 3h de travail, ton prix minimum est 5 000 + 9 000 + 4 000 = 18 000 FCFA."},
+    {q:"Quand réinvestir dans mon activité ?", a:"Règle simple : garde 50% de chaque bénéfice pour toi, réinvestis 30% dans ton activité (stock, outils, publicité), mets 20% de côté. Ne réinvestis que quand tu as validé que l'activité génère des revenus réguliers."},
+    {q:"Comment augmenter mes revenus ?", a:"3 leviers : 1. Plus de clients (partage ton offre à 5 nouvelles personnes/semaine). 2. Plus de ventes par client (propose un pack ou abonnement mensuel). 3. Monte tes prix progressivement (+10% tous les 2 mois si la demande est là)."},
+    {q:"Comment gérer mes dépenses ?", a:"Note chaque dépense liée à ton Plan B ici. Catégorise-les : dépenses fixes (abonnements, local) et variables (stock, livraison). Objectif : tes dépenses ne doivent pas dépasser 40% de tes revenus dans les 3 premiers mois."},
+    {q:"Comment savoir si mon Plan B est rentable ?", a:"Ton Plan B est rentable quand tes revenus couvrent tes dépenses ET ton temps. Si tu gagnes 50 000 FCFA/mois pour 20h de travail, c'est 2 500 FCFA/heure. Si c'est plus que ton salaire horaire actuel, ton Plan B est rentable."},
+  ],
+};
+
+function ctxSend(chipEl, ctx, msg) {
   if(!msg) msg = document.getElementById('ctx-inp-'+ctx).value.trim();
   if(!msg) return;
   document.getElementById('ctx-inp-'+ctx).value = '';
 
   const messagesEl = document.getElementById('ctx-msgs-'+ctx);
-  messagesEl.innerHTML += `<div class="ctx-msg user">${msg}</div>`;
-  messagesEl.innerHTML += `<div class="ctx-msg bot" id="ctx-loading-${ctx}"><div class="dots"><span></span><span></span><span></span></div></div>`;
-  messagesEl.scrollTop = messagesEl.scrollHeight;
-
-  STATE.ctxHistory[ctx].push({role:"user", content:msg});
-
-  const systems = {
-    idee: "Tu es l'assistant de Coach Redouane dans Plan B Tracker. Aide a choisir et valider une idee de Plan B Rentable. Reponds en francais, max 120 mots, bienveillant et concret, adapte a l'Afrique francophone.",
-    plan: "Tu es l'assistant de Coach Redouane dans Plan B Tracker, section Plan 90 jours. Aide avec des conseils concrets sur les actions et la progression. Reponds en francais, max 120 mots, bienveillant et pratique.",
-    revenus: "Tu es l'assistant de Coach Redouane dans Plan B Tracker, section Revenus. Aide a gerer les finances, fixer les prix et optimiser les revenus. Reponds en francais, max 120 mots, concret et pratique.",
-  };
-
   const uName = STATE.user ? (STATE.user.prenom || '') : '';
-  const ideaCtx = STATE.ideaActive ? " Idee active de l utilisateur: " + STATE.ideaActive.nom + "." : "";
-  const sys = systems[ctx] + ideaCtx + (uName ? " L utilisateur s appelle " + uName + ". Tutoie-le et utilise son prenom." : " Tutoie l utilisateur.");
 
-  try {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        system: sys,
-        messages: STATE.ctxHistory[ctx].slice(-10),
-        max_tokens: 500
-      })
-    });
-    const d = await res.json();
-    let reply = '';
-    if(d.content && d.content.length > 0) {
-      reply = d.content.map(x=>x.text||'').join('');
-    } else if(d.error) {
-      throw new Error(d.error.message || JSON.stringify(d.error));
-    } else {
-      throw new Error('Reponse inattendue: ' + JSON.stringify(d).slice(0,100));
-    }
-    STATE.ctxHistory[ctx].push({role:"assistant", content:reply});
-    document.getElementById('ctx-loading-'+ctx).remove();
-    const replyHtml = reply.split('\n').join('<br>');
-    messagesEl.innerHTML += '<div class="ctx-msg bot">' + replyHtml + '</div>';
-  } catch(e) {
-    console.error('Chat API error:', e.message);
-    document.getElementById('ctx-loading-'+ctx).remove();
-    // Show the actual error for debugging
-    messagesEl.innerHTML += '<div class="ctx-msg bot" style="color:var(--danger);font-size:11px">Erreur: ' + e.message + '</div>';
+  // Show user message
+  messagesEl.innerHTML += '<div class="ctx-msg user">' + msg + '</div>';
+
+  // Find best matching FAQ answer
+  const faqs = CTX_FAQ[ctx] || [];
+  const msgLow = msg.toLowerCase();
+  
+  let bestAnswer = null;
+  let bestScore = 0;
+  
+  faqs.forEach(faq => {
+    const qWords = faq.q.toLowerCase().split(' ');
+    let score = 0;
+    qWords.forEach(w => { if(w.length > 3 && msgLow.includes(w)) score++; });
+    // Also check if user clicked a chip
+    if(msg === faq.q) score = 100;
+    if(score > bestScore) { bestScore = score; bestAnswer = faq; }
+  });
+
+  // Personalize answer with user name
+  let reply = '';
+  if(bestAnswer && bestScore > 0) {
+    reply = uName ? (uName + ', ' + bestAnswer.a[0].toLowerCase() + bestAnswer.a.slice(1)) : bestAnswer.a;
+  } else {
+    // Default answers per context
+    const defaults = {
+      idee: (uName||'') + " Pour affiner ton choix d'idee, utilise le bouton Analyser mon profil. L'IA prend en compte ta competence, ton secteur et ton budget pour te recommander les meilleures idees adaptees a ta situation.",
+      plan: (uName||'') + " Concentre-toi sur une seule action a la fois. Coche une action aujourd'hui, aussi petite soit-elle. La progression constante sur 90 jours est plus puissante que les grands sprints occasionnels.",
+      revenus: (uName||'') + " Enregistre chaque revenu et chaque depense des qu'ils arrivent. La precision de ton suivi financier est la base de la rentabilite de ton Plan B.",
+    };
+    reply = defaults[ctx] || 'Clique sur une des questions suggérées pour obtenir une réponse précise.';
   }
+
+  // Show answer with slight delay for natural feel
+  setTimeout(() => {
+    messagesEl.innerHTML += '<div class="ctx-msg bot">' + reply + '</div>';
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }, 600);
+
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
