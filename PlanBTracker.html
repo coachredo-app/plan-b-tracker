@@ -230,6 +230,122 @@ body{background:var(--darker);color:var(--text);font-family:'DM Sans',sans-serif
 
 @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .page.active{animation:fadeIn .3s ease}
+
+/* ── MOBILE RESPONSIVE ─────────────────────────── */
+@media (max-width: 768px) {
+  /* Hide sidebar, show bottom nav */
+  .sidebar { display: none !important; }
+  .main { margin-left: 0 !important; padding: 16px 16px 80px !important; }
+
+  /* Bottom navigation bar */
+  .mobile-nav {
+    display: flex !important;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--card);
+    border-top: 1px solid var(--border);
+    z-index: 100;
+    padding: 8px 0 12px;
+  }
+  .mobile-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    padding: 4px 2px;
+    font-size: 10px;
+    color: var(--muted);
+    transition: color .2s;
+    position: relative;
+  }
+  .mobile-nav-item.active { color: var(--gold); }
+  .mobile-nav-item span.icon { font-size: 20px; }
+  .mobile-nav-item .mnbdg {
+    position: absolute;
+    top: 0; right: 8px;
+    background: var(--gold);
+    color: var(--dark);
+    font-size: 8px;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 10px;
+  }
+
+  /* Mobile header */
+  .mobile-header {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .mobile-header h2 { font-size: 22px !important; }
+  .mobile-header p { font-size: 12px; }
+
+  /* Grids → single column */
+  .g2, .g3, .g4, .g3c, .sg4, .sg3 {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  /* Tabs scrollable */
+  .tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+  }
+  .tab-btn { min-width: 100px; white-space: nowrap; }
+
+  /* Cards */
+  .card { padding: 16px; }
+  .card-title { font-size: 16px; }
+
+  /* Stat cards smaller */
+  .stat-card { padding: 14px; }
+  .stv, .stat-value { font-size: 24px !important; }
+
+  /* Actions */
+  .action-item { flex-wrap: wrap; }
+  .action-week { width: 100%; margin-top: 4px; }
+
+  /* Phase cards */
+  .phase-card { padding: 12px; }
+  .phase-card .phase-name { font-size: 13px; }
+
+  /* Modals */
+  .modal { width: 95vw !important; padding: 20px !important; margin: 0 auto; }
+
+  /* Chat button above mobile nav */
+  .chat-btn { bottom: 72px !important; right: 16px !important; }
+  .chat-panel { bottom: 140px !important; right: 8px !important; width: calc(100vw - 16px) !important; }
+
+  /* Profile modal */
+  .profile-card { width: 95vw !important; padding: 20px !important; }
+
+  /* Onboarding */
+  .onb-card { padding: 24px !important; }
+  .cards-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  /* Idea cards */
+  .idea-card { flex-wrap: wrap; gap: 10px; }
+  .idea-card > button { width: 100%; }
+
+  /* Page header hidden on mobile (shown in mobile-header) */
+  .page-header { display: none; }
+
+  /* Context chat */
+  .ctx-chat { margin-top: 16px; }
+  .ctx-chips { gap: 4px; }
+  .ctx-chip { font-size: 10px; padding: 3px 8px; }
+}
+
+@media (min-width: 769px) {
+  .mobile-nav { display: none !important; }
+  .mobile-header { display: none !important; }
+}
 </style>
 </head>
 <body>
@@ -282,6 +398,13 @@ body{background:var(--darker);color:var(--text);font-family:'DM Sans',sans-serif
 
   <!-- DASHBOARD -->
   <div class="page active" id="page-dashboard">
+    <div class="mobile-header">
+      <div>
+        <h2 style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--text)" id="m-page-title">Bonjour 👋</h2>
+        <p style="font-size:12px;color:var(--muted)" id="m-page-sub"></p>
+      </div>
+      <div class="avatar" id="m-user-avatar" onclick="openProfile()" style="cursor:pointer;width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#8B6914);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;color:var(--dark)">CR</div>
+    </div>
     <div class="quote-box">
       <div class="quote-text">"L'Afrique grandit quand ses enfants se transforment de l'intérieur."</div>
       <div class="quote-author">— Coach Redouane</div>
@@ -692,6 +815,32 @@ body{background:var(--darker);color:var(--text);font-family:'DM Sans',sans-serif
   </div>
 </div>
 
+
+<!-- MOBILE BOTTOM NAV -->
+<div class="mobile-nav" id="mobile-nav">
+  <div class="mobile-nav-item active" onclick="mobileGoTo('dashboard',this)">
+    <span class="icon">◈</span>
+    <span>Accueil</span>
+  </div>
+  <div class="mobile-nav-item" onclick="mobileGoTo('idee',this)" id="mnav-idee">
+    <span class="icon">💡</span>
+    <span>Idée</span>
+    <span class="mnbdg" id="m-badge-idee" style="display:none">!</span>
+  </div>
+  <div class="mobile-nav-item" onclick="mobileGoTo('plan',this)">
+    <span class="icon">📅</span>
+    <span>Plan</span>
+  </div>
+  <div class="mobile-nav-item" onclick="mobileGoTo('revenus',this)">
+    <span class="icon">💰</span>
+    <span>Revenus</span>
+  </div>
+  <div class="mobile-nav-item" onclick="openProfile()">
+    <span class="icon" id="mobile-avatar-icon">👤</span>
+    <span id="mobile-user-name">Profil</span>
+  </div>
+</div>
+
 </div><!-- end main-app -->
 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
@@ -823,13 +972,21 @@ function initApp() {
 }
 
 function updateUserDisplay() {
+  // Update mobile nav avatar
+  const mAvatar = document.getElementById('m-user-avatar');
+  const mName = document.getElementById('mobile-user-name');
+  const mBadge = document.getElementById('m-badge-idee');
+  if(mAvatar && STATE.user) mAvatar.textContent = (STATE.user.prenom||'CR').slice(0,2).toUpperCase();
+  if(mName && STATE.user) mName.textContent = STATE.user.prenom ? STATE.user.prenom.split(' ')[0] : 'Profil';
   if(!STATE.user) return;
   const u = STATE.user;
   const init = (u.prenom||'CR').slice(0,2).toUpperCase();
   document.getElementById('user-avatar').textContent = init;
   document.getElementById('user-name-display').textContent = u.prenom || 'Coach';
   document.getElementById('user-idea-display').textContent = STATE.ideaActive ? STATE.ideaActive.nom.slice(0,20)+'...' : 'Aucune idée active';
-  const hasUsed=STATE.actions.some(a=>a.done); document.getElementById('badge-idee').style.display=(!STATE.ideaActive&&hasUsed)?'inline':'none';
+  const hasUsed = STATE.actions.some(a=>a.done);
+  document.getElementById('badge-idee').style.display = (!STATE.ideaActive&&hasUsed)?'inline':'none';
+  if(mBadge) mBadge.style.display = (!STATE.ideaActive && hasUsed) ? 'inline' : 'none';
 }
 
 // ── NAVIGATION ──────────────────────────────────────
@@ -844,18 +1001,20 @@ const PAGE_INFO = {
 };
 
 function goTo(page) {
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  goToPage(page);
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById('page-'+page).classList.add('active');
-  event.currentTarget.classList.add('active');
-  STATE.currentPage = page;
+  if(event && event.currentTarget) event.currentTarget.classList.add('active');
   const info = PAGE_INFO[page];
-  document.getElementById('page-title').textContent = typeof info.h === 'function' ? info.h() : info.h;
-  document.getElementById('page-sub').textContent = typeof info.p === 'function' ? info.p() : info.p;
-  if(page === 'plan') { renderPhases(); renderActionsList(); }
-  if(page === 'revenus') renderRevenus();
-  if(page === 'archive') renderArchive();
-  if(page === 'dashboard') updateDashboard();
+  const title = typeof info.h === 'function' ? info.h() : info.h;
+  const sub = typeof info.p === 'function' ? info.p() : info.p;
+  const pt = document.getElementById('page-title');
+  const ps = document.getElementById('page-sub');
+  if(pt) pt.textContent = title;
+  if(ps) ps.textContent = sub;
+  const mt = document.getElementById('m-page-title');
+  const ms = document.getElementById('m-page-sub');
+  if(mt) mt.textContent = title;
+  if(ms) ms.textContent = sub;
 }
 
 // ── DASHBOARD ───────────────────────────────────────
@@ -1161,7 +1320,11 @@ function renderIdeeResults(data, form, previousIdees) {
   STATE.lastIdees = data.idees;
   STATE.lastAnalyse = data.analyse;
   const el = document.getElementById('idee-results');
-  const isActive = (nom) => STATE.ideaActive && STATE.ideaActive.nom === nom;
+  const isActive = (nom) => {
+    if(STATE.ideaActive && STATE.ideaActive.nom === nom) return 'active';
+    if(STATE.archives && STATE.archives.some(a => a.nom === nom)) return 'archived';
+    return false;
+  };
   // Will store HTML after render
   const prevList = previousIdees ? previousIdees.map(i=>i.nom).join(', ') : '';
   el.innerHTML = `
@@ -1178,11 +1341,13 @@ function renderIdeeResults(data, form, previousIdees) {
       ${data.idees.map((idee,i) => {
         STATE._lastIdeesList = data.idees;
         STATE._lastForm = form;
-        const active = isActive(idee.nom);
-        const btnHtml = active
+        const activeStatus = isActive(idee.nom);
+        const btnHtml = activeStatus === 'active'
           ? '<button class="btn-outline" style="font-size:12px;flex-shrink:0;opacity:.6;border-color:#2ECC71;color:#2ECC71" disabled>✓ Active</button>'
+          : activeStatus === 'archived'
+          ? '<button class="btn-outline" style="font-size:12px;flex-shrink:0;opacity:.6;border-color:#C9A84C;color:#C9A84C" disabled>📁 Archivée</button>'
           : '<button class="btn-outline" style="font-size:12px;flex-shrink:0" onclick="choisirIdeeByIndex('+i+')">Choisir</button>';
-        return '<div class="idea-card '+(active?'selected':'')+'"><div class="idea-score">'+idee.score+'</div><div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--text)">'+idee.nom+'</div><div style="font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5">'+idee.description+'</div><div style="font-size:11px;color:var(--gold);margin-top:3px">'+idee.pourquoi+'</div><div style="margin-top:7px">'+idee.tags.map(t=>'<span class="tag">'+t+'</span>').join('')+'</div></div>'+btnHtml+'</div>';
+        return '<div class="idea-card '+(activeStatus?'selected':'')+'"><div class="idea-score">'+idee.score+'</div><div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--text)">'+idee.nom+'</div><div style="font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5">'+idee.description+'</div><div style="font-size:11px;color:var(--gold);margin-top:3px">'+idee.pourquoi+'</div><div style="margin-top:7px">'+idee.tags.map(t=>'<span class="tag">'+t+'</span>').join('')+'</div></div>'+btnHtml+'</div>';
       }).join('')}
     </div>
     <div style="text-align:center;padding:16px;border-top:1px solid var(--border);margin-top:4px">
@@ -1424,6 +1589,7 @@ async function activerIdee(idee, form) {
   if(STATE.lastIdees && STATE.lastForm) {
     renderIdeeResults({analyse: STATE.lastAnalyse || '', idees: STATE.lastIdees}, STATE.lastForm);
   }
+  updateUserDisplay();
 }
 
 function renderActiveIdeaView() {
@@ -2032,6 +2198,30 @@ function simulerAnalyse(form, exclude) {
     : `Basé sur ta compétence en "${form.competence}", ton secteur "${secteur}" et le besoin que tu observes en ${pays} — voici les 3 idées les mieux adaptées à ton profil et à ta situation actuelle.`;
 
   return { analyse, idees: finalSelected };
+}
+
+function mobileGoTo(page, el) {
+  goToPage(page);
+  document.querySelectorAll('.mobile-nav-item').forEach(i => i.classList.remove('active'));
+  if(el) el.classList.add('active');
+  // Update mobile header
+  const info = PAGE_INFO[page];
+  const title = typeof info.h === 'function' ? info.h() : info.h;
+  const sub = typeof info.p === 'function' ? info.p() : info.p;
+  const mt = document.getElementById('m-page-title');
+  const ms = document.getElementById('m-page-sub');
+  if(mt) mt.textContent = title;
+  if(ms) ms.textContent = sub;
+}
+
+function goToPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  STATE.currentPage = page;
+  if(page === 'plan') { renderPhases(); renderActionsList(); }
+  if(page === 'revenus') renderRevenus();
+  if(page === 'archive') renderArchive();
+  if(page === 'dashboard') updateDashboard();
 }
 
 document.addEventListener('DOMContentLoaded', function() {
