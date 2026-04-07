@@ -1873,6 +1873,54 @@ async function ctxSend(chipEl, ctx, msg) {
 
 // ── START ────�
 // ── SIMULATION FUNCTIONS (remplacées par vraie API au déploiement) ──
+function simulerActions(idee) {
+  const nom = idee ? (idee.nom || 'ton activite') : 'ton activite';
+  return [
+    {id:STATE.nextId++,text:'Definir mon offre pour '+nom,week:"Semaine 1",done:false},
+    {id:STATE.nextId++,text:"Identifier 5 premiers clients potentiels",week:"Semaine 1",done:false},
+    {id:STATE.nextId++,text:"Creer mon message de presentation WhatsApp",week:"Semaine 2",done:false},
+    {id:STATE.nextId++,text:"Publier mon premier statut WhatsApp",week:"Semaine 2",done:false},
+    {id:STATE.nextId++,text:"Contacter mes 5 premiers prospects",week:"Semaine 3",done:false},
+    {id:STATE.nextId++,text:"Realiser mon premier test client",week:"Semaine 3",done:false},
+    {id:STATE.nextId++,text:"Collecter les retours de mon premier test",week:"Semaine 4",done:false},
+    {id:STATE.nextId++,text:"Ajuster mon offre selon les retours",week:"Semaine 4",done:false},
+    {id:STATE.nextId++,text:"Fixer mon prix definitif et ma grille tarifaire",week:"Semaine 5",done:false},
+    {id:STATE.nextId++,text:"Ouvrir un compte dedie a mon activite",week:"Semaine 5",done:false},
+    {id:STATE.nextId++,text:"Viser mes 3 premiers clients payants",week:"Semaine 6",done:false},
+    {id:STATE.nextId++,text:"Publier des temoignages de mes premiers clients",week:"Semaine 6",done:false},
+    {id:STATE.nextId++,text:"Etablir ma routine hebdomadaire de suivi",week:"Semaine 7",done:false},
+    {id:STATE.nextId++,text:"Analyser mes revenus du premier mois",week:"Semaine 8",done:false},
+    {id:STATE.nextId++,text:"Demander des temoignages a mes clients",week:"Semaine 9",done:false},
+    {id:STATE.nextId++,text:"Lancer une promotion pour attirer de nouveaux clients",week:"Semaine 10",done:false},
+    {id:STATE.nextId++,text:"Developper un deuxieme canal d acquisition",week:"Semaine 11",done:false},
+    {id:STATE.nextId++,text:"Viser la stabilite financiere et planifier le mois 3",week:"Semaine 12",done:false},
+  ];
+}
+
+function simulerChat(msg, ctx) {
+  const name = STATE.user ? STATE.user.prenom : '';
+  const greet = name ? name + ', ' : '';
+  const responses = {
+    idee: [
+      greet + "bonne question ! Concentre-toi sur ce que tu fais naturellement bien et ce dont les gens autour de toi ont besoin. L intersection entre tes competences et le marche, c est la que se trouve ta meilleure idee.",
+      greet + "l idee realiste est celle que tu peux lancer cette semaine avec ce que tu as deja. Commence petit, teste, et ameliore.",
+      "Pour valider rapidement " + greet + "propose ton service a 3 personnes gratuitement. Leurs retours te diront si tu es sur la bonne voie.",
+    ],
+    plan: [
+      greet + "si tu te sens bloque, reviens a l action la plus simple. Quelle est la toute petite chose que tu peux faire dans les 30 prochaines minutes ?",
+      "La constance est plus importante que la vitesse " + greet + ". Une action par jour cree un mouvement reel sur 90 jours.",
+      "Pour passer a la phase suivante " + greet + ", assure-toi d avoir complete au moins 3 actions de la phase actuelle.",
+    ],
+    revenus: [
+      greet + "pour fixer ton prix, calcule ton cout en temps et ressources, puis multiplie par 2.5. C est un bon point de depart.",
+      "Reinvestis 20% de chaque revenu dans ton activite " + greet + ". Cette discipline fait la difference sur le long terme.",
+      "Pour augmenter tes revenus " + greet + ", la voie la plus rapide est d aller chercher de nouveaux clients avec tes temoignages existants.",
+    ],
+  };
+  const arr = responses[ctx] || responses.plan;
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
 function getPrix(fcfaAmount, periode) {
   const rates = {'FCFA':1,'MAD':0.009,'DZD':0.055,'TND':0.0013,'EUR':0.0015,'USD':0.0016,'GBP':0.0013,'CAD':0.0022,'GHS':0.019,'NGN':1.25,'KES':0.21,'ZAR':0.029,'EGP':0.079,'SAR':0.006,'AED':0.0059,'TRY':0.055};
   const devise = STATE.devise || 'FCFA';
