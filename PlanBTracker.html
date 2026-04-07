@@ -1159,6 +1159,7 @@ async function analyserProfil() {
 function renderIdeeResults(data, form, previousIdees) {
   STATE.lastForm = form;
   STATE.lastIdees = data.idees;
+  STATE.lastAnalyse = data.analyse;
   const el = document.getElementById('idee-results');
   const isActive = (nom) => STATE.ideaActive && STATE.ideaActive.nom === nom;
   // Will store HTML after render
@@ -1175,7 +1176,7 @@ function renderIdeeResults(data, form, previousIdees) {
       </div>
       <div class="card-sub">Clique Choisir pour activer une idée — ou demande de nouvelles suggestions</div>
       ${data.idees.map((idee,i) => {
-        STATE._lastIdeesList = STATE._lastIdeesList || data.idees;
+        STATE._lastIdeesList = data.idees;
         STATE._lastForm = form;
         const active = isActive(idee.nom);
         const btnHtml = active
@@ -1419,6 +1420,10 @@ async function activerIdee(idee, form) {
   renderActionsList();
   updateDashboard();
   document.getElementById('plan-gen-loading').style.display = 'none';
+  // Re-render idea results to update buttons state
+  if(STATE.lastIdees && STATE.lastForm) {
+    renderIdeeResults({analyse: STATE.lastAnalyse || '', idees: STATE.lastIdees}, STATE.lastForm);
+  }
 }
 
 function renderActiveIdeaView() {
