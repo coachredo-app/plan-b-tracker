@@ -1330,17 +1330,15 @@ function showIdeesList() {
       </div>
       <div class="card-sub">Triées selon ton profil — clique sur une idée pour l'analyser</div>
       <div style="max-height:500px;overflow-y:auto">
-        ${sorted.slice(0,50).map((idea,i)=>`
-          <div style="padding:10px 14px;background:var(--darker);border:1px solid ${i<3?'rgba(201,168,76,.3)':'var(--border)'};border-radius:8px;margin-bottom:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:all .2s" onclick="analyserIdeeDirecte('${idea.nom.replace(/'/g,"&#39;")}')"
-            onmouseover="this.style.borderColor='rgba(201,168,76,.3)'" onmouseout="this.style.borderColor='${i<3?'rgba(201,168,76,.3)':'var(--border)'}'">
-            <div>
-              <span style="font-size:12px;color:var(--muted);margin-right:8px">${i+1}.</span>
-              <span style="font-size:13px;color:var(--text)">${idea.nom}</span>
-              ${i<3?'<span style="margin-left:8px;font-size:10px;background:rgba(201,168,76,.15);color:var(--gold);padding:2px 8px;border-radius:20px;font-weight:600">Recommandé</span>':''}
-            </div>
-            <span style="color:var(--muted);font-size:14px">›</span>
-          </div>
-        `).join('')}
+        ${sorted.slice(0,50).map((idea,i)=>{
+          const border = i<3 ? 'rgba(201,168,76,.3)' : 'var(--border)';
+          const badge = i<3 ? '<span style="margin-left:8px;font-size:10px;background:rgba(201,168,76,.15);color:#C9A84C;padding:2px 8px;border-radius:20px;font-weight:600">Recommande</span>' : '';
+          const safeNom = idea.nom.replace(/'/g,"&#39;");
+          return '<div style="padding:10px 14px;background:var(--darker);border:1px solid '+border+';border-radius:8px;margin-bottom:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center" onclick="analyserIdeeDirecte(\'' + safeNom + '\')">'
+            + '<div><span style="font-size:12px;color:#6B7094;margin-right:8px">'+(i+1)+'.</span>'
+            + '<span style="font-size:13px;color:#E8E4D9">'+idea.nom+'</span>'+badge+'</div>'
+            + '<span style="color:#6B7094">›</span></div>';
+        }).join('')}
       </div>
     </div>
   `;
