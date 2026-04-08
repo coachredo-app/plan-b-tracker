@@ -919,6 +919,38 @@ body{background:var(--darker);color:var(--text);font-family:DM Sans,sans-serif;m
   </div>
 </div>
 
+
+<!-- ════════════════════════════════════════════════════
+     JOURNEY SCREEN — Parcours guidé linéaire interactif
+     ════════════════════════════════════════════════════ -->
+<div id="journey-screen" style="display:none;position:fixed;inset:0;background:var(--darker);z-index:200;overflow-y:auto;-webkit-overflow-scrolling:touch">
+  <!-- Header fixe -->
+  <div style="position:sticky;top:0;z-index:10;background:rgba(13,15,26,.97);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding:14px 20px">
+    <div style="max-width:640px;margin:0 auto">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:var(--gold)">Plan B Tracker</div>
+        <div id="journey-user-name" style="font-size:12px;color:var(--muted)"></div>
+      </div>
+      <!-- Barre de progression -->
+      <div style="background:var(--card);border-radius:4px;height:5px;overflow:hidden">
+        <div id="journey-prog-bar" style="height:100%;background:linear-gradient(90deg,var(--gold),#E8C96A);border-radius:4px;transition:width .5s ease;width:0%"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px">
+        <div id="journey-step-label" style="font-size:11px;color:var(--muted)"></div>
+        <div id="journey-step-num" style="font-size:11px;color:var(--gold);font-weight:600"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenu dynamique -->
+  <div style="max-width:640px;margin:0 auto;padding:24px 20px 60px" id="journey-body"></div>
+
+  <!-- Lien retour app -->
+  <div style="max-width:640px;margin:0 auto;padding:0 20px 40px;text-align:center">
+    <button onclick="skipJourneyToApp()" style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:underline;opacity:.6">Passer et accéder à l'application →</button>
+  </div>
+</div>
+
 </div><!-- end main-app -->
 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
@@ -1030,9 +1062,8 @@ function finishOnboarding() {
   STATE.progression.engagement = true;
   STATE.user = {...onbData, depuis: new Date().toLocaleDateString('fr-FR')};
   STATE.devise = getCurrency(onbData.pays || 'FCFA');
-  document.getElementById('onboarding').style.display = 'none';
   document.getElementById('main-app').style.display = 'block';
-  initApp();
+  launchJourney();
 }
 
 
@@ -1687,15 +1718,784 @@ function mobileGoTo(page,el){goToPage(page);document.querySelectorAll('.mobile-n
 
 function goToPage(page){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));const pageEl=document.getElementById('page-'+page);if(pageEl)pageEl.classList.add('active');STATE.currentPage=page;if(page==='plan')renderPlan();if(page==='revenus')renderRevenus();if(page==='archive')renderArchive();if(page==='dashboard')updateDashboard();}
 
-document.addEventListener('DOMContentLoaded', function() {
+
+// ════════════════════════════════════════════════════════════
+//  JOURNEY ENGINE — Parcours guidé linéaire complet
+// ════════════════════════════════════════════════════════════
+
+// Réponses collectées pendant le parcours
+let JOURNEY = {
+  step: 'test90',         // étape courante
+  test90: '',             // jours de survie
+  angle1: '',             // compétences naturelles
+  angle2: '',             // besoins observés
+  angle3: '',             // ce qui se vend
+  ideeChoisie: null,      // objet idée
+  offre: '',              // "J'aide X à Y"
+  prix: '',               // prix défini
+  contacts: '',           // 10 contacts listés
+  semaines: {},           // réponses par semaine {1: {answers:[], note:''}, ...}
+};
+
+// Étapes du parcours avec leur progression %
+const JOURNEY_STEPS = {
+  test90:     {pct:5,  label:'Test des 90 jours'},
+  angle1:     {pct:14, label:'Angle 1 — Tes compétences'},
+  angle2:     {pct:22, label:'Angle 2 — Besoins autour de toi'},
+  angle3:     {pct:30, label:'Angle 3 — Ce qui se vend'},
+  idee:       {pct:40, label:'Choix de ton idée'},
+  offre:      {pct:50, label:'Formulation de l\'offre'},
+  s1:         {pct:55, label:'Semaine 1 — Fondations'},
+  s2:         {pct:60, label:'Semaine 2 — Exposition'},
+  s3:         {pct:66, label:'Semaine 3 — Terrain'},
+  s4:         {pct:72, label:'Semaine 4 — Première vente'},
+  s5:         {pct:77, label:'Semaine 5 — Répétition'},
+  s6:         {pct:80, label:'Semaine 6 — Amplification'},
+  s7:         {pct:83, label:'Semaine 7 — Organisation'},
+  s8:         {pct:86, label:'Semaine 8 — Structuration'},
+  s9:         {pct:89, label:'Semaine 9 — Optimisation'},
+  s10:        {pct:92, label:'Semaine 10 — Affinage'},
+  s11:        {pct:95, label:'Semaine 11 — Consolidation'},
+  s12:        {pct:100, label:'Semaine 12 — Vision finale'},
+};
+
+// Questions guidées par semaine (tirées du livre)
+const SEMAINE_QUESTIONS = {
+  1: [
+    {id:'offre_sem1', q:'Quelle est ton idée de Plan B choisie ?', ph:'Ex: Gestion des réseaux sociaux pour petits commerces', type:'text'},
+    {id:'phrase_offre', q:'Formule ton offre en 1 phrase : "J\'aide _______ à _______"', ph:'Ex: J\'aide les boutiques à attirer plus de clients avec Facebook', type:'text'},
+    {id:'prix_defini', q:'Quel est ton prix de départ ?', ph:'Ex: 30 000 FCFA par mois ou 5 000 FCFA par séance', type:'text'},
+    {id:'contacts_liste', q:'Liste les 10 premières personnes à contacter (prénoms suffisent)', ph:'Ex: Ahmed, Fatima, mon frère, ma collègue Sara...', type:'textarea'},
+  ],
+  2: [
+    {id:'canevas_qui', q:'Mini-Canevas : "J\'aide _______ à _______" — Ton public exact ?', ph:'Ex: Les gérants de petites boutiques de quartier', type:'text'},
+    {id:'canevas_benefice', q:'Grâce à toi, ils vont pouvoir...', ph:'Ex: Attirer 2x plus de clients sans dépenser en publicité traditionnelle', type:'text'},
+    {id:'heure_or', q:'Ton "Heure d\'Or" — quel créneau quotidien tu dédies à ton Plan B ?', ph:'Ex: De 18h à 19h30, chaque soir de semaine', type:'text'},
+    {id:'5_messages', q:'Combien de messages as-tu envoyés cette semaine ? Que s\'est-il passé ?', ph:'Ex: J\'ai envoyé 5 messages. 2 ont répondu positivement, 1 veut me rappeler...', type:'textarea'},
+  ],
+  3: [
+    {id:'mvp_service', q:'Quelle est la version la plus simple de ton service (ton MVP) ?', ph:'Ex: 1 post Facebook par jour pendant 1 semaine à 5 000 FCFA au lieu de 30 000', type:'text'},
+    {id:'retours', q:'Qu\'est-ce que tes testeurs t\'ont dit ? (honnêtement)', ph:'Ex: Ahmed a dit que le prix est trop élevé pour commencer. Fatima a accepté de tester.', type:'textarea'},
+    {id:'ajustement', q:'Qu\'est-ce que tu ajustes selon ces retours ?', ph:'Ex: Je baisse le prix d\'entrée à 10 000 FCFA pour les 3 premiers clients', type:'text'},
+  ],
+  4: [
+    {id:'vente_faite', q:'As-tu encaissé ta première vente ? Décris ce qui s\'est passé.', ph:'Ex: Oui ! Ibrahim m\'a payé 15 000 FCFA pour gérer sa page ce mois-ci. / Pas encore, j\'ai relancé 3 personnes.', type:'textarea'},
+    {id:'finance_sep', q:'Comment tu sépares l\'argent du Plan B ? (Mobile Money, enveloppe...)', ph:'Ex: J\'ai ouvert un compte Wave dédié au Plan B', type:'text'},
+    {id:'pct_reinvest', q:'Quel % tu gardes pour réinvestir dans le Plan B ?', ph:'Ex: 20% de chaque paiement reçu', type:'text'},
+  ],
+  5: [
+    {id:'repeter', q:'Qu\'est-ce qui a généré ta première vente ? Comment tu le répètes ?', ph:'Ex: C\'est le message WhatsApp direct qui a marché. Je l\'envoie à 10 nouvelles personnes.', type:'textarea'},
+    {id:'nouvelles_personnes', q:'Qui as-tu contacté de nouveau cette semaine ?', ph:'Ex: 8 nouvelles personnes contactées, 2 ont répondu positivement', type:'text'},
+  ],
+  6: [
+    {id:'recommandations', q:'Qui t\'a recommandé à quelqu\'un ? Qu\'est-ce qui s\'est passé ?', ph:'Ex: Fatima m\'a présenté à sa sœur qui a une boutique de vêtements', type:'textarea'},
+    {id:'temoignage', q:'As-tu un témoignage client à partager ? (même court)', ph:'Ex: "Depuis que je travaille avec lui, j\'ai 3 nouveaux clients par semaine" — Ibrahim', type:'text'},
+  ],
+  7: [
+    {id:'routine', q:'Décris ta routine quotidienne Plan B actuelle', ph:'Ex: 18h-18h15 : check messages. 18h15-19h : créer du contenu. 19h-19h30 : contacter 2 prospects.', type:'textarea'},
+    {id:'message_vente', q:'Ton message de vente simplifié en 1-2 phrases', ph:'Ex: Je gère ta page Facebook pour que tu te concentres sur ton business. Résultat garanti en 30 jours.', type:'text'},
+  ],
+  8: [
+    {id:'bilan_m1', q:'Bilan du Mois 1 : revenus totaux, nombre de clients, apprentissages', ph:'Ex: 45 000 FCFA de revenus, 3 clients, j\'apprends que les restaurants sont plus faciles à convaincre', type:'textarea'},
+    {id:'optimiser', q:'Quelle tâche tu peux automatiser ou simplifier pour gagner du temps ?', ph:'Ex: Je crée des modèles de posts pour ne pas repartir de zéro chaque jour', type:'text'},
+  ],
+  9: [
+    {id:'nouveau_prix', q:'Ton nouveau prix augmenté (+10-20%) et comment tu le justifies ?', ph:'Ex: Je passe de 30 000 à 35 000 FCFA car j\'inclus maintenant des rapports mensuels', type:'text'},
+    {id:'bonus_offre', q:'Quel bonus simple tu ajoutes à ton offre existante ?', ph:'Ex: J\'ajoute 1 session de conseil par mois offerte pour les clients abonnés', type:'text'},
+  ],
+  10: [
+    {id:'client_ideal', q:'Décris ton client idéal (profil, secteur, problème principal)', ph:'Ex: Gérant d\'une boutique de 1-5 employés, dans la mode ou alimentation, n\'a pas le temps pour les réseaux', type:'textarea'},
+    {id:'canal_test', q:'Nouveau canal testé cette semaine et résultat', ph:'Ex: J\'ai posté sur un groupe Facebook de commerçants → 4 demandes en 2 jours', type:'text'},
+  ],
+  11: [
+    {id:'top3_actions', q:'Les 3 actions les plus rentables de ces 90 jours', ph:'Ex: 1. Messages WhatsApp directs 2. Recommandations clients 3. Posts dans groupes Facebook', type:'textarea'},
+    {id:'offre_recurrente', q:'Ton offre récurrente (abonnement mensuel) — comment tu l\'as définie ?', ph:'Ex: Abonnement mensuel à 35 000 FCFA = 15 posts + 2 sessions conseil + rapport mensuel', type:'text'},
+  ],
+  12: [
+    {id:'bilan_90', q:'Bilan complet des 90 jours : revenus totaux, clients, apprentissages clés', ph:'Ex: 180 000 FCFA générés, 6 clients, j\'ai appris que la régularité est plus importante que la perfection', type:'textarea'},
+    {id:'decision_suite', q:'Décision pour le cycle 2 (continuer / améliorer / changer d\'idée)', ph:'Ex: Je continue avec la même idée mais je me spécialise uniquement dans les restaurants', type:'text'},
+    {id:'vision_6mois', q:'Ta vision dans 6 mois avec ce Plan B', ph:'Ex: Dans 6 mois, je veux avoir 10 clients réguliers pour 350 000 FCFA/mois et lancer ma première formation', type:'textarea'},
+  ],
+};
+
+function launchJourney() {
+  // Load saved journey progress
+  try {
+    const saved = localStorage.getItem('planb_journey');
+    if(saved) JOURNEY = {...JOURNEY, ...JSON.parse(saved)};
+  } catch(e) {}
+
+  document.getElementById('onboarding').style.display = 'none';
+  document.getElementById('main-app').style.display = 'block'; // needed for app functions
+  document.getElementById('journey-screen').style.display = 'block';
+
+  const prenom = STATE.user ? STATE.user.prenom : '';
+  const nameEl = document.getElementById('journey-user-name');
+  if(nameEl) nameEl.textContent = prenom ? '👋 ' + prenom : '';
+
+  renderJourneyStep(JOURNEY.step || 'test90');
+}
+
+function saveJourney() {
+  try { localStorage.setItem('planb_journey', JSON.stringify(JOURNEY)); } catch(e) {}
+  try { localStorage.setItem('planb_user', JSON.stringify(STATE.user)); } catch(e) {}
+}
+
+function renderJourneyStep(step) {
+  JOURNEY.step = step;
+  saveJourney();
+
+  const info = JOURNEY_STEPS[step] || {pct:0, label:step};
+  const bar = document.getElementById('journey-prog-bar');
+  const lbl = document.getElementById('journey-step-label');
+  const num = document.getElementById('journey-step-num');
+  if(bar) bar.style.width = info.pct + '%';
+  if(lbl) lbl.textContent = info.label;
+  if(num) {
+    const stepNums = Object.keys(JOURNEY_STEPS);
+    const idx = stepNums.indexOf(step);
+    num.textContent = 'Étape '+(idx+1)+' / '+stepNums.length;
+  }
+
+  const body = document.getElementById('journey-body');
+  if(!body) return;
+
+  // Scroll to top
+  document.getElementById('journey-screen').scrollTo(0, 0);
+
+  // Render the right screen
+  if(step === 'test90') renderJTest90(body);
+  else if(step === 'angle1') renderJAngle1(body);
+  else if(step === 'angle2') renderJAngle2(body);
+  else if(step === 'angle3') renderJAngle3(body);
+  else if(step === 'idee') renderJIdee(body);
+  else if(step === 'offre') renderJOffre(body);
+  else if(step.startsWith('s')) renderJSemaine(body, parseInt(step.slice(1)));
+}
+
+function jCard(icon, titre, desc, content, buttons) {
+  return '<div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:16px">'
+    + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">'
+    + '<div style="width:48px;height:48px;border-radius:12px;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">'+icon+'</div>'
+    + '<div><div style="font-family:Cormorant Garamond,serif;font-size:20px;font-weight:700;color:var(--gold)">'+titre+'</div>'
+    + (desc ? '<div style="font-size:12px;color:var(--muted);margin-top:2px">'+desc+'</div>' : '')
+    + '</div></div>'
+    + content
+    + (buttons ? '<div style="margin-top:20px">'+buttons+'</div>' : '')
+    + '</div>';
+}
+
+function jInput(id, label, ph, type, saved) {
+  const el = type === 'textarea'
+    ? '<textarea id="j-'+id+'" placeholder="'+ph+'" style="width:100%;background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:DM Sans,sans-serif;font-size:13px;resize:vertical;min-height:90px;line-height:1.6;outline:none;margin-top:6px">'+(saved||'')+'</textarea>'
+    : '<input id="j-'+id+'" type="text" placeholder="'+ph+'" value="'+(saved||'')+'" style="width:100%;background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:DM Sans,sans-serif;font-size:13px;outline:none;margin-top:6px">';
+  return '<div style="margin-bottom:16px"><div style="font-size:13px;font-weight:600;color:var(--text);line-height:1.5">'+label+'</div>'+el+'</div>';
+}
+
+function jBtn(txt, onclick, outline) {
+  if(outline) return '<button onclick="'+onclick+'" style="width:100%;padding:13px;background:transparent;border:1px solid rgba(201,168,76,.3);border-radius:10px;color:var(--gold);font-family:DM Sans,sans-serif;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px">'+txt+'</button>';
+  return '<button onclick="'+onclick+'" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--gold),#A8842A);border:none;border-radius:10px;color:var(--dark);font-family:DM Sans,sans-serif;font-size:15px;font-weight:700;cursor:pointer">'+txt+'</button>';
+}
+
+function jBack(step) {
+  return '<button onclick="renderJourneyStep(\''+step+'\')" style="background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;font-family:DM Sans,sans-serif;margin-bottom:16px;padding:0">← Retour</button>';
+}
+
+// ── ÉTAPE 1 : TEST DES 90 JOURS ─────────────────────
+function renderJTest90(body) {
+  const prenom = STATE.user ? STATE.user.prenom : '';
+  body.innerHTML =
+    '<div style="text-align:center;margin-bottom:28px">'
+    + '<div style="font-size:48px;margin-bottom:12px">⏱️</div>'
+    + '<div style="font-family:Cormorant Garamond,serif;font-size:28px;font-weight:700;color:var(--text);margin-bottom:8px">Bienvenue'+(prenom?' '+prenom:'')+' !</div>'
+    + '<div style="font-size:14px;color:var(--muted);line-height:1.7;max-width:480px;margin:0 auto">Avant de commencer, une question essentielle du livre de Coach Redouane. Réponds honnêtement — c\'est pour toi.</div>'
+    + '</div>'
+
+    + jCard('⏱️', 'Le Test des 90 Jours',
+        'La 1ère question à se poser avant tout',
+        '<div style="background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.2);border-radius:10px;padding:16px;margin-bottom:20px">'
+        + '<div style="font-family:Cormorant Garamond,serif;font-size:18px;font-style:italic;color:var(--text);line-height:1.6;margin-bottom:8px">"Si ton salaire s\'arrêtait aujourd\'hui, combien de jours pourrais-tu tenir financièrement ?"</div>'
+        + '<div style="font-size:12px;color:var(--muted)">Cette réponse définit l\'urgence de ton Plan B.</div>'
+        + '</div>'
+        + '<label style="display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px">Ton nombre de jours :</label>'
+        + '<div style="display:flex;align-items:center;gap:12px">'
+        + '<input id="j-test90" type="number" min="0" max="365" value="'+(JOURNEY.test90||'')+'" placeholder="Ex: 30" style="width:120px;background:var(--darker);border:2px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-size:22px;font-weight:700;text-align:center;outline:none;font-family:Cormorant Garamond,serif">'
+        + '<div style="font-size:14px;color:var(--muted)">jours de survie</div>'
+        + '</div>'
+        + '<div id="test90-feedback" style="margin-top:12px;font-size:12px;color:var(--muted)"></div>',
+        jBtn('Continuer →', 'validerTest90()')
+    )
+
+    + '<div style="text-align:center;padding:12px;background:rgba(201,168,76,.04);border:1px solid rgba(201,168,76,.1);border-radius:10px">'
+    + '<div style="font-size:12px;color:var(--muted);line-height:1.6">'
+    + '💡 <strong style="color:var(--gold)">Pourquoi cette question ?</strong><br>'
+    + 'Elle te donne ta vraie motivation. Moins de 30 jours = urgence absolue. 30-90 jours = Zone de confort qui peut te coûter cher. Plus de 90 jours = tu as le temps de construire correctement.'
+    + '</div></div>';
+
+  // Live feedback
+  const inp = document.getElementById('j-test90');
+  if(inp) inp.addEventListener('input', function() {
+    const v = parseInt(this.value);
+    const fb = document.getElementById('test90-feedback');
+    if(!fb) return;
+    if(isNaN(v)) { fb.textContent = ''; return; }
+    if(v < 15) fb.innerHTML = '<span style="color:var(--danger)">🚨 Moins de 15 jours — ton Plan B est urgent. On commence maintenant.</span>';
+    else if(v < 30) fb.innerHTML = '<span style="color:#E67E22">⚡ Moins de 30 jours — la pression est bonne. Elle va t\'aider à agir.</span>';
+    else if(v < 90) fb.innerHTML = '<span style="color:var(--gold)">⚠️ '+v+' jours — c\'est bien, mais pas une raison de procrastiner.</span>';
+    else fb.innerHTML = '<span style="color:var(--success)">✅ '+v+' jours — tu peux construire avec méthode. Ne gaspille pas cette chance.</span>';
+  });
+}
+
+function validerTest90() {
+  const val = document.getElementById('j-test90').value.trim();
+  if(!val) { alert('Entre un nombre de jours pour continuer.'); return; }
+  JOURNEY.test90 = val;
+  renderJourneyStep('angle1');
+}
+
+// ── ÉTAPE 2 : ANGLE 1 — Compétences ──────────────────
+function renderJAngle1(body) {
+  body.innerHTML = jBack('test90')
+    + jCard('⚡', 'Angle 1 — Ce que tu fais naturellement bien',
+        'La méthode des 3 Angles — Chapitre 2 du livre',
+        '<div style="background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.2);border-radius:10px;padding:14px;margin-bottom:20px">'
+        + '<div style="font-size:13px;color:var(--text);line-height:1.7">Tes compétences naturelles sont invisibles pour toi mais précieuses pour les autres. Ce qui te semble simple est souvent compliqué pour ton entourage.</div>'
+        + '</div>'
+        + '<div style="margin-bottom:16px">'
+        + '<div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:12px">Réponds à ces 3 questions :</div>'
+
+        + '<div style="background:var(--darker);border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid var(--border)">'
+        + '<div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px">Question 1</div>'
+        + '<div style="font-size:13px;color:var(--text);margin-bottom:8px">Qu\'est-ce que les gens te demandent souvent de faire ou de leur expliquer ?</div>'
+        + '<textarea id="j-a1q1" placeholder="Ex: On me demande souvent de l\'aide pour réparer les téléphones, cuisiner pour les fêtes, gérer les comptes..." style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-family:DM Sans,sans-serif;font-size:12px;resize:vertical;min-height:60px;outline:none">'+(JOURNEY.a1q1||'')+'</textarea>'
+        + '</div>'
+
+        + '<div style="background:var(--darker);border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid var(--border)">'
+        + '<div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px">Question 2</div>'
+        + '<div style="font-size:13px;color:var(--text);margin-bottom:8px">Qu\'est-ce qui te semble facile mais difficile pour les autres autour de toi ?</div>'
+        + '<textarea id="j-a1q2" placeholder="Ex: Je trouve ça facile de convaincre les gens, de vendre, de coudre, de faire des photos..." style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-family:DM Sans,sans-serif;font-size:12px;resize:vertical;min-height:60px;outline:none">'+(JOURNEY.a1q2||'')+'</textarea>'
+        + '</div>'
+
+        + '<div style="background:var(--darker);border-radius:10px;padding:14px;border:1px solid var(--border)">'
+        + '<div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px">Question 3</div>'
+        + '<div style="font-size:13px;color:var(--text);margin-bottom:8px">Pour quoi des gens t\'ont déjà remercié ou félicité ?</div>'
+        + '<textarea id="j-a1q3" placeholder="Ex: On m\'a félicité pour mes gâteaux, ma façon de coiffer, mon sens de l\'organisation, mes explications claires..." style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-family:DM Sans,sans-serif;font-size:12px;resize:vertical;min-height:60px;outline:none">'+(JOURNEY.a1q3||'')+'</textarea>'
+        + '</div>'
+        + '</div>',
+        jBtn('Angle 2 →', 'validerAngle1()')
+    );
+}
+
+function validerAngle1() {
+  JOURNEY.a1q1 = document.getElementById('j-a1q1').value.trim();
+  JOURNEY.a1q2 = document.getElementById('j-a1q2').value.trim();
+  JOURNEY.a1q3 = document.getElementById('j-a1q3').value.trim();
+  JOURNEY.angle1 = [JOURNEY.a1q1, JOURNEY.a1q2, JOURNEY.a1q3].filter(Boolean).join(' / ');
+  if(!JOURNEY.angle1) { alert('Réponds à au moins une question pour continuer.'); return; }
+  renderJourneyStep('angle2');
+}
+
+// ── ÉTAPE 3 : ANGLE 2 — Besoins ───────────────────────
+function renderJAngle2(body) {
+  body.innerHTML = jBack('angle1')
+    + jCard('👁️', 'Angle 2 — Les besoins autour de toi',
+        'Observe avant de créer — la demande est ton carburant',
+        '<div style="background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.2);border-radius:10px;padding:14px;margin-bottom:20px">'
+        + '<div style="font-size:13px;color:var(--text);line-height:1.7">La meilleure idée de Plan B résout un problème réel que tu observes autour de toi. Pas besoin d\'inventer — juste d\'écouter.</div>'
+        + '</div>'
+
+        + '<div style="background:var(--darker);border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid var(--border)">'
+        + '<div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px">Question 1</div>'
+        + '<div style="font-size:13px;color:var(--text);margin-bottom:8px">Quels problèmes entends-tu souvent dans ton entourage (famille, voisins, collègues) ?</div>'
+        + '<textarea id="j-a2q1" placeholder="Ex: Mes amis se plaignent toujours du prix des coiffeurs, du manque de livraison rapide, de ne pas trouver de bons plats cuisinés..." style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-family:DM Sans,sans-serif;font-size:12px;resize:vertical;min-height:70px;outline:none">'+(JOURNEY.a2q1||'')+'</textarea>'
+        + '</div>'
+
+        + '<div style="background:var(--darker);border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid var(--border)">'
+        + '<div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px">Question 2</div>'
+        + '<div style="font-size:13px;color:var(--text);margin-bottom:8px">Pour quoi les gens autour de toi payent-ils régulièrement (même si c\'est peu) ?</div>'
+        + '<textarea id="j-a2q2" placeholder="Ex: Ils paient pour la coiffure à domicile, les cours particuliers pour leurs enfants, la réparation de téléphone, la livraison..." style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-family:DM Sans,sans-serif;font-size:12px;resize:vertical;min-height:70px;outline:none">'+(JOURNEY.a2q2||'')+'</textarea>'
+        + '</div>'
+
+        + '<div style="background:var(--darker);border-radius:10px;padding:14px;border:1px solid var(--border)">'
+        + '<div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px">Question 3</div>'
+        + '<div style="font-size:13px;color:var(--text);margin-bottom:8px">Si tu pouvais résoudre UN problème pour 10 personnes de ton entourage demain, ce serait lequel ?</div>'
+        + '<input id="j-a2q3" type="text" placeholder="Ex: Leur trouver une coiffeuse fiable à domicile / Gérer leur page Facebook à leur place" value="'+(JOURNEY.a2q3||'')+'" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-family:DM Sans,sans-serif;font-size:13px;outline:none;margin-top:4px">'
+        + '</div>',
+        jBtn('Angle 3 →', 'validerAngle2()')
+    );
+}
+
+function validerAngle2() {
+  JOURNEY.a2q1 = document.getElementById('j-a2q1').value.trim();
+  JOURNEY.a2q2 = document.getElementById('j-a2q2').value.trim();
+  JOURNEY.a2q3 = document.getElementById('j-a2q3').value.trim();
+  JOURNEY.angle2 = [JOURNEY.a2q1, JOURNEY.a2q2, JOURNEY.a2q3].filter(Boolean).join(' / ');
+  if(!JOURNEY.angle2) { alert('Réponds à au moins une question pour continuer.'); return; }
+  renderJourneyStep('angle3');
+}
+
+// ── ÉTAPE 4 : ANGLE 3 — Ce qui se vend ───────────────
+function renderJAngle3(body) {
+  body.innerHTML = jBack('angle2')
+    + jCard('📊', 'Angle 3 — Ce qui se vend déjà',
+        'Observe le marché — adapte, n\'invente pas',
+        '<div style="background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.2);border-radius:10px;padding:14px;margin-bottom:20px">'
+        + '<div style="font-size:13px;color:var(--text);line-height:1.7">Trouver ce qui se vend déjà dans ton environnement est plus sûr qu\'inventer. Tu t\'adaptes à un marché existant.</div>'
+        + '</div>'
+
+        + '<div style="background:var(--darker);border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid var(--border)">'
+        + '<div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px">Question 1</div>'
+        + '<div style="font-size:13px;color:var(--text);margin-bottom:8px">Qu\'est-ce qui marche visiblement bien dans ton quartier ou ton réseau (les gens en parlent, les files d\'attente...) ?</div>'
+        + '<textarea id="j-a3q1" placeholder="Ex: Le vendeur de jus naturels devant le marché fait toujours la queue. La coiffeuse du quartier est toujours surbookée." style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-family:DM Sans,sans-serif;font-size:12px;resize:vertical;min-height:70px;outline:none">'+(JOURNEY.a3q1||'')+'</textarea>'
+        + '</div>'
+
+        + '<div style="background:var(--darker);border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid var(--border)">'
+        + '<div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px">Question 2</div>'
+        + '<div style="font-size:13px;color:var(--text);margin-bottom:8px">Quels services ou produits vois-tu sur les groupes WhatsApp ou Facebook de ton entourage ?</div>'
+        + '<textarea id="j-a3q2" placeholder="Ex: Je vois beaucoup de gens vendre des vêtements, proposer des cours de langue, offrir des services de nettoyage..." style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-family:DM Sans,sans-serif;font-size:12px;resize:vertical;min-height:60px;outline:none">'+(JOURNEY.a3q2||'')+'</textarea>'
+        + '</div>'
+
+        + '<div style="background:var(--darker);border-radius:10px;padding:14px;border:1px solid var(--border)">'
+        + '<div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px">Question 3</div>'
+        + '<div style="font-size:13px;color:var(--text);margin-bottom:8px">Si tu devais te lancer demain avec ce que tu as (compétences + observations), quelle serait ton idée ?</div>'
+        + '<input id="j-a3q3" type="text" placeholder="Ex: Gérer les réseaux sociaux des petits commerces / Préparer et livrer des repas faits maison" value="'+(JOURNEY.a3q3||'')+'" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-family:DM Sans,sans-serif;font-size:13px;outline:none;margin-top:4px">'
+        + '</div>',
+        jBtn('Trouver mon idée →', 'validerAngle3()')
+    );
+}
+
+function validerAngle3() {
+  JOURNEY.a3q1 = document.getElementById('j-a3q1').value.trim();
+  JOURNEY.a3q2 = document.getElementById('j-a3q2').value.trim();
+  JOURNEY.a3q3 = document.getElementById('j-a3q3').value.trim();
+  JOURNEY.angle3 = [JOURNEY.a3q1, JOURNEY.a3q2, JOURNEY.a3q3].filter(Boolean).join(' / ');
+  if(!JOURNEY.angle3) { alert('Réponds à au moins une question pour continuer.'); return; }
+  renderJourneyStep('idee');
+}
+
+// ── ÉTAPE 5 : CHOISIR L'IDÉE ──────────────────────────
+function renderJIdee(body) {
+  // Generate ideas based on angles
+  const comp = JOURNEY.angle1.toLowerCase();
+  const besoin = JOURNEY.angle2.toLowerCase();
+  const marche = JOURNEY.angle3.toLowerCase();
+  const combined = comp + ' ' + besoin + ' ' + marche;
+
+  const suggestions = genererIdees(combined);
+
+  body.innerHTML = jBack('angle3')
+    + '<div style="text-align:center;margin-bottom:20px">'
+    + '<div style="font-size:32px;margin-bottom:8px">💡</div>'
+    + '<div style="font-family:Cormorant Garamond,serif;font-size:24px;font-weight:700;color:var(--gold);margin-bottom:6px">Voici tes idées recommandées</div>'
+    + '<div style="font-size:13px;color:var(--muted)">Basées sur tes 3 angles — Choisis UNE seule idée</div>'
+    + '</div>'
+
+    // Résumé angles
+    + '<div style="background:rgba(201,168,76,.04);border:1px solid rgba(201,168,76,.12);border-radius:12px;padding:14px;margin-bottom:20px">'
+    + '<div style="font-size:11px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Résumé de tes 3 angles</div>'
+    + (JOURNEY.angle1 ? '<div style="font-size:12px;color:var(--muted);margin-bottom:6px"><strong style="color:var(--text)">⚡ Compétences :</strong> '+JOURNEY.angle1.slice(0,100)+(JOURNEY.angle1.length>100?'...':'')+'</div>' : '')
+    + (JOURNEY.angle2 ? '<div style="font-size:12px;color:var(--muted);margin-bottom:6px"><strong style="color:var(--text)">👁️ Besoins :</strong> '+JOURNEY.angle2.slice(0,100)+(JOURNEY.angle2.length>100?'...':'')+'</div>' : '')
+    + (JOURNEY.angle3 ? '<div style="font-size:12px;color:var(--muted)"><strong style="color:var(--text)">📊 Marché :</strong> '+JOURNEY.angle3.slice(0,100)+(JOURNEY.angle3.length>100?'...':'')+'</div>' : '')
+    + '</div>'
+
+    // 3 suggestions
+    + suggestions.map((idee, i) => {
+      const selected = JOURNEY.ideeChoisie && JOURNEY.ideeChoisie.nom === idee.nom;
+      return '<div onclick="selectionnerIdee('+i+')" style="background:var(--card);border:2px solid '+(selected?'var(--gold)':'var(--border)')+';border-radius:12px;padding:16px;margin-bottom:12px;cursor:pointer;transition:all .2s;'+(selected?'background:rgba(201,168,76,.06)':'')+'\" id="idee-card-'+i+'">'
+        + '<div style="display:flex;align-items:flex-start;gap:12px">'
+        + '<div style="min-width:44px;height:44px;border-radius:10px;background:'+(selected?'rgba(201,168,76,.2)':'rgba(201,168,76,.08)')+';display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--gold);font-family:Cormorant Garamond,serif">'+idee.score+'</div>'
+        + '<div style="flex:1">'
+        + '<div style="font-size:15px;font-weight:600;color:'+(selected?'var(--gold)':'var(--text)')+';margin-bottom:4px">'+idee.nom+'</div>'
+        + '<div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:8px">'+idee.description+'</div>'
+        + '<div style="display:flex;gap:6px;flex-wrap:wrap">'+idee.tags.map(t=>'<span style="font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(201,168,76,.1);color:var(--gold);font-weight:600">'+t+'</span>').join('')+'</div>'
+        + '</div>'
+        + '<div style="font-size:20px;color:'+(selected?'var(--gold)':'var(--border)')+'">'+(selected?'✓':'○')+'</div>'
+        + '</div></div>';
+    }).join('')
+
+    // Idée libre
+    + '<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">'
+    + '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px">🖊️ Ou entre ton propre idée :</div>'
+    + '<input id="j-idee-libre" type="text" placeholder="Ex: Formation Excel pour secrétaires..." value="'+(JOURNEY.ideeLibre||'')+'" style="width:100%;background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-family:DM Sans,sans-serif;font-size:13px;outline:none">'
+    + '<button onclick="validerIdeeLibre()" style="width:100%;margin-top:10px;padding:11px;background:transparent;border:1px solid rgba(201,168,76,.3);border-radius:8px;color:var(--gold);font-family:DM Sans,sans-serif;font-size:13px;cursor:pointer">Choisir mon propre idée →</button>'
+    + '</div>'
+
+    + jBtn('Valider cette idée et continuer →', 'validerIdee()');
+
+  // Store suggestions
+  window._journeySuggestions = suggestions;
+}
+
+let _ideeSelectIdx = -1;
+
+function selectionnerIdee(idx) {
+  _ideeSelectIdx = idx;
+  // Update UI
+  document.querySelectorAll('[id^="idee-card-"]').forEach((el, i) => {
+    const sel = i === idx;
+    el.style.borderColor = sel ? 'var(--gold)' : 'var(--border)';
+    el.style.background = sel ? 'rgba(201,168,76,.06)' : 'var(--card)';
+  });
+}
+
+function validerIdeeLibre() {
+  const v = document.getElementById('j-idee-libre').value.trim();
+  if(!v) { alert('Entre ton idée pour continuer.'); return; }
+  JOURNEY.ideeLibre = v;
+  JOURNEY.ideeChoisie = {nom: v, offre: '', public: '', benefice: '', prix: '', score: 80, tags: ['Mon idée'], description: 'Mon idée personnelle de Plan B.'};
+  renderJourneyStep('offre');
+}
+
+function validerIdee() {
+  if(_ideeSelectIdx >= 0 && window._journeySuggestions && window._journeySuggestions[_ideeSelectIdx]) {
+    JOURNEY.ideeChoisie = window._journeySuggestions[_ideeSelectIdx];
+  } else {
+    const libre = document.getElementById('j-idee-libre');
+    if(libre && libre.value.trim()) {
+      JOURNEY.ideeChoisie = {nom: libre.value.trim(), offre: '', public: '', benefice: '', prix: '', score: 80, tags: [], description: ''};
+    }
+  }
+  if(!JOURNEY.ideeChoisie) { alert('Choisis une idée ou entre la tienne pour continuer.'); return; }
+  renderJourneyStep('offre');
+}
+
+// ── ÉTAPE 6 : OFFRE + CONTACTS ────────────────────────
+function renderJOffre(body) {
+  const idee = JOURNEY.ideeChoisie;
+  body.innerHTML = jBack('idee')
+    + '<div style="text-align:center;margin-bottom:20px">'
+    + '<div style="font-size:32px;margin-bottom:8px">✅</div>'
+    + '<div style="font-family:Cormorant Garamond,serif;font-size:24px;font-weight:700;color:var(--gold);margin-bottom:6px">Idée choisie : '+idee.nom+'</div>'
+    + '<div style="font-size:13px;color:var(--muted)">Maintenant on rend cette idée concrète et vendable</div>'
+    + '</div>'
+
+    + jCard('📝', 'Formule ton offre',
+        'Chapitre 3 — Construire une offre claire',
+        '<div style="background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.2);border-radius:10px;padding:12px 14px;margin-bottom:16px">'
+        + '<div style="font-size:13px;color:var(--text);line-height:1.7">"Si tu ne peux pas expliquer ton offre en 2 phrases, elle n\'est pas encore prête."</div>'
+        + '</div>'
+        + jInput('offre', '"J\'aide _______ à _______" — Complète cette phrase', 'Ex: J\'aide les restaurants à remplir leurs tables grâce aux réseaux sociaux', 'text', JOURNEY.offre)
+        + jInput('prix', 'Mon prix de départ (sois précis)', 'Ex: 30 000 FCFA par mois / 5 000 FCFA par séance / 2 000 FCFA par livraison', 'text', JOURNEY.prix)
+        + '<div style="background:var(--darker);border-radius:8px;padding:12px;font-size:12px;color:var(--muted);line-height:1.6">'
+        + '💡 <strong>Règle du prix :</strong> Ton temps vaut entre 2 000 et 5 000 FCFA/heure. Calcule : durée × valeur horaire × 1.5 = ton prix de départ.'
+        + '</div>',
+        ''
+    )
+
+    + jCard('👥', 'Mes 10 premiers contacts',
+        'La règle d\'or — tes premiers clients sont dans ton téléphone',
+        '<div style="background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.2);border-radius:10px;padding:12px 14px;margin-bottom:16px">'
+        + '<div style="font-size:13px;color:var(--text);line-height:1.7">Avant de chercher des inconnus, liste 10 personnes que tu connais déjà. Ne réfléchis pas — écris juste des prénoms.</div>'
+        + '</div>'
+        + jInput('contacts', 'Mes 10 premiers contacts (prénoms suffisent)', 'Ex:\n1. Ahmed (voisin, a une boutique)\n2. Fatima (collègue, cherche toujours un coiffeur)\n3. Mon frère Ibrahim\n4. Madame Diallo (connaissance de ma mère)\n5...', 'textarea', JOURNEY.contacts),
+        jBtn('Lancer mon Plan B — Semaine 1 →', 'validerOffre()')
+    );
+}
+
+function validerOffre() {
+  JOURNEY.offre = (document.getElementById('j-offre') ? document.getElementById('j-offre').value.trim() : '') || '';
+  JOURNEY.prix = (document.getElementById('j-prix') ? document.getElementById('j-prix').value.trim() : '') || '';
+  JOURNEY.contacts = (document.getElementById('j-contacts') ? document.getElementById('j-contacts').value.trim() : '') || '';
+
+  if(!JOURNEY.offre) { alert('Formule ton offre en 1 phrase pour continuer.'); return; }
+
+  // Activate the idea in STATE
+  if(JOURNEY.ideeChoisie) {
+    STATE.ideaActive = {
+      nom: JOURNEY.ideeChoisie.nom,
+      offre: JOURNEY.offre,
+      public: JOURNEY.ideeChoisie.public || '',
+      benefice: JOURNEY.ideeChoisie.benefice || '',
+      prix: JOURNEY.prix,
+    };
+    STATE.actions = simulerActions(STATE.ideaActive);
+    STATE.progression.semaineActuelle = 1;
+    saveState();
+  }
+  renderJourneyStep('s1');
+}
+
+// ── ÉTAPES SEMAINES ───────────────────────────────────
+function renderJSemaine(body, num) {
+  const data = SEMAINES_DATA[num];
+  if(!data) { skipJourneyToApp(); return; }
+
+  const saved = JOURNEY.semaines[num] || {};
+  const isDone = saved.validee;
+  const questions = SEMAINE_QUESTIONS[num] || [];
+  const prenom = STATE.user ? STATE.user.prenom : '';
+
+  // Special validation celebration banner
+  let banner = '';
+  if(num > 1 && JOURNEY.semaines[num-1] && JOURNEY.semaines[num-1].validee) {
+    const prevBadge = num === 5 ? '🎉' : '✅';
+    const msgs = {2:'Bien joué ! Tu as posé les bases. Continue sur ta lancée.',3:'Excellent ! Maintenant place au terrain réel.',4:'Bravo ! Tu as testé. La vente est à portée de main.',5:'🎉 FÉLICITATIONS pour ta première vente ! Maintenant on répète.',6:'La régularité crée les résultats. Continue.',7:'Tu amplifies. Tes clients parlent pour toi.',8:'Routine installée. L\'organisation libère de l\'énergie.',9:'Bilan solide. L\'optimisation commence maintenant.',10:'Tu montes en gamme. Excellent travail.',11:'Client idéal défini. Tu vas plus vite maintenant.',12:'L\'actif se consolide. Presque au bout.',};
+    banner = '<div style="background:rgba(46,204,113,.08);border:1px solid rgba(46,204,113,.25);border-radius:12px;padding:14px 16px;margin-bottom:20px;display:flex;align-items:center;gap:12px">'
+      + '<div style="font-size:28px">'+prevBadge+'</div>'
+      + '<div><div style="font-size:14px;font-weight:600;color:var(--success)">Semaine '+(num-1)+' validée !</div>'
+      + '<div style="font-size:12px;color:var(--muted)">'+( msgs[num]||'Continue sur cette lancée.')+'</div></div>'
+      + '</div>';
+  }
+
+  const phaseLabel = num<=4?'Phase 1 — Lancer & Encaisser':num<=8?'Phase 2 — Répéter & Structurer':'Phase 3 — Optimiser & Sécuriser';
+  const prevStep = num > 1 ? 's'+(num-1) : 'offre';
+
+  body.innerHTML = (num > 1 ? jBack(prevStep) : '')
+    + banner
+
+    // En-tête semaine
+    + '<div style="background:linear-gradient(135deg,rgba(201,168,76,.1),rgba(201,168,76,.03));border:1px solid rgba(201,168,76,.2);border-radius:16px;padding:20px;margin-bottom:20px">'
+    + '<div style="display:flex;align-items:center;gap:14px;margin-bottom:12px">'
+    + '<div style="width:52px;height:52px;border-radius:50%;background:rgba(201,168,76,.15);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-family:Cormorant Garamond,serif;font-size:22px;font-weight:700;color:var(--gold);flex-shrink:0">'+num+'</div>'
+    + '<div>'
+    + '<div style="font-size:11px;color:var(--gold);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">'+phaseLabel+'</div>'
+    + '<div style="font-family:Cormorant Garamond,serif;font-size:22px;font-weight:700;color:var(--text)">Semaine '+num+' — '+data.titre+'</div>'
+    + '</div></div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+    + '<div style="background:rgba(0,0,0,.2);border-radius:8px;padding:10px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:3px">🎯 Objectif</div><div style="font-size:12px;color:var(--text)">'+data.objectif+'</div></div>'
+    + '<div style="background:rgba(201,168,76,.1);border-radius:8px;padding:10px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--gold);margin-bottom:3px">✅ KPI</div><div style="font-size:12px;color:var(--text);font-weight:600">'+data.kpi+'</div></div>'
+    + '</div></div>'
+
+    // Actions à cocher (from PLAN90_DATA)
+    + '<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">'
+    + '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px">📋 Actions de la semaine</div>'
+    + renderSemaineActions(num)
+    + '</div>'
+
+    // Questions guidées
+    + (questions.length > 0 ? '<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">'
+      + '<div style="font-size:13px;font-weight:600;color:var(--gold);margin-bottom:4px">💬 Questions de réflexion</div>'
+      + '<div style="font-size:12px;color:var(--muted);margin-bottom:16px">Réponds honnêtement — ces réponses te guident vers la prochaine étape</div>'
+      + questions.map(q => jInput(q.id, q.q, q.ph, q.type, saved[q.id]||'')).join('')
+      + '</div>' : '')
+
+    // Conseil Coach Redouane
+    + '<div style="padding:14px 16px;background:rgba(201,168,76,.04);border-left:3px solid var(--gold);border-radius:0 10px 10px 0;margin-bottom:16px">'
+    + '<div style="font-size:12px;color:var(--text);line-height:1.7;margin-bottom:6px">💡 '+data.conseil+'</div>'
+    + '<div style="font-size:11px;color:var(--gold);font-style:italic">"'+data.citation+'"</div>'
+    + '</div>'
+
+    // Plan de secours S4
+    + (data.secours ? '<div style="background:rgba(231,76,60,.06);border:1px solid rgba(231,76,60,.2);border-radius:12px;padding:14px;margin-bottom:16px">'
+      + '<div style="font-size:13px;font-weight:600;color:var(--danger);margin-bottom:8px">🚨 Plan de secours — Si aucune vente</div>'
+      + '<div style="font-size:12px;color:var(--muted);margin-bottom:8px">Ce n\'est pas un échec — c\'est un ajustement. Règle absolue : on continue.</div>'
+      + ['Augmenter le volume de messages (doubler)','Simplifier encore plus l\'offre','Baisser temporairement le prix de 30%','Utiliser les scripts WhatsApp du Bonus 4'].map(a=>'<div style="font-size:12px;color:var(--text);margin-bottom:4px">→ '+a+'</div>').join('')
+      + '</div>' : '')
+
+    // Note + Valider
+    + (isDone ?
+        '<div style="background:rgba(46,204,113,.06);border:1px solid rgba(46,204,113,.2);border-radius:12px;padding:16px;text-align:center">'
+        + '<div style="font-size:14px;font-weight:600;color:var(--success)">✅ Semaine '+num+' validée le '+saved.date+'</div>'
+        + (saved.note ? '<div style="font-size:12px;color:var(--muted);margin-top:6px;font-style:italic">'+saved.note+'</div>' : '')
+        + (num < 12 ? '<br><button onclick="renderJourneyStep(\'s'+(num+1)+'\')" style="margin-top:12px;padding:11px 24px;background:linear-gradient(135deg,var(--gold),#A8842A);border:none;border-radius:8px;color:var(--dark);font-family:DM Sans,sans-serif;font-size:14px;font-weight:700;cursor:pointer">Semaine '+(num+1)+' →</button>' : '')
+        + '</div>'
+      :
+        '<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px">'
+        + '<div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px">📝 Note personnelle (optionnel)</div>'
+        + '<textarea id="j-note-'+num+'" placeholder="Ce que j\'ai appris, ce qui a marché, mes difficultés..." style="width:100%;background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-family:DM Sans,sans-serif;font-size:12px;resize:vertical;min-height:60px;outline:none">'+(saved.note||'')+'</textarea>'
+        + jBtn('✅ Valider la Semaine '+num+(num<12?' — Passer à la Semaine '+(num+1):' — Terminer les 90 jours 🏆'), 'validerSemaineJourney('+num+')')
+        + '</div>'
+    );
+}
+
+function renderSemaineActions(num) {
+  const actions = STATE.actions.filter(a => a.week === 'Semaine ' + num);
+  if(!actions.length) return '<div style="font-size:12px;color:var(--muted)">Les actions sont générées automatiquement.</div>';
+  const done = actions.filter(a=>a.done).length;
+  return '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">'+done+'/'+actions.length+' complétées</div>'
+    + actions.map(a =>
+      '<div onclick="toggleJourneyAction('+a.id+','+num+')" style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer">'
+      + '<div style="width:24px;height:24px;border-radius:50%;border:2px solid '+(a.done?'var(--success)':'var(--border)')+';background:'+(a.done?'rgba(46,204,113,.15)':'transparent')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;font-size:11px;color:var(--success);font-weight:700">'+(a.done?'✓':'')+'</div>'
+      + '<div style="font-size:13px;color:'+(a.done?'var(--muted)':'var(--text)')+';'+(a.done?'text-decoration:line-through':'')+'">'+a.text+'</div>'
+      + '</div>'
+    ).join('');
+}
+
+function toggleJourneyAction(id, num) {
+  const a = STATE.actions.find(x => x.id === id);
+  if(a) {
+    a.done = !a.done;
+    saveState();
+    // Re-render just the actions part
+    const actionsEl = document.querySelector('#journey-body .action-block');
+    if(actionsEl) actionsEl.innerHTML = renderSemaineActions(num);
+    // Full re-render for simplicity
+    renderJSemaine(document.getElementById('journey-body'), num);
+  }
+}
+
+function validerSemaineJourney(num) {
+  const data = SEMAINES_DATA[num];
+  const questions = SEMAINE_QUESTIONS[num] || [];
+  const actions = STATE.actions.filter(a => a.week === 'Semaine ' + num);
+  const done = actions.filter(a=>a.done).length;
+  const noteEl = document.getElementById('j-note-'+num);
+  const note = noteEl ? noteEl.value.trim() : '';
+
+  // Save answers
+  const answers = {};
+  questions.forEach(q => {
+    const el = document.getElementById('j-'+q.id);
+    if(el) answers[q.id] = el.value.trim();
+  });
+
+  // Warn if not all actions done
+  if(done < actions.length && actions.length > 0) {
+    if(!confirm('Tu n\'as pas fini toutes les actions ('+done+'/'+actions.length+'). Valider quand même ?')) return;
+  }
+
+  // Save in JOURNEY
+  JOURNEY.semaines[num] = {
+    validee: true,
+    date: new Date().toLocaleDateString('fr-FR'),
+    answers: answers,
+    note: note,
+    actionsCount: done,
+  };
+
+  // Update STATE.progression
+  STATE.progression.semaines[num] = {
+    validee: true,
+    date: new Date().toLocaleDateString('fr-FR'),
+    kpi: data.kpi,
+    actionsCount: done,
+    totalActions: actions.length,
+    note: note,
+  };
+  if(num < 12) {
+    STATE.progression.semaineActuelle = num + 1;
+    if(num >= 8) STATE.activePhase = 2;
+    else if(num >= 4) STATE.activePhase = 1;
+    else STATE.activePhase = 0;
+  }
+
+  saveJourney();
+  saveState();
+
+  if(num < 12) {
+    renderJourneyStep('s'+(num+1));
+  } else {
+    renderJourneyComplete();
+  }
+}
+
+function renderJourneyComplete() {
+  const body = document.getElementById('journey-body');
+  const prenom = STATE.user ? STATE.user.prenom : '';
+  const totalR = STATE.revenus.filter(r=>r.type==='revenu').reduce((s,r)=>s+r.montant,0);
+  body.innerHTML = '<div style="text-align:center;padding:20px 0">'
+    + '<div style="font-size:72px;margin-bottom:16px">🏆</div>'
+    + '<div style="font-family:Cormorant Garamond,serif;font-size:32px;font-weight:700;color:var(--gold);margin-bottom:12px">'+(prenom?prenom+', tu':'Tu')+' as terminé tes 90 jours !</div>'
+    + '<div style="font-size:15px;color:var(--text);line-height:1.7;margin-bottom:28px;max-width:500px;margin-left:auto;margin-right:auto">Tu as accompli quelque chose que 90% des gens ne font jamais. Peu importe les résultats — tu as appris, tu as agi, tu as construit.</div>'
+    + '<div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:24px;text-align:left">'
+    + '<div style="font-size:14px;font-weight:600;color:var(--gold);margin-bottom:16px">Ton bilan 90 jours</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
+    + '<div style="background:var(--darker);border-radius:10px;padding:14px;text-align:center"><div style="font-family:Cormorant Garamond,serif;font-size:28px;font-weight:700;color:var(--gold)">'+Object.keys(JOURNEY.semaines).filter(k=>JOURNEY.semaines[k].validee).length+'</div><div style="font-size:11px;color:var(--muted);margin-top:3px">semaines validées</div></div>'
+    + '<div style="background:var(--darker);border-radius:10px;padding:14px;text-align:center"><div style="font-family:Cormorant Garamond,serif;font-size:28px;font-weight:700;color:var(--gold)">'+STATE.actions.filter(a=>a.done).length+'</div><div style="font-size:11px;color:var(--muted);margin-top:3px">actions complétées</div></div>'
+    + '<div style="background:var(--darker);border-radius:10px;padding:14px;text-align:center"><div style="font-family:Cormorant Garamond,serif;font-size:28px;font-weight:700;color:var(--gold)">'+Math.round(totalR/1000)+'K</div><div style="font-size:11px;color:var(--muted);margin-top:3px">'+STATE.devise+' générés</div></div>'
+    + '<div style="background:var(--darker);border-radius:10px;padding:14px;text-align:center"><div style="font-family:Cormorant Garamond,serif;font-size:28px;font-weight:700;color:var(--gold)">2</div><div style="font-size:11px;color:var(--muted);margin-top:3px">Lancer le cycle 2</div></div>'
+    + '</div></div>'
+    + '<button onclick="skipJourneyToApp()" style="width:100%;max-width:400px;padding:16px;background:linear-gradient(135deg,var(--gold),#A8842A);border:none;border-radius:12px;color:var(--dark);font-family:DM Sans,sans-serif;font-size:16px;font-weight:700;cursor:pointer">Lancer le Cycle 2 →</button>'
+    + '</div>';
+}
+
+// Générer 3 idées basées sur le texte combiné des angles
+function genererIdees(text) {
+  const t = text.toLowerCase();
+  const POOL = [
+    {nom:"Gestion réseaux sociaux pour PME",score:87,mots:["réseau","social","facebook","instagram","digital","marketing","contenu","communication","page"],description:"Tu gères les pages Facebook et Instagram de petits commerces pour leur attirer plus de clients.",pourquoi:"Fort besoin partout. Un smartphone suffit pour commencer.",tags:["Digital","Récurrent","Faible capital"]},
+    {nom:"Vente de repas faits maison",score:91,mots:["cuisine","cuisinier","repas","manger","plat","nourriture","recette","chef","food"],description:"Tu prépares des repas locaux et les livres à des familles et des salariés.",pourquoi:"Besoin quotidien. Clients fidèles. Zéro investissement initial.",tags:["Alimentaire","Quotidien","Fidélisation"]},
+    {nom:"Coiffure et soins à domicile",score:92,mots:["coiffure","cheveux","tresse","beauté","salon","hair","esthétique","maquillage"],description:"Tu te déplaces chez les clients pour coiffure, soins et mise en beauté.",pourquoi:"Très demandé, fidélisation facile, peu de matériel requis.",tags:["Beauté","Domicile","Récurrent"]},
+    {nom:"Service de livraison express à moto",score:89,mots:["moto","livraison","transport","colis","course","véhicule","conduire","rapide"],description:"Tu livres colis, repas et courses en moto dans ta ville.",pourquoi:"Fort besoin quotidien. Revenus immédiats.",tags:["Moto","Cash rapide","Quotidien"]},
+    {nom:"Coaching en développement personnel",score:88,mots:["coach","coaching","accompagner","motiver","guider","mentor","développement","personnel","aider"],description:"Tu accompagnes des particuliers et entrepreneurs dans leur développement.",pourquoi:"Ta passion pour l'humain est ta compétence principale.",tags:["Impact","Expertise","Scalable"]},
+    {nom:"Cours particuliers et soutien scolaire",score:80,mots:["école","élève","étudiant","cours","apprendre","enseigner","maths","formation","éducation"],description:"Tu aides les élèves à progresser en maths, langues ou autres matières.",pourquoi:"Demande permanente. Parents prêts à payer.",tags:["Éducation","Récurrent","Relationnel"]},
+    {nom:"Couture et vêtements sur mesure",score:87,mots:["couture","coudre","tissu","vêtement","mode","habit","tailleur","confection"],description:"Tu crées des tenues personnalisées et réalises des retouches.",pourquoi:"Clients fidèles, bouche-à-oreille naturel.",tags:["Artisanat","Sur mesure","Créatif"]},
+    {nom:"Revente de produits importés",score:86,mots:["vente","commerce","produit","revente","achat","import","boutique","marchander"],description:"Tu sources des produits de qualité et les revends avec marge.",pourquoi:"Secteur accessible. Revenus rapides dès la première vente.",tags:["Commerce","Cash rapide","Flexible"]},
+    {nom:"Réparation de téléphones",score:85,mots:["téléphone","réparation","smartphone","électronique","écran","batterie","technique","informatique"],description:"Tu répares smartphones et appareils électroniques rapidement.",pourquoi:"Tout le monde a un téléphone. Demande constante partout.",tags:["Technique","Récurrent","Local"]},
+    {nom:"Nettoyage professionnel de maisons et bureaux",score:84,mots:["nettoyage","ménage","propre","nettoyer","entretien","maison","bureau","hygiène"],description:"Tu proposes des services de nettoyage pour maisons, bureaux et locaux.",pourquoi:"Besoin permanent. Clients fidèles. Peu de capital.",tags:["Service","Récurrent","Physique"]},
+    {nom:"Pâtisserie et gâteaux sur commande",score:84,mots:["gâteau","pâtisserie","sucre","cuire","four","boulangerie","mariage","fête","anniversaire"],description:"Tu prépares des gâteaux et pâtisseries pour événements et particuliers.",pourquoi:"Fêtes et cérémonies tout au long de l'année.",tags:["Alimentaire","Événementiel","Artisanat"]},
+    {nom:"Maraîchage et vente de légumes frais",score:85,mots:["légume","agriculture","cultiver","planter","jardin","récolte","ferme","maraîchage","sol"],description:"Tu cultives ou sources des légumes frais et les vends directement.",pourquoi:"Besoin alimentaire permanent. Marges bonnes en direct.",tags:["Agriculture","Essentiel","Local"]},
+    {nom:"Création de contenu et visuels marketing",score:83,mots:["design","graphique","créatif","visuel","logo","affiche","canva","photoshop","créer"],description:"Tu crées des visuels, logos et contenus marketing pour entrepreneurs.",pourquoi:"Tout entrepreneur a besoin d'une image. Peu de capital.",tags:["Créatif","Digital","Freelance"]},
+    {nom:"Formation en ligne dans ton domaine",score:84,mots:["former","formation","enseigner","apprendre","vidéo","cours","ligne","expert","partager"],description:"Tu crées et vends des formations en ligne sur ton expertise principale.",pourquoi:"Scalable. Une formation vendue des milliers de fois.",tags:["Scalable","Expertise","Passif"]},
+    {nom:"Massage et bien-être à domicile",score:83,mots:["massage","relaxation","détente","bien-être","corps","soin","stress","spa","kiné"],description:"Tu proposes des séances de massage et relaxation à domicile.",pourquoi:"Le stress est élevé. La demande de bien-être explose.",tags:["Bien-être","Premium","Domicile"]},
+    {nom:"Transport de personnes (moto-taxi ou VTC)",score:87,mots:["voiture","taxi","conduire","passager","véhicule","transport","route","chauffeur"],description:"Tu transportes des personnes en sécurité dans ta ville.",pourquoi:"Besoin constant. Revenus quotidiens garantis.",tags:["Transport","Quotidien","Cash"]},
+    {nom:"Traiteur et restauration pour événements",score:82,mots:["traiteur","mariage","cérémonie","baptême","événement","buffet","banquet","restauration"],description:"Tu gères la restauration complète pour mariages et cérémonies.",pourquoi:"Cérémonies fréquentes. Revenus élevés par événement.",tags:["Événementiel","Premium","Culinaire"]},
+    {nom:"Vente de cosmétiques naturels artisanaux",score:80,mots:["cosmétique","savon","crème","naturel","peau","beauté","huile","soin","artisanal"],description:"Tu fabriques et vends des savons, crèmes et produits naturels.",pourquoi:"Tendance naturel en hausse. Marges intéressantes.",tags:["Beauté","Artisanat","Récurrent"]},
+  ];
+
+  // Score each idea
+  function score(idee) {
+    let s = idee.score;
+    idee.mots.forEach(m => {
+      if(t.includes(m)) s += 12;
+    });
+    return s;
+  }
+
+  return POOL.map(i => ({...i, fs: score(i)}))
+    .sort((a,b) => b.fs - a.fs)
+    .slice(0, 3);
+}
+
+function skipJourneyToApp() {
+  // Save current journey state first
+  if(JOURNEY.ideeChoisie && !STATE.ideaActive) {
+    STATE.ideaActive = JOURNEY.ideeChoisie;
+    STATE.actions = simulerActions(STATE.ideaActive);
+    saveState();
+  }
+  document.getElementById('journey-screen').style.display = 'none';
+  updateUserDisplay();
+  updateDashboard();
+  initApp();
+}
+
+// Check if user should see journey or app on load
+function checkJourneyOrApp() {
   loadState();
+  // Load journey progress
+  try {
+    const savedJ = localStorage.getItem('planb_journey');
+    if(savedJ) JOURNEY = {...JOURNEY, ...JSON.parse(savedJ)};
+  } catch(e) {}
+
   if(STATE.user && STATE.user.prenom) {
+    // Returning user
     document.getElementById('onboarding').style.display = 'none';
-    document.getElementById('main-app').style.display = 'block';
-    initApp();
+    // If they have an active idea and have passed the offre step, go to app
+    if(STATE.ideaActive && JOURNEY.offre) {
+      // Determine correct journey step
+      const sem = STATE.progression.semaineActuelle || 1;
+      const validatedSems = Object.keys(JOURNEY.semaines).filter(k => JOURNEY.semaines[k].validee).map(Number);
+      const lastValidated = Math.max(0, ...validatedSems);
+      if(lastValidated >= 12) {
+        // All done - show app
+        document.getElementById('main-app').style.display = 'block';
+        initApp();
+      } else {
+        // Continue journey at right step
+        document.getElementById('main-app').style.display = 'block';
+        document.getElementById('journey-screen').style.display = 'block';
+        const nextStep = lastValidated > 0 ? 's'+(lastValidated+1) : 's'+sem;
+        JOURNEY.step = nextStep;
+        launchJourney();
+      }
+    } else if(STATE.user.prenom && !STATE.ideaActive) {
+      // Has name but no idea - continue journey
+      document.getElementById('main-app').style.display = 'block';
+      document.getElementById('journey-screen').style.display = 'block';
+      launchJourney();
+    } else {
+      document.getElementById('main-app').style.display = 'block';
+      initApp();
+    }
   } else {
     renderOnbStep();
   }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  checkJourneyOrApp();
 });
 </script>
 </body>
