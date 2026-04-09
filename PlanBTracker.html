@@ -269,7 +269,10 @@ textarea.jinp{resize:vertical;min-height:70px;line-height:1.6}
       <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--text)" id="prf-name">—</div>
     </div>
     <div id="prf-info"></div>
-    <button onclick="closeM('m-profile');backToJourney()" style="width:100%;margin-top:14px;padding:11px;background:linear-gradient(135deg,var(--gold),#A8842A);border:none;border-radius:8px;color:var(--dark);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer">Reprendre mon parcours →</button>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button onclick="closeM('m-profile');showEditProfile()" style="flex:1;padding:11px;background:var(--darker);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer">✏️ Modifier profil</button>
+      <button onclick="closeM('m-profile');backToJourney()" style="flex:1;padding:11px;background:linear-gradient(135deg,var(--gold),#A8842A);border:none;border-radius:8px;color:var(--dark);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer">🗺️ Mon parcours</button>
+    </div>
   </div>
 </div>
 
@@ -277,7 +280,7 @@ textarea.jinp{resize:vertical;min-height:70px;line-height:1.6}
 // ═══════════════════════════════════════════════════════════════
 //  ÉTAT — Source de vérité unique
 // ═══════════════════════════════════════════════════════════════
-const S = {
+let S = {
   user: null,          // {prenom, depuis}
   devise: 'FCFA',
   actions: [],         // [{id, text, week, done}]
@@ -288,7 +291,7 @@ const S = {
   prog: { semaineActuelle: 1, semaines: {} },
 };
 
-const J = {            // Réponses du parcours guidé
+let J = {            // Réponses du parcours guidé
   step: 'test90',
   test90: '',
   a1q1:'',a1q2:'',a1q3:'',
@@ -345,6 +348,26 @@ function sTab(group, idx, btn) {
   parent.querySelectorAll('.tpane').forEach((p,i)=>p.classList.toggle('active',i===idx));
 }
 
+function showEditProfile() {
+  // Show edit profile in a simple modal
+  const u = S.user;
+  const pays = u.prenom ? '' : '';
+  document.getElementById('ep-prenom').value = u.prenom || '';
+  document.getElementById('ep-devise').value = S.devise || 'FCFA';
+  openM('m-edit-profile');
+}
+
+function saveEditProfile() {
+  const p = document.getElementById('ep-prenom').value.trim();
+  const d = document.getElementById('ep-devise').value;
+  if(!p) { alert('Entre ton prénom.'); return; }
+  S.user.prenom = p;
+  S.devise = d;
+  save();
+  updateAppUI();
+  closeM('m-edit-profile');
+}
+
 function goToApp() {
   updateAppUI();
   showScreen('scr-app');
@@ -353,11 +376,36 @@ function goToApp() {
 
 function backToJourney() {
   if(!S.user) { showScreen('scr-onb'); return; }
+  // Determine correct step to show
+  const validNums = Object.keys(J.semaines).filter(k => J.semaines[k].validee).map(Number);
+  const lastValidated = validNums.length > 0 ? Math.max(...validNums) : 0;
+  let step = J.step || 'test90';
+  // If they have validated semaines, go to the next one or the last one
+  if(lastValidated > 0 && lastValidated < 12) {
+    step = 's' + (lastValidated + 1);
+  } else if(lastValidated >= 12) {
+    step = 's12';
+  } else if(S.ideaActive && J.offre) {
+    step = 's' + (S.prog.semaineActuelle || 1);
+  } else if(S.ideaActive) {
+    step = 'offre';
+  } else if(J.angle3) {
+    step = 'idee';
+  } else if(J.angle2) {
+    step = 'angle3';
+  } else if(J.angle1) {
+    step = 'angle2';
+  } else if(J.test90) {
+    step = 'angle1';
+  } else {
+    step = 'test90';
+  }
   showScreen('scr-journey');
-  renderJ(J.step || 'test90');
+  renderJ(step);
 }
 
 function closeM(id) { document.getElementById(id).classList.remove('open'); }
+function openM(id) { document.getElementById(id).classList.add('open'); }
 
 // ═══════════════════════════════════════════════════════════════
 //  ONBOARDING
@@ -379,25 +427,37 @@ const STEPS = ['test90','angle1','angle2','angle3','idee','offre',
   's1','s2','s3','s4','s5','s6','s7','s8','s9','s10','s11','s12'];
 
 const STEP_LABELS = {
-  test90:'Test des 90 jours', angle1:'Angle 1 — Compétences',
-  angle2:'Angle 2 — Besoins', angle3:'Angle 3 — Marché',
-  idee:'Choix de ton idée', offre:'Formule ton offre',
-  s1:'S1 — Fondations', s2:'S2 — Exposition', s3:'S3 — Terrain',
-  s4:'S4 — Première vente', s5:'S5 — Répétition', s6:'S6 — Amplification',
-  s7:'S7 — Organisation', s8:'S8 — Structuration', s9:'S9 — Optimisation',
-  s10:'S10 — Affinage', s11:'S11 — Consolidation', s12:'S12 — Bilan final',
+  test90:'Préparation — Test des 90 jours', angle1:'Trouver ton idée — Étape 1/3',
+  angle2:'Trouver ton idée — Étape 2/3', angle3:'Trouver ton idée — Étape 3/3',
+  idee:'Choix de ton idée', offre:'Formuler ton offre',
+  s1:'Sprint 1 · Sem 1 — Fondations', s2:'Sprint 1 · Sem 2 — Exposition',
+  s3:'Sprint 1 · Sem 3 — Terrain', s4:'Sprint 1 · Sem 4 — 1ère vente',
+  s5:'Sprint 2 · Sem 5 — Répétition', s6:'Sprint 2 · Sem 6 — Amplification',
+  s7:'Sprint 2 · Sem 7 — Routine', s8:'Sprint 2 · Sem 8 — Structuration',
+  s9:'Sprint 3 · Sem 9 — Optimisation', s10:'Sprint 3 · Sem 10 — Affinage',
+  s11:'Sprint 3 · Sem 11 — Consolidation', s12:'Sprint 3 · Sem 12 — Vision finale',
 };
 
 function renderJ(step) {
   J.step = step; save();
   const idx = STEPS.indexOf(step);
-  const pct = idx<0?0:Math.round((idx/(STEPS.length-1))*100);
+  // Sprint-based progress: show progress within current sprint
+  let pct;
+  if(['s1','s2','s3','s4'].includes(step)) pct = Math.round((['s1','s2','s3','s4'].indexOf(step)/3)*100);
+  else if(['s5','s6','s7','s8'].includes(step)) pct = Math.round((['s5','s6','s7','s8'].indexOf(step)/3)*100);
+  else if(['s9','s10','s11','s12'].includes(step)) pct = Math.round((['s9','s10','s11','s12'].indexOf(step)/3)*100);
+  else pct = idx<0?0:Math.round((idx/(STEPS.length-1))*100);
   const fill = document.getElementById('jp-fill');
   if(fill) fill.style.width = pct+'%';
   const lbl = document.getElementById('jp-lbl');
   if(lbl) lbl.textContent = STEP_LABELS[step]||step;
   const num = document.getElementById('jp-num');
-  if(num) num.textContent = idx>=0 ? 'Étape '+(idx+1)+'/'+STEPS.length : '';
+  if(num) {
+    const sprintMap = {s1:'1',s2:'1',s3:'1',s4:'1',s5:'2',s6:'2',s7:'2',s8:'2',s9:'3',s10:'3',s11:'3',s12:'3'};
+    const sprint = sprintMap[step];
+    if(sprint) num.textContent = 'Sprint '+sprint+'/3 — '+(['s1','s2','s3','s4'].includes(step)?'Lancer & Encaisser':['s5','s6','s7','s8'].includes(step)?'Répéter & Structurer':'Optimiser & Sécuriser');
+    else num.textContent = idx>=0 ? 'Étape '+(idx+1)+'/'+STEPS.length : '';
+  }
   const prenom = S.user?S.user.prenom:'';
   const pl = document.getElementById('j-prenom-lbl');
   if(pl) pl.textContent = prenom ? '👋 '+prenom : '';
@@ -681,7 +741,7 @@ function valOffre(){
   J.prix=document.getElementById('j-prix')?.value?.trim()||'';
   J.contacts=document.getElementById('j-contacts')?.value?.trim()||'';
   if(!J.offre){alert('Formule ton offre en 1 phrase pour continuer.');return;}
-  S.ideaActive={nom:J.ideeChoisie.nom,offre:J.offre,prix:J.prix,public:J.ideeChoisie.public||'',benefice:J.ideeChoisie.benefice||''};
+  const ic=J.ideeChoisie||{}; S.ideaActive={nom:ic.nom||J.ideeLibre||'Mon idée',offre:J.offre,prix:J.prix,public:ic.public||'',benefice:ic.benefice||''};
   S.prog.semaineActuelle=1;
   S.actions=genActions();
   save();
@@ -746,11 +806,21 @@ function renderSem(body, num){
   const isDone=saved.validee;
   const prev=num>1?'s'+(num-1):'offre';
   const ideaNom=S.ideaActive?S.ideaActive.nom:'';
-  const phL=num<=4?'Phase 1 — Lancer & Encaisser':num<=8?'Phase 2 — Répéter & Structurer':'Phase 3 — Optimiser & Sécuriser';
+  const sprint=num<=4?1:num<=8?2:3;
+  const sprintWeek=num<=4?num:num<=8?num-4:num-8;
+  const phL='Sprint '+sprint+'/3 · Semaine '+sprintWeek+'/4 — '+(num<=4?'Lancer & Encaisser':num<=8?'Répéter & Structurer':'Optimiser & Sécuriser');
   const acts=S.actions.filter(a=>a.week==='Semaine '+num);
   const doneCnt=acts.filter(a=>a.done).length;
 
   let banner='';
+  // S1 motivator: show S4 destination
+  if(num===1) {
+    banner='<div style="background:rgba(46,204,113,.06);border:1px solid rgba(46,204,113,.2);border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px">'
+      +'<div style="font-size:24px">🏁</div>'
+      +'<div><div style="font-size:13px;font-weight:700;color:var(--success)">Dans 4 semaines = ta première vente</div>'
+      +'<div style="font-size:12px;color:var(--muted);margin-top:2px">Sprint 1/3 — 4 semaines pour poser les fondations et encaisser.</div></div>'
+      +'</div>';
+  }
   if(num>1&&J.semaines[num-1]?.validee){
     banner='<div style="background:rgba(46,204,113,.08);border:1px solid rgba(46,204,113,.25);border-radius:12px;padding:12px 16px;margin-bottom:18px;display:flex;align-items:center;gap:12px">'
       +'<div style="font-size:28px">'+(num===5?'🎉':'✅')+'</div>'
@@ -897,6 +967,53 @@ function updateDash(){
   }
 }
 
+function openSemaineDetail(n) {
+  // Show semaine detail inside app (modal overlay on plan page)
+  const d = SEM[n];
+  if(!d) return;
+  const isDone = J.semaines[n] && J.semaines[n].validee;
+  const acts = S.actions.filter(a => a.week === 'Semaine ' + n);
+  const doneCnt = acts.filter(a=>a.done).length;
+  const phL = n<=4?'Phase 1 — Lancer & Encaisser':n<=8?'Phase 2 — Répéter & Structurer':'Phase 3 — Optimiser & Sécuriser';
+
+  let actsHtml = acts.map(a =>
+    '<div style="display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer" onclick="toggleActModal('+a.id+','+n+')">'
+    +'<div style="width:22px;height:22px;border-radius:50%;border:2px solid '+(a.done?'var(--success)':'var(--border)')+';background:'+(a.done?'rgba(46,204,113,.15)':'transparent')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;color:var(--success);font-weight:700">'+(a.done?'✓':'')+'</div>'
+    +'<div style="font-size:13px;color:'+(a.done?'var(--muted)':'var(--text)')+';'+(a.done?'text-decoration:line-through':'')+';line-height:1.5">'+a.text+'</div>'
+    +'</div>'
+  ).join('');
+
+  let qsHtml = '';
+  const saved = J.semaines[n] || {};
+  (d.qs||[]).forEach(q => {
+    const val = saved.answers && saved.answers[q.id] ? saved.answers[q.id] : '';
+    if(val) qsHtml += '<div style="margin-bottom:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:3px">'+q.l+'</div><div style="font-size:13px;color:var(--text);background:var(--darker);border-radius:6px;padding:8px 10px;line-height:1.6">'+val+'</div></div>';
+  });
+
+  document.getElementById('sem-modal-body').innerHTML =
+    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">'
+    +'<div style="width:44px;height:44px;border-radius:50%;background:rgba(201,168,76,.15);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--gold);flex-shrink:0">'+n+'</div>'
+    +'<div><div style="font-family:Cormorant Garamond,serif;font-size:18px;font-weight:700;color:var(--gold)">Semaine '+n+' — '+d.titre+'</div>'
+    +'<div style="font-size:11px;color:var(--muted)">'+phL+'</div></div></div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">'
+    +'<div style="background:var(--darker);border-radius:8px;padding:10px"><div style="font-size:10px;text-transform:uppercase;color:var(--muted);margin-bottom:3px">Objectif</div><div style="font-size:12px;color:var(--text)">'+d.objectif+'</div></div>'
+    +'<div style="background:rgba(201,168,76,.08);border-radius:8px;padding:10px"><div style="font-size:10px;text-transform:uppercase;color:var(--gold);margin-bottom:3px">KPI</div><div style="font-size:12px;color:var(--text);font-weight:600">'+d.kpi+'</div></div>'
+    +'</div>'
+    +(acts.length ? '<div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px">📋 Actions ('+doneCnt+'/'+acts.length+')</div>'+actsHtml : '')
+    +(qsHtml ? '<div style="margin-top:14px"><div style="font-size:12px;font-weight:600;color:var(--gold);margin-bottom:8px">💬 Tes réponses</div>'+qsHtml+'</div>' : '')
+    +'<div style="margin-top:14px;padding:12px;background:rgba(201,168,76,.04);border-left:3px solid var(--gold);border-radius:0 8px 8px 0"><div style="font-size:12px;color:var(--text);line-height:1.6;margin-bottom:6px">💡 '+d.conseil+'</div><div style="font-size:11px;color:var(--gold);font-style:italic">"'+d.citation+'"</div></div>'
+    +(isDone
+      ? '<div style="margin-top:14px;padding:10px;background:rgba(46,204,113,.06);border:1px solid rgba(46,204,113,.2);border-radius:8px;text-align:center"><div style="font-size:13px;color:var(--success);font-weight:600">✅ Validée le '+(saved.date||'')+'</div>'+(saved.note?'<div style="font-size:11px;color:var(--muted);margin-top:4px">'+saved.note+'</div>':'')+'</div>'
+      : '<button onclick="goToSemJourney('+n+')" style="width:100%;margin-top:14px;padding:12px;background:linear-gradient(135deg,var(--gold),#A8842A);border:none;border-radius:8px;color:var(--dark);font-family:DM Sans,sans-serif;font-size:14px;font-weight:700;cursor:pointer">Continuer la Semaine '+n+' →</button>'
+    );
+  openM('sem-detail-modal');
+}
+
+function toggleActModal(id, num) {
+  const a = S.actions.find(x => x.id === id);
+  if(a) { a.done = !a.done; save(); openSemaineDetail(num); renderPlanPage(); }
+}
+
 function renderPlanPage(){
   const ni=document.getElementById('plan-no-idea');
   const pc=document.getElementById('plan-content');
@@ -916,8 +1033,8 @@ function renderPlanPage(){
     const sv=S.prog.semaines[n]||{};
     const isDone=sv.validee;const isAct=n===sem;const isLocked=n>sem;
     const bc=isDone?'rgba(46,204,113,.3)':isAct?'rgba(201,168,76,.4)':'var(--border)';
-    const phL=n<=4?'P1':n<=8?'P2':'P3';
-    html+='<div style="background:var(--card);border:1px solid '+bc+';border-radius:12px;padding:14px;margin-bottom:10px;opacity:'+(isLocked?'0.4':'1')+';cursor:'+(isLocked?'default':'pointer')+'" '+(isLocked?'':'onclick="backToJourney()"')+'>'
+    const sp=n<=4?1:n<=8?2:3;const sw=n<=4?n:n<=8?n-4:n-8;const phL='S'+sp+'.'+sw;
+    html+='<div style="background:var(--card);border:1px solid '+bc+';border-radius:12px;padding:14px;margin-bottom:10px;opacity:'+(isLocked?'0.4':'1')+';cursor:'+(isLocked?'default':'pointer')+'" '+(isLocked?'':'onclick="openSemaineDetail('+n+')"')+'>'
       +'<div style="display:flex;align-items:center;gap:12px">'
       +'<div style="width:36px;height:36px;border-radius:50%;background:'+(isDone?'rgba(46,204,113,.15)':isAct?'rgba(201,168,76,.15)':'var(--darker)')+';border:2px solid '+(isDone?'var(--success)':isAct?'var(--gold)':'var(--border)')+';display:flex;align-items:center;justify-content:center;font-size:'+(isLocked?'13px':'13px')+';font-weight:700;color:'+(isDone?'var(--success)':isAct?'var(--gold)':'var(--muted)')+'">'+(isDone?'✓':isLocked?'🔒':n)+'</div>'
       +'<div style="flex:1"><div style="font-size:13px;font-weight:600;color:'+(isLocked?'var(--muted)':'var(--text)')+'">'+phL+' — S'+n+' — '+d.titre+'</div>'
@@ -995,6 +1112,7 @@ function openProfile(){
 
 
 function goToSem(n) { renderJ('s' + n); }
+function goToSemJourney(n) { closeM('sem-detail-modal'); showScreen('scr-journey'); renderJ('s' + n); }
 function buildSemPicker(currentNum) {
   const validNums = Object.keys(J.semaines).filter(k => J.semaines[k].validee).map(Number);
   const maxUnlocked = Math.max(currentNum, ...validNums, 1);
@@ -1069,5 +1187,38 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 </script>
+
+
+<!-- Edit Profile Modal -->
+<div class="mover" id="m-edit-profile">
+  <div class="mbox" style="width:400px;max-width:94vw">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--gold);font-weight:700">Modifier mon profil</div>
+      <button onclick="closeM('m-edit-profile')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;line-height:1">✕</button>
+    </div>
+    <label style="display:block;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px;font-weight:600">Prénom</label>
+    <input id="ep-prenom" type="text" placeholder="Ton prénom..." style="width:100%;background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;margin-bottom:14px">
+    <label style="display:block;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px;font-weight:600">Devise</label>
+    <select id="ep-devise" style="width:100%;background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;margin-bottom:20px">
+      <option>FCFA</option><option>MAD</option><option>DZD</option><option>TND</option><option>EUR</option><option>USD</option><option>GBP</option><option>NGN</option><option>GHS</option><option>KES</option><option>ZAR</option><option>EGP</option><option>CAD</option>
+    </select>
+    <div style="display:flex;gap:10px">
+      <button onclick="saveEditProfile()" style="flex:1;padding:12px;background:linear-gradient(135deg,var(--gold),#A8842A);border:none;border-radius:8px;color:var(--dark);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer">Enregistrer</button>
+      <button onclick="closeM('m-edit-profile')" style="padding:12px 20px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- Semaine Detail Modal -->
+<div class="mover" id="sem-detail-modal">
+  <div class="mbox" style="max-height:85vh;overflow-y:auto;width:500px;max-width:94vw">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--gold);font-weight:700">Détail semaine</div>
+      <button onclick="closeM('sem-detail-modal')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;line-height:1">✕</button>
+    </div>
+    <div id="sem-modal-body"></div>
+  </div>
+</div>
+
 </body>
 </html>
