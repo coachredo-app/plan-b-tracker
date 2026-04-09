@@ -12,7 +12,7 @@ body{background:var(--darker);color:var(--text);font-family:'DM Sans',sans-serif
 .screen{display:none}.screen.active{display:block}
 /* ONB */
 #scr-onb{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 30% 20%,rgba(201,168,76,.08),transparent 60%)}
-.onb-card{background:var(--card);border:1px solid rgba(201,168,76,.2);border-radius:20px;padding:40px;width:440px;max-width:92vw}
+.onb-card{background:var(--card);border:1px solid rgba(201,168,76,.2);border-radius:20px;padding:40px;width:440px;max-width:92vw;margin:auto}
 .logo{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:var(--gold);text-align:center;margin-bottom:4px}
 .logo-sub{font-size:11px;color:var(--muted);text-align:center;margin-bottom:24px;letter-spacing:1px;text-transform:uppercase}
 .fi{width:100%;background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:12px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;outline:none;transition:border-color .2s}
@@ -598,7 +598,7 @@ function renderIdee(body){
       +'<div><div style="font-size:15px;font-weight:600;color:'+(sel?'var(--gold)':'var(--text)')+';margin-bottom:4px">'+id.nom+'</div>'
       +'<div style="font-size:12px;color:var(--muted);margin-bottom:8px">'+id.description+'</div>'
       +'<div>'+id.tags.map(t=>'<span style="font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(201,168,76,.1);color:var(--gold);font-weight:600;margin-right:4px">'+t+'</span>').join('')+'</div></div>'
-      +'<div style="font-size:20px;flex-shrink:0;color:'+(sel?'var(--gold)':'var(--border)')+'">'+( sel?'✓':'○')+'</div>'
+      +'<div class="ic-check" style="font-size:20px;flex-shrink:0;color:'+(sel?'var(--gold)':'var(--border)')+'">'+( sel?'✓':'○')+'</div>'
       +'</div></div>';
   }).join('');
 
@@ -626,10 +626,11 @@ function selIdee(i){
   _selIdx=i;
   document.querySelectorAll('.idea-card').forEach((el,idx)=>{
     const sel=idx===i;
-    el.classList.toggle('sel',sel);
-    const check=el.querySelector('div>div:last-child');
+    el.style.borderColor=sel?'var(--gold)':'var(--border)';
+    el.style.background=sel?'rgba(201,168,76,.06)':'var(--darker)';
+    const check=el.querySelector('.ic-check');
     if(check){check.textContent=sel?'✓':'○';check.style.color=sel?'var(--gold)':'var(--border)';}
-    const title=el.querySelector('[style*="font-weight:600"]');
+    const title=el.querySelector('.ic-title');
     if(title) title.style.color=sel?'var(--gold)':'var(--text)';
   });
 }
@@ -693,7 +694,7 @@ function valOffre(){
 const SEM={
   1:{titre:'Décision & Fondations',objectif:'Choisir UNE idée et la rendre vendable',kpi:'10 personnes identifiées',kpiD:'10 noms écrits = semaine réussie',conseil:"La 1ère semaine est la plus difficile. L'objectif n'est pas la perfection — c'est de choisir et d'avancer.",citation:'Un message envoyé vaut mieux qu\'un message parfait.',
     actions:['Faire le Test des 90 Jours','Choisir UNE seule idée finale','Formuler 1 phrase d\'offre claire','Fixer 1 prix précis','Lister 10 personnes à contacter','Définir mon Heure d\'Or (créneau quotidien Plan B)'],
-    qs:[{id:'q1',l:'Ton idée choisie et pourquoi elle ?',p:'Ex: Gestion réseaux sociaux car je suis passionné et mes amis me demandent toujours...',t:'textarea'},{id:'q2',l:'Ton offre en 1 phrase "J\'aide X à Y"',p:'Ex: J\'aide les boutiques à attirer plus de clients avec Facebook',t:'text'},{id:'q3',l:'Ton prix de départ et comment tu l\'as fixé',p:'Ex: 25 000 FCFA/mois car c\'est moins que mes concurrents pour commencer',t:'text'},{id:'q4',l:'Tes 10 premiers contacts listés',p:'1. Ahmed...\n2. Fatima...',t:'textarea'}]},
+    qs:[{id:'q2',l:'Ton offre en 1 phrase "J\'aide X à Y"',p:'Ex: J\'aide les boutiques à attirer plus de clients avec Facebook',t:'text'},{id:'q3',l:'Ton prix de départ et comment tu l\'as fixé',p:'Ex: 25 000 FCFA/mois car c\'est moins que mes concurrents pour commencer',t:'text'},{id:'q4',l:'Tes 10 premiers contacts listés',p:'1. Ahmed...\n2. Fatima...',t:'textarea'}]},
   2:{titre:'Exposition contrôlée',objectif:'Faire savoir que tu existes',kpi:'5 réponses obtenues',kpiD:'5 réponses — oui ou non, peu importe. Une réponse = un vrai contact.',conseil:"Ne cherche pas à convaincre — cherche à exposer. Ton rôle : exister aux yeux de tes prospects.",citation:'La motivation est un jardin, pas un moteur. Arrose-le chaque jour.',
     actions:['Publier 3 statuts WhatsApp sur mon activité','Envoyer 5 messages personnalisés à ma liste','Proposer une offre test à prix réduit','Lancer 5 conversations réelles','Remplir le Mini-Canevas : J\'aide [qui] à [quoi]'],
     qs:[{id:'q1',l:'Combien de messages as-tu envoyés ? Que s\'est-il passé ?',p:'Ex: 7 messages envoyés. 2 réponses positives, 1 veut qu\'on se rappelle...',t:'textarea'},{id:'q2',l:'Quelle réaction t\'a le plus surpris ?',p:'Ex: Mon ami Ahmed a demandé les détails — je ne m\'y attendais pas.',t:'textarea'},{id:'q3',l:'Ton message WhatsApp exact (celui qui a le mieux fonctionné)',p:'Ex: "Je lance un service de gestion Facebook. Je cherche 3 boutiques à 15 000 FCFA ce mois. Intéressé ?"',t:'textarea'}]},
@@ -744,6 +745,7 @@ function renderSem(body, num){
   const saved=J.semaines[num]||{};
   const isDone=saved.validee;
   const prev=num>1?'s'+(num-1):'offre';
+  const ideaNom=S.ideaActive?S.ideaActive.nom:'';
   const phL=num<=4?'Phase 1 — Lancer & Encaisser':num<=8?'Phase 2 — Répéter & Structurer':'Phase 3 — Optimiser & Sécuriser';
   const acts=S.actions.filter(a=>a.week==='Semaine '+num);
   const doneCnt=acts.filter(a=>a.done).length;
@@ -763,6 +765,8 @@ function renderSem(body, num){
         +'<div style="font-size:13px;color:'+(a.done?'var(--muted)':'var(--text)')+';'+(a.done?'text-decoration:line-through':'')+';line-height:1.5">'+a.text+'</div>'
         +'</div>').join('')
     :'<div style="font-size:12px;color:var(--muted)">Actions générées automatiquement.</div>';
+  // Add custom action button
+  actsHtml += '<button onclick="addCustomAction('+num+')" style="width:100%;margin-top:10px;padding:9px;background:transparent;border:1px dashed var(--border);border-radius:8px;color:var(--muted);font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;transition:all .2s" onmouseover="this.style.borderColor=\'rgba(201,168,76,.4)\';this.style.color=\'var(--gold)\';" onmouseout="this.style.borderColor=\'var(--border)\';this.style.color=\'var(--muted)\';">+ Ajouter une action personnalisée</button>';
 
   const qsHtml=(d.qs||[]).map(q=>'<div style="margin-bottom:2px">'
     +'<div class="jq">'+q.l+'</div>'
@@ -771,7 +775,16 @@ function renderSem(body, num){
       :'<input class="jinp" type="text" id="sq-'+q.id+'" placeholder="'+q.p+'" value="'+(saved.answers?saved.answers[q.id]||'':'')+'">')
     +'</div>').join('');
 
+  // Nav bar: back + semaine picker + changer idée
+  const semPicker = buildSemPicker(num);
+
   body.innerHTML=(num>1?jBack(prev):'')
+    // Semaine navigation + changer idée
+    +'<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px">'
+    +'<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:8px">Navigation rapide</div>'
+    +semPicker
+    +(ideaNom?'<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-size:12px;color:var(--muted)">💡 Idée active : <strong style="color:var(--text)">'+ideaNom+'</strong></div><button onclick="changerIdeeJourney()" style="font-size:11px;padding:5px 12px;background:transparent;border:1px solid rgba(231,76,60,.3);border-radius:20px;color:var(--danger);cursor:pointer;font-family:DM Sans,sans-serif">Changer d\'idée</button></div>':'')
+    +'</div>'
     +banner
     +'<div style="background:linear-gradient(135deg,rgba(201,168,76,.1),rgba(201,168,76,.03));border:1px solid rgba(201,168,76,.2);border-radius:14px;padding:18px;margin-bottom:16px">'
     +'<div style="display:flex;align-items:center;gap:14px;margin-bottom:12px">'
@@ -977,6 +990,72 @@ function openProfile(){
 // ═══════════════════════════════════════════════════════════════
 //  DÉMARRAGE
 // ═══════════════════════════════════════════════════════════════
+
+// ── Custom action ────────────────────────────
+
+
+function goToSem(n) { renderJ('s' + n); }
+function buildSemPicker(currentNum) {
+  const validNums = Object.keys(J.semaines).filter(k => J.semaines[k].validee).map(Number);
+  const maxUnlocked = Math.max(currentNum, ...validNums, 1);
+  let html = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px">';
+  for(let n = 1; n <= 12; n++) {
+    const done = J.semaines[n] && J.semaines[n].validee;
+    const cur = n === currentNum;
+    const locked = n > maxUnlocked + 1;
+    const border = cur ? 'var(--gold)' : done ? 'rgba(46,204,113,.5)' : 'var(--border)';
+    const bg = cur ? 'rgba(201,168,76,.15)' : done ? 'rgba(46,204,113,.1)' : 'transparent';
+    const color = cur ? 'var(--gold)' : done ? 'var(--success)' : 'var(--muted)';
+    const opacity = locked ? '0.35' : '1';
+    const cursor = locked ? 'not-allowed' : 'pointer';
+    const label = (done && !cur) ? '✓' : String(n);
+        const onclick = locked ? '' : ('onclick="goToSem(' + n + ')"');
+    html += '<button ' + onclick + ' style="width:32px;height:32px;border-radius:50%;border:2px solid ' + border + ';background:' + bg + ';color:' + color + ';font-size:11px;font-weight:700;cursor:' + cursor + ';font-family:DM Sans,sans-serif;opacity:' + opacity + '">' + label + '</button>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function addCustomAction(num) {
+  const txt = prompt('Ajoute une action pour la Semaine ' + num + ' :');
+  if(!txt || !txt.trim()) return;
+  S.actions.push({id: S.nextId++, text: txt.trim(), week: 'Semaine ' + num, done: false});
+  save();
+  renderJ('s' + num);
+}
+
+// ── Changer d'idée depuis le parcours ────────
+function changerIdeeJourney() {
+  if(!confirm('Changer d\'idée va te ramener à l\'étape de sélection d\'idée. Tes actions seront réinitialisées. Continuer ?')) return;
+  // Archive current idea
+  if(S.ideaActive) {
+    S.archives.push({
+      nom: S.ideaActive.nom,
+      debut: new Date().toLocaleDateString('fr-FR'),
+      done: S.actions.filter(a=>a.done).length,
+      total: S.actions.length,
+      statut: 'Changé',
+    });
+  }
+  S.ideaActive = null;
+  S.actions = [];
+  J.ideeChoisie = null;
+  J.ideeIdx = -1;
+  J.ideeLibre = '';
+  J.semaines = {};
+  S.prog.semaineActuelle = 1;
+  S.prog.semaines = {};
+  save();
+  renderJ('idee');
+}
+
+// ── Lien menu → app depuis journey ──────────
+function showAppFromJourney() {
+  updateAppUI();
+  showScreen('scr-app');
+  showPage('dashboard');
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   load();
 
