@@ -24,6 +24,14 @@ body{background:var(--darker);color:var(--text);font-family:'DM Sans',sans-serif
 .jh-inner{max-width:640px;margin:0 auto}
 .jh-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
 .j-logo{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:var(--gold)}
+.wb-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:10px;cursor:pointer;transition:border-color .2s}
+.wb-card:hover{border-color:rgba(201,168,76,.3)}
+.wb-primary{border:2px solid var(--gold)}
+.wb-primary:hover{background:rgba(201,168,76,.06)}
+.wb-secondary:hover{background:rgba(201,168,76,.04)}
+.wb-danger{border-color:rgba(231,76,60,.2)}
+.wb-danger:hover{background:rgba(231,76,60,.04)}
+.wb-icon{width:44px;height:44px;border-radius:12px;background:rgba(201,168,76,.1);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
 .j-skip{background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;color:var(--muted);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif}
 .jp-track{background:var(--card);border-radius:4px;height:5px;overflow:hidden}
 .jp-fill{height:100%;background:linear-gradient(90deg,var(--gold),#E8C96A);border-radius:4px;transition:width .5s ease}
@@ -133,8 +141,9 @@ textarea.jinp{resize:vertical;min-height:70px;line-height:1.6}
     <div class="jh-inner">
       <div class="jh-top">
         <div class="j-logo">Plan B Tracker</div>
-        <div style="display:flex;align-items:center;gap:10px">
+        <div style="display:flex;align-items:center;gap:8px">
           <div id="j-prenom-lbl" style="font-size:12px;color:var(--muted)"></div>
+          <button onclick="nouvelleIdee()" style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.25);border-radius:6px;padding:5px 10px;color:var(--gold);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600">💡 Nouvelle idée</button>
           <button class="j-skip" onclick="goToApp()">App →</button>
         </div>
       </div>
@@ -157,7 +166,8 @@ textarea.jinp{resize:vertical;min-height:70px;line-height:1.6}
       <div class="nav-item" onclick="showPage('plan',this)"><span>📅</span> Plan 90 jours</div>
       <div class="nav-item" onclick="showPage('revenus',this)"><span>💰</span> Revenus & Dépenses</div>
       <div class="nav-item" onclick="showPage('archive',this)"><span>📁</span> Archive idées</div>
-      <div class="nav-item" onclick="backToJourney()"><span>🗺️</span> Reprendre le parcours</div>
+      <div class="nav-item" onclick="nouvelleIdee();showScreen('scr-journey')" style="color:var(--gold)"><span>💡</span> Nouvelle idée</div>
+    <div class="nav-item" onclick="backToJourney()"><span>🗺️</span> Reprendre le parcours</div>
     </div>
     <div class="suser" onclick="openProfile()">
       <div class="ava" id="s-ava">?</div>
@@ -836,7 +846,7 @@ function renderSem(body, num){
         +'</div>').join('')
     :'<div style="font-size:12px;color:var(--muted)">Actions générées automatiquement.</div>';
   // Add custom action button
-  actsHtml += '<button onclick="addCustomAction('+num+')" style="width:100%;margin-top:10px;padding:9px;background:transparent;border:1px dashed var(--border);border-radius:8px;color:var(--muted);font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;transition:all .2s" onmouseover="this.style.borderColor=\'rgba(201,168,76,.4)\';this.style.color=\'var(--gold)\';" onmouseout="this.style.borderColor=\'var(--border)\';this.style.color=\'var(--muted)\';">+ Ajouter une action personnalisée</button>';
+  actsHtml += '<button onclick="addCustomAction('+num+')" style="width:100%;margin-top:10px;padding:9px;background:transparent;border:1px dashed var(--border);border-radius:8px;color:var(--muted);font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;transition:all .2s"rgba(201,168,76,.4)\';this.style.color=\'var(--gold)\';"var(--border)\';this.style.color=\'var(--muted)\';">+ Ajouter une action personnalisée</button>';
 
   const qsHtml=(d.qs||[]).map(q=>'<div style="margin-bottom:2px">'
     +'<div class="jq">'+q.l+'</div>'
@@ -1174,13 +1184,135 @@ function showAppFromJourney() {
   showPage('dashboard');
 }
 
+
+// ── RETOUR / RESET ────────────────────────────────────
+function renderWelcomeBack() {
+  const body = document.getElementById('jbody');
+  if(!body) return;
+
+  const pl = document.getElementById('j-prenom-lbl');
+  if(pl) pl.textContent = S.user ? '\u{1F44B} ' + S.user.prenom : '';
+  const fill = document.getElementById('jp-fill');
+  if(fill) fill.style.width = '0%';
+  const lbl = document.getElementById('jp-lbl');
+  if(lbl) lbl.textContent = 'Bon retour !';
+  const num = document.getElementById('jp-num');
+  if(num) num.textContent = '';
+
+  const validNums = Object.keys(J.semaines).filter(k => J.semaines[k].validee).map(Number);
+  const lastV = validNums.length > 0 ? Math.max(...validNums) : 0;
+  const sprint = lastV <= 4 ? 1 : lastV <= 8 ? 2 : 3;
+  const ideaNom = S.ideaActive ? S.ideaActive.nom : (J.ideeChoisie ? J.ideeChoisie.nom : '');
+  const semActuelle = S.prog.semaineActuelle || 1;
+  const prenom = S.user ? S.user.prenom : '';
+
+  body.innerHTML =
+    '<div style="text-align:center;margin-bottom:28px">'
+    + '<div style="font-size:48px;margin-bottom:12px">\u{1F44B}</div>'
+    + '<div style="font-family:Cormorant Garamond,serif;font-size:28px;font-weight:700;color:var(--gold);margin-bottom:6px">Bon retour, ' + prenom + ' !</div>'
+    + '<div style="font-size:14px;color:var(--muted)">Que veux-tu faire ?</div>'
+    + '</div>'
+
+    + (ideaNom || lastV > 0
+      ? '<div onclick="reprendreJourney()" class="wb-card wb-primary">'
+        + '<div style="display:flex;align-items:center;gap:14px">'
+        + '<div class="wb-icon">\u25B6\uFE0F</div>'
+        + '<div style="flex:1">'
+        + '<div style="font-size:16px;font-weight:700;color:var(--gold);margin-bottom:4px">Reprendre mon parcours</div>'
+        + (ideaNom ? '<div style="font-size:13px;color:var(--muted)">Id\u00e9e : <strong style="color:var(--text)">' + ideaNom + '</strong></div>' : '')
+        + (lastV > 0 ? '<div style="font-size:12px;color:var(--success);margin-top:2px">\u2705 Sprint ' + sprint + ' \u00b7 Semaine ' + semActuelle + '/12 en cours</div>' : '<div style="font-size:12px;color:var(--gold);margin-top:2px">\u2192 Continuer l\u2019onboarding</div>')
+        + '</div>'
+        + '<div style="font-size:24px;color:var(--gold)">\u2192</div>'
+        + '</div></div>'
+      : '')
+
+    + '<div onclick="nouvelleIdee()" class="wb-card wb-secondary">'
+    + '<div style="display:flex;align-items:center;gap:14px">'
+    + '<div class="wb-icon">\u{1F4A1}</div>'
+    + '<div style="flex:1">'
+    + '<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px">Essayer une nouvelle id\u00e9e</div>'
+    + '<div style="font-size:13px;color:var(--muted)">Reprendre les 3 Angles avec une autre direction</div>'
+    + '</div>'
+    + '<div style="font-size:24px;color:var(--muted)">\u2192</div>'
+    + '</div></div>'
+
+    + '<div onclick="toutRecommencer()" class="wb-card wb-danger">'
+    + '<div style="display:flex;align-items:center;gap:14px">'
+    + '<div class="wb-icon" style="background:rgba(231,76,60,.08)">\u{1F504}</div>'
+    + '<div style="flex:1">'
+    + '<div style="font-size:14px;font-weight:600;color:var(--danger)">Tout recommencer depuis z\u00e9ro</div>'
+    + '<div style="font-size:12px;color:var(--muted);margin-top:2px">Effacer toutes les donn\u00e9es</div>'
+    + '</div>'
+    + '</div></div>';
+}
+
+
+function reprendreJourney() {
+  // Go to the correct semaine or step
+  const validNums = Object.keys(J.semaines).filter(k => J.semaines[k].validee).map(Number);
+  const lastV = validNums.length > 0 ? Math.max(...validNums) : 0;
+  let step;
+  if(lastV >= 12) step = 's12';
+  else if(lastV > 0) step = 's' + (lastV + 1);
+  else if(S.ideaActive && J.offre) step = 's' + (S.prog.semaineActuelle || 1);
+  else if(S.ideaActive) step = 'offre';
+  else if(J.angle3) step = 'idee';
+  else if(J.angle2) step = 'angle3';
+  else if(J.angle1) step = 'angle2';
+  else if(J.test90) step = 'angle1';
+  else step = 'test90';
+  renderJ(step);
+}
+
+function nouvelleIdee() {
+  // Keep profile and test90, reset angles + idea + semaines
+  if(S.ideaActive) {
+    // Archive current
+    S.archives.push({
+      nom: S.ideaActive.nom,
+      debut: new Date().toLocaleDateString('fr-FR'),
+      done: S.actions.filter(a=>a.done).length,
+      total: S.actions.length,
+      statut: 'Archivée',
+    });
+  }
+  // Reset idea-related state
+  S.ideaActive = null;
+  S.actions = [];
+  S.prog.semaineActuelle = 1;
+  S.prog.semaines = {};
+  J.angle1 = ''; J.angle2 = ''; J.angle3 = '';
+  J.a1q1 = ''; J.a1q2 = ''; J.a1q3 = '';
+  J.a2q1 = ''; J.a2q2 = ''; J.a2q3 = '';
+  J.a3q1 = ''; J.a3q2 = ''; J.a3q3 = '';
+  J.ideeIdx = -1; J.ideeLibre = ''; J.ideeChoisie = null;
+  J.offre = ''; J.prix = ''; J.contacts = '';
+  J.semaines = {};
+  J.step = 'angle1';
+  save();
+  renderJ('angle1');
+}
+
+function toutRecommencer() {
+  if(!confirm('Effacer TOUTES tes données et recommencer depuis zéro ?')) return;
+  localStorage.removeItem('planb_S');
+  localStorage.removeItem('planb_J');
+  location.reload();
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   load();
 
   if(S.user && S.user.prenom) {
-    // Utilisateur existant — reprend le parcours
-    showScreen('scr-journey');
-    renderJ(J.step || 'test90');
+    // Utilisateur existant
+    if(S.ideaActive || J.angle1) {
+      // Has progress - show welcome back choice
+      showScreen('scr-journey');
+      renderWelcomeBack();
+    } else {
+      showScreen('scr-journey');
+      renderJ('test90');
+    }
   } else {
     // Nouvel utilisateur — onboarding
     showScreen('scr-onb');
