@@ -735,28 +735,72 @@ function valA3(){
 
 // ── IDÉE ──
 const IDEAS=[
-  {nom:'Gestion réseaux sociaux pour PME',mots:['réseau','social','facebook','instagram','digital','marketing','contenu'],description:'Tu gères les pages Facebook/Instagram de petits commerces.',tags:['Digital','Récurrent']},
-  {nom:'Vente de repas faits maison',mots:['cuisine','cuisinier','repas','plat','nourriture','chef','manger'],description:'Tu prépares des repas locaux et les livres à des familles.',tags:['Alimentaire','Fidélisation']},
-  {nom:'Coiffure et soins à domicile',mots:['coiffure','cheveux','tresse','beauté','salon','esthétique','maquillage'],description:'Tu te déplaces pour coiffer et soigner à domicile.',tags:['Beauté','Récurrent']},
-  {nom:'Service de livraison express',mots:['moto','livraison','transport','colis','conduire','rapide'],description:'Tu livres colis et repas rapidement dans ta ville.',tags:['Moto','Cash rapide']},
-  {nom:'Coaching développement personnel',mots:['coach','accompagner','motiver','guider','mentor','aider'],description:'Tu accompagnes des particuliers vers leur meilleure version.',tags:['Impact','Scalable']},
-  {nom:'Cours particuliers soutien scolaire',mots:['école','élève','cours','apprendre','enseigner','maths','éducation'],description:'Tu aides des élèves à progresser dans les matières clés.',tags:['Éducation','Récurrent']},
-  {nom:'Couture et vêtements sur mesure',mots:['couture','coudre','tissu','vêtement','mode','habit'],description:'Tu crées des tenues personnalisées.',tags:['Artisanat','Créatif']},
-  {nom:'Réparation de téléphones',mots:['téléphone','réparation','smartphone','électronique','écran','technique'],description:'Tu répares smartphones et appareils électroniques.',tags:['Technique','Local']},
-  {nom:'Nettoyage de maisons et bureaux',mots:['nettoyage','ménage','nettoyer','entretien','maison','bureau'],description:'Tu proposes des services de nettoyage professionnel.',tags:['Service','Récurrent']},
-  {nom:'Pâtisserie et gâteaux sur commande',mots:['gâteau','pâtisserie','sucre','four','fête','anniversaire'],description:'Tu prépares des pâtisseries pour événements.',tags:['Alimentaire','Événementiel']},
-  {nom:'Revente de produits importés',mots:['vente','commerce','produit','revente','achat','boutique'],description:'Tu sources des produits et les revends avec marge.',tags:['Commerce','Cash rapide']},
-  {nom:'Formation en ligne',mots:['former','formation','enseigner','vidéo','cours','ligne','expert'],description:'Tu crées et vends des formations en ligne.',tags:['Scalable','Passif']},
-  {nom:'Transport de personnes',mots:['voiture','taxi','conduire','passager','véhicule','transport'],description:'Tu transportes des personnes en sécurité.',tags:['Transport','Cash quotidien']},
-  {nom:'Traiteur pour événements',mots:['traiteur','mariage','cérémonie','buffet','banquet','restauration'],description:'Tu gères la restauration pour cérémonies.',tags:['Événementiel','Premium']},
-  {nom:'Maraîchage et légumes frais',mots:['légume','agriculture','cultiver','jardin','récolte','ferme'],description:'Tu cultives ou sources des légumes frais.',tags:['Agriculture','Local']},
+  // MODE & STYLE
+  {nom:'Conseil en style et image personnelle',mots:['style','vetement','habit','mode','luxe','budget','look','tenue','shopping','s’habiller','vestimentaire','conseil','image'],description:'Tu conseilles les gens sur leur style vestimentaire selon leur budget et morphologie.',tags:['Mode','Conseil','Premium'],offre:'J’aide les gens à s’habiller avec style et élégance quel que soit leur budget.'},
+  {nom:'Personal shopper — Shopping personnalisé',mots:['shopping','vetement','mode','acheter','budget','magasin','boutique','tendance','look','tenue'],description:'Tu accompagnes tes clients faire leurs achats de vêtements et les guides vers les bonnes trouvailles.',tags:['Mode','Service','Premium'],offre:'J’accompagne mes clients pour trouver les meilleurs vêtements au meilleur prix.'},
+  {nom:'Revente de vêtements sélectionnés',mots:['vetement','mode','habit','revente','friperie','luxe','budget','boutique','shopping'],description:'Tu sélectionnes et revends des vêtements de qualité à prix accessible.',tags:['Commerce','Mode','Cash rapide'],offre:'Je revends des vêtements tendance de qualité à des prix accessibles.'},
+  {nom:'Boutique en ligne de vêtements',mots:['vetement','mode','habit','boutique','ligne','vente','tendance','shopping','marque'],description:'Tu crées et gères une boutique en ligne de vêtements.',tags:['E-commerce','Mode','Scalable'],offre:'Je vends des vêtements tendance en ligne avec conseil personnalisé.'},
+  {nom:'Coach image et confiance en soi',mots:['image','confiance','style','vetement','look','apparence','conseil','coach','transformation'],description:'Tu accompagnes les gens à améliorer leur image et leur confiance.',tags:['Coaching','Mode','Impact'],offre:'J’aide mes clients à améliorer leur image et rayonner avec confiance.'},
+  // AUTRES
+  {nom:'Gestion réseaux sociaux pour PME',mots:['réseau','social','facebook','instagram','digital','marketing','contenu','communauté'],description:'Tu gères les pages Facebook/Instagram de petits commerces.',tags:['Digital','Récurrent'],offre:'Je gère les réseaux sociaux des petits commerces pour attirer plus de clients.'},
+  {nom:'Vente de repas faits maison',mots:['cuisine','repas','plat','nourriture','chef','manger','cuisiner','traiteur'],description:'Tu prépares des repas locaux et les livres à des familles.',tags:['Alimentaire','Fidélisation'],offre:'Je prépare et livre des repas faits maison pour familles et salariés.'},
+  {nom:'Coiffure et soins à domicile',mots:['coiffure','cheveux','tresse','beauté','salon','esthétique','maquillage','soin'],description:'Tu te déplaces pour coiffer et soigner à domicile.',tags:['Beauté','Récurrent'],offre:'Je me déplace pour coiffer et soigner à domicile.'},
+  {nom:'Service de livraison express',mots:['moto','livraison','transport','colis','conduire','rapide','livrer'],description:'Tu livres colis et repas rapidement dans ta ville.',tags:['Moto','Cash rapide'],offre:'Je livre rapidement colis et courses dans toute la ville.'},
+  {nom:'Coaching développement personnel',mots:['coach','accompagner','motiver','guider','mentor','aider','développement','personnel'],description:'Tu accompagnes des particuliers vers leur meilleure version.',tags:['Impact','Scalable'],offre:'J’accompagne les gens à atteindre leurs objectifs personnels et professionnels.'},
+  {nom:'Cours particuliers et soutien scolaire',mots:['école','élève','cours','apprendre','enseigner','maths','éducation','étudiant'],description:'Tu aides des élèves à progresser dans les matières clés.',tags:['Éducation','Récurrent'],offre:'J’aide les élèves à progresser et réussir leurs examens.'},
+  {nom:'Couture et vêtements sur mesure',mots:['couture','coudre','tissu','vêtement','mode','habit','tailleur','confection'],description:'Tu crées des tenues personnalisées sur mesure.',tags:['Artisanat','Créatif'],offre:'Je crée des tenues uniques sur mesure pour toutes occasions.'},
+  {nom:'Réparation de téléphones',mots:['téléphone','réparation','smartphone','électronique','écran','technique','mobile'],description:'Tu répares smartphones et appareils électroniques.',tags:['Technique','Local'],offre:'Je répare rapidement tous types de smartphones et appareils électroniques.'},
+  {nom:'Nettoyage de maisons et bureaux',mots:['nettoyage','ménage','nettoyer','entretien','maison','bureau','propre'],description:'Tu proposes des services de nettoyage professionnel.',tags:['Service','Récurrent'],offre:'Je nettoie maisons et bureaux de manière professionnelle.'},
+  {nom:'Pâtisserie et gâteaux sur commande',mots:['gâteau','pâtisserie','sucre','four','fête','anniversaire','cuisiner','confiserie'],description:'Tu prépares des pâtisseries pour événements et particuliers.',tags:['Alimentaire','Événementiel'],offre:'Je prépare des gâteaux et pâtisseries sur commande pour toutes occasions.'},
+  {nom:'Revente de produits importés',mots:['vente','commerce','produit','revente','achat','boutique','import','grossiste'],description:'Tu sources des produits de qualité et les revends avec marge.',tags:['Commerce','Cash rapide'],offre:'Je source et revends des produits de qualité à prix compétitifs.'},
+  {nom:'Formation en ligne dans ton domaine',mots:['former','formation','enseigner','vidéo','cours','ligne','expert','partager'],description:'Tu crées et vends des formations en ligne sur ton expertise.',tags:['Scalable','Passif'],offre:'Je partage mon expertise en formations en ligne accessibles.'},
+  {nom:'Transport de personnes',mots:['voiture','taxi','conduire','passager','véhicule','transport','chauffeur'],description:'Tu transportes des personnes en sécurité.',tags:['Transport','Cash quotidien'],offre:'Je transporte des personnes en sécurité dans la ville.'},
+  {nom:'Traiteur pour événements',mots:['traiteur','mariage','cérémonie','buffet','banquet','restauration','fête','événement'],description:'Tu gères la restauration complète pour cérémonies.',tags:['Événementiel','Premium'],offre:'Je gère la restauration complète pour mariages et cérémonies.'},
+  {nom:'Maraîchage et légumes frais',mots:['légume','agriculture','cultiver','jardin','récolte','ferme','plante','potager'],description:'Tu cultives ou sources des légumes frais locaux.',tags:['Agriculture','Local'],offre:'Je fournis des légumes frais cultivés localement.'},
+  {nom:'Photographie et vidéo événementielle',mots:['photo','photographe','vidéo','mariage','événement','portrait','caméra','image'],description:'Tu captures les moments précieux en photo et vidéo.',tags:['Créatif','Événementiel'],offre:'Je capture tes moments importants en photo et vidéo professionnelle.'},
+  {nom:'Makeup et maquillage professionnel',mots:['maquillage','makeup','beauté','mariée','événement','esthétique','visage','teint'],description:'Tu maquilles pour mariages, événements et shooting photo.',tags:['Beauté','Événementiel'],offre:'Je maquille professionnellement pour mariages et événements spéciaux.'},
+  {nom:'Massages et bien-être à domicile',mots:['massage','relaxation','détente','bien-être','corps','soin','stress','spa'],description:'Tu proposes des séances de massage et relaxation à domicile.',tags:['Bien-être','Premium'],offre:'Je propose des séances de massage et relaxation à domicile.'},
+  {nom:'Bijoux et accessoires artisanaux',mots:['bijou','accessoire','artisan','perle','bracelet','collier','ornement','créatif'],description:'Tu crées et vends des bijoux et accessoires faits main.',tags:['Artisanat','Créatif'],offre:'Je crée des bijoux et accessoires uniques faits à la main.'},
+  {nom:'Comptabilité et gestion pour PME',mots:['comptabilité','gestion','finance','chiffre','compte','bilan','trésorerie','entrepreneur'],description:'Tu gères la comptabilité des petites entreprises.',tags:['Finance','Récurrent'],offre:'Je gère la comptabilité et les finances des petites entreprises.'},
+  {nom:'Électricité et plomberie',mots:['électricité','plomberie','installation','réparation','panne','câble','tuyau','maison'],description:'Tu interviens pour des travaux électriques et plomberie.',tags:['Technique','Local'],offre:'J’interviens rapidement pour tous travaux électriques et plomberie.'},
+  {nom:'Jardinage et entretien espaces verts',mots:['jardin','plante','jardinage','entretien','gazon','arbre','fleur','vert'],description:'Tu entretiens jardins et espaces verts.',tags:['Service','Récurrent'],offre:'J’entretiens jardins et espaces verts pour particuliers et entreprises.'},
 ];
 
 let _ideas=[], _selIdx=-1;
 
 function genIdees(txt){
-  const t=txt.toLowerCase();
-  return IDEAS.map(i=>({...i,sc:i.mots.reduce((s,m)=>t.includes(m)?s+10:s,70)})).sort((a,b)=>b.sc-a.sc).slice(0,3);
+  // Normalize: remove accents, lowercase
+  function norm(s){
+    return s.toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g,'')
+      .replace(/['']/g,"'");
+  }
+  const t = norm(txt);
+  
+  return IDEAS.map(i => {
+    let sc = 50; // base score
+    const mots = i.mots.map(m => norm(m));
+    
+    mots.forEach(m => {
+      if(t.includes(m)) sc += 15;           // exact match
+      // Partial: word root match (first 5 chars)
+      if(m.length >= 5 && t.includes(m.slice(0,5))) sc += 8;
+      // Check each word in txt against each mot
+      norm(txt).split(/\s+/).forEach(w => {
+        if(w.length >= 4 && m.length >= 4) {
+          if(m.includes(w) || w.includes(m)) sc += 6;
+        }
+      });
+    });
+    
+    // Also score against idea name and description
+    const ideaNorm = norm(i.nom + ' ' + i.description);
+    norm(txt).split(/\s+/).forEach(w => {
+      if(w.length >= 4 && ideaNorm.includes(w)) sc += 5;
+    });
+    
+    return {...i, sc};
+  }).sort((a,b) => b.sc - a.sc).slice(0,3);
 }
 
 function renderIdee(body){
