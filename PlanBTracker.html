@@ -781,9 +781,9 @@ function renderIdee(body){
     +'<div style="font-size:13px;color:var(--muted)">Basées sur tes 3 angles — Choisis UNE seule idée</div>'
     +'</div>'
     +'<div style="background:rgba(201,168,76,.04);border:1px solid rgba(201,168,76,.1);border-radius:10px;padding:12px;margin-bottom:16px">'
-    +(J.a1q3?'<div style="font-size:12px;color:var(--muted);margin-bottom:3px"><strong style="color:var(--text)">⚡</strong> '+J.a1q3+'</div>':'')
-    +(J.a2q3?'<div style="font-size:12px;color:var(--muted);margin-bottom:3px"><strong style="color:var(--text)">👁️</strong> '+J.a2q3+'</div>':'')
-    +(J.a3q3?'<div style="font-size:12px;color:var(--muted)"><strong style="color:var(--text)">📊</strong> '+J.a3q3+'</div>':'')
+    +(J.angle1?'<div style="font-size:12px;color:var(--muted);margin-bottom:6px"><strong style="color:var(--gold)">\u26A1\uFE0F Comp\u00e9tences :</strong> '+J.angle1.slice(0,120)+(J.angle1.length>120?'...':'')+'</div>':'')
+    +(J.angle2?'<div style="font-size:12px;color:var(--muted);margin-bottom:6px"><strong style="color:var(--gold)">\uD83D\uDC41\uFE0F Besoins :</strong> '+J.angle2.slice(0,120)+(J.angle2.length>120?'...':'')+'</div>':'')
+    +(J.angle3?'<div style="font-size:12px;color:var(--muted)"><strong style="color:var(--gold)">\uD83D\uDCCA March\u00e9 :</strong> '+J.angle3.slice(0,120)+(J.angle3.length>120?'...':'')+'</div>':'')
     +'</div>'
     +cards
     +'<div class="jcard" style="margin-top:4px">'
@@ -884,6 +884,7 @@ function valOffre(){
   S.actions = [];
   genActions().forEach(a => S.actions.push(a));
   save();
+  showScreen('scr-journey');
   renderJ('s1');
 }
 
@@ -1119,7 +1120,7 @@ function updateDash(){
   }
   const al=document.getElementById('d-act-list');
   if(al){
-    const next=S.actions.filter(a=>!a.done).slice(0,5);
+    const next=S.actions.slice(0,8); // Show all (done + undone), done = strikethrough
     al.innerHTML=next.length
       ?next.map(a=>'<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer" onclick="toggleDashAct('+a.id+')">'
         +'<div style="width:22px;height:22px;border-radius:50%;border:2px solid '+(a.done?'var(--success)':'var(--border)')+';background:'+(a.done?'rgba(46,204,113,.15)':'transparent')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;color:var(--success);font-weight:700">'+(a.done?'\u2713':'')+'</div>'
@@ -1270,18 +1271,38 @@ function reprendreArchive(i){
   const a = S.archives[i];
   if(!a) return;
   if(S.ideaActive){
-    if(!confirm('Tu as d\u00e9j\u00e0 une id\u00e9e active. Elle sera archiv\u00e9e. Continuer ?')) return;
-    S.archives.push({nom:S.ideaActive.nom,debut:new Date().toLocaleDateString('fr-FR'),done:S.actions.filter(x=>x.done).length,total:S.actions.length,statut:'Archiv\u00e9e'});
+    if(!confirm('Tu as déjà une idée active : «'+S.ideaActive.nom+'».\n\nElle sera archivée. Continuer ?')) return;
+    S.archives.push({
+      nom:S.ideaActive.nom, offre:S.ideaActive.offre||'', prix:S.ideaActive.prix||'',
+      debut:new Date().toLocaleDateString('fr-FR'),
+      done:S.actions.filter(x=>x.done).length, total:S.actions.length,
+      statut:'Archivée',
+      actions:JSON.parse(JSON.stringify(S.actions)),
+      semActuelle:S.prog.semaineActuelle||1,
+      semaines:JSON.parse(JSON.stringify(S.prog.semaines||{})),
+      jSemaines:JSON.parse(JSON.stringify(J.semaines||{})),
+    });
   }
-  S.ideaActive = {nom:a.nom, offre:a.offre||'', prix:'', public:'', benefice:''};
-  S.actions = a.actions && a.actions.length ? a.actions.map(x=>({...x,id:S.nextId++})) : [];
+  // Restore full state from archive
+  S.ideaActive = {nom:a.nom, offre:a.offre||'', prix:a.prix||'', public:'', benefice:''};
+  S.actions = a.actions && a.actions.length ? JSON.parse(JSON.stringify(a.actions)) : [];
   S.prog.semaineActuelle = a.semActuelle || 1;
+  S.prog.semaines = a.semaines ? JSON.parse(JSON.stringify(a.semaines)) : {};
+  if(a.jSemaines) J.semaines = JSON.parse(JSON.stringify(a.jSemaines));
+  J.offre = a.offre || '';
+  J.ideeChoisie = {nom:a.nom};
   S.archives.splice(i,1);
   save();
   renderArchive();
   updateDash();
-  showPage('dashboard');
-  alert('Id\u00e9e «'+S.ideaActive.nom+'» reprise ! Tu es sur le Tableau de bord.');
+  // Show journey at correct semaine
+  const sem = S.prog.semaineActuelle || 1;
+  if(confirm('Idée «'+a.nom+'» reprise ! Tu étais à la Semaine '+sem+'. Reprendre le parcours guidé ?')) {
+    showScreen('scr-journey');
+    renderJ('s'+sem);
+  } else {
+    showPage('dashboard');
+  }
 }
 
 function supprimerArchive(i){
@@ -1470,10 +1491,17 @@ function nouvelleIdee() {
     // Archive current
     S.archives.push({
       nom: S.ideaActive.nom,
+      offre: S.ideaActive.offre || '',
+      prix: S.ideaActive.prix || '',
       debut: new Date().toLocaleDateString('fr-FR'),
       done: S.actions.filter(a=>a.done).length,
       total: S.actions.length,
       statut: 'Archivée',
+      actions: JSON.parse(JSON.stringify(S.actions)),  // deep copy
+      semActuelle: S.prog.semaineActuelle || 1,
+      semaines: JSON.parse(JSON.stringify(S.prog.semaines || {})),
+      jSemaines: JSON.parse(JSON.stringify(J.semaines || {})),
+      revenus: S.revenus.filter(r => r.idea === S.ideaActive.nom),
     });
   }
   // Reset idea-related state
