@@ -2,8 +2,12 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Plan B Tracker — Coach Redouane</title>
+<meta name="version" content="3.0.0">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -143,7 +147,7 @@ textarea.jinp{resize:vertical;min-height:70px;line-height:1.6}
         <div class="j-logo">Plan B Tracker</div>
         <div style="display:flex;align-items:center;gap:8px">
           <div id="j-prenom-lbl" style="font-size:12px;color:var(--muted)"></div>
-          <button onclick="nouvelleIdee()" style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.25);border-radius:6px;padding:5px 10px;color:var(--gold);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600">💡 Nouvelle idée</button>
+          <button onclick="confirmerNouvelleIdee()" style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.25);border-radius:6px;padding:5px 10px;color:var(--gold);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600">💡 Nouvelle idée</button>
           <button class="j-skip" onclick="goToApp()">App →</button>
         </div>
       </div>
@@ -166,7 +170,7 @@ textarea.jinp{resize:vertical;min-height:70px;line-height:1.6}
       <div class="nav-item" onclick="showPage('plan',this)"><span>📅</span> Plan 90 jours</div>
       <div class="nav-item" onclick="showPage('revenus',this)"><span>💰</span> Revenus & Dépenses</div>
       <div class="nav-item" onclick="showPage('archive',this)"><span>📁</span> Archive idées</div>
-      <div class="nav-item" onclick="nouvelleIdee();showScreen('scr-journey')" style="color:var(--gold)"><span>💡</span> Nouvelle idée</div>
+      <div class="nav-item" onclick="confirmerNouvelleIdee()" style="color:var(--gold)"><span>💡</span> Nouvelle idée</div>
     <div class="nav-item" onclick="backToJourney()"><span>🗺️</span> Reprendre le parcours</div>
     </div>
     <div class="suser" onclick="openProfile()">
@@ -309,7 +313,7 @@ let J = {            // Réponses du parcours guidé
   a3q1:'',a3q2:'',a3q3:'',
   ideeIdx: -1, ideeLibre: '',
   ideeChoisie: null,
-  offre: '', prix: '', contacts: '',
+  offre: '', prix: '', contacts: '', contacts10: [],
   semaines: {},  // {1:{validee,date,note,answers}}
 };
 
@@ -515,7 +519,105 @@ function jQ3(id, q1, p1, q2, p2, q3, p3, v1, v2, v3) {
 }
 
 // ── TEST 90 JOURS ──
+
+
+const HELP_HINTS = {
+  angle1: {
+    title: "Aide \u2014 Tes comp\u00e9tences naturelles",
+    content: [
+      "Pense \u00e0 ce que tes amis et famille te demandent souvent. Ex: \"Tu cuisines si bien, tu peux me faire un g\u00e2teau ?\"",
+      "Qu\'est-ce qui te semble \u00e9vident mais difficile pour les autres ? Ex: g\u00e9rer les r\u00e9seaux, conduire, r\u00e9parer des appareils.",
+      "Pour quoi as-tu \u00e9t\u00e9 f\u00e9licit\u00e9 ou remerci\u00e9 ? Ex: ta fa\u00e7on d\'expliquer, ta cuisine, ton organisation.",
+      "Qu\'est-ce que tu fais sans effort en moins de 30 minutes, alors que d\'autres y passent des heures ?",
+    ]
+  },
+  angle2: {
+    title: "Aide \u2014 Les besoins autour de toi",
+    content: [
+      "Quand tu parles avec tes voisins ou coll\u00e8gues, de quoi se plaignent-ils souvent ? Ex: \"impossible de trouver un bon traiteur\", \"ma page Facebook est nulle\"",
+      "Quels services coûtent cher ou sont difficiles \u00e0 trouver dans ton quartier ?",
+      "Qu\'est-ce que les gens paient sans h\u00e9siter, m\u00eame avec peu d\'argent ? Ex: coiffure, r\u00e9paration t\u00e9l\u00e9phone, repas.",
+      "Quel probl\u00e8me revient souvent dans ta famille ou parmi tes amis ?",
+    ]
+  },
+  angle3: {
+    title: "Aide \u2014 Ce qui se vend d\u00e9j\u00e0",
+    content: [
+      "Observe les groupes WhatsApp et Facebook dans ton pays : que proposent les gens ? Ex: vente de v\u00eatements, cours de langue, livraison.",
+      "Dans ton quartier, quels commerces ou services font toujours file d\'attente ?",
+      "Quelles activit\u00e9s vois-tu des gens faire pour gagner de l\'argent autour de toi ? M\u00eame informellement.",
+      "Si tu avais 50 000 FCFA et 1 semaine, qu\'est-ce que tu pourrais lancer qui se vendrait certainement ?",
+    ]
+  },
+  test90: {
+    title: "Aide \u2014 Le Test des 90 jours",
+    content: [
+      "Calcule simplement : combien as-tu d\'\u00e9conomies ? Divise par tes d\u00e9penses mensuelles (loyer + nourriture + transport).",
+      "Exemple : 150 000 FCFA d\'\u00e9conomies \u00f7 50 000 FCFA/mois = 3 mois = environ 90 jours.",
+      "Si tu n\'as pas d\'\u00e9conomies : r\u00e9ponds 0. C\'est une information importante, pas un jugement.",
+      "Cette r\u00e9ponse d\u00e9finit l\'urgence de ton Plan B. Elle t\'appartient.",
+    ]
+  }
+};
+
+function showHelp(key) {
+  const h = HELP_HINTS[key];
+  if(!h) return;
+  const modal = document.getElementById('help-modal');
+  const title = document.getElementById('help-title');
+  const body = document.getElementById('help-body');
+  if(title) title.textContent = h.title;
+  if(body) body.innerHTML = h.content.map(c =>
+    '<div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
+    + '<div style="width:6px;height:6px;border-radius:50%;background:var(--gold);margin-top:6px;flex-shrink:0"></div>'
+    + '<div style="font-size:13px;color:var(--text);line-height:1.6">'+c+'</div>'
+    + '</div>'
+  ).join('');
+  if(modal) modal.classList.add('open');
+}
+
+// ── ÉCRAN D'INTRODUCTION ──────────────────────────
+function renderIntro(body) {
+  const prenom = S.user ? S.user.prenom : '';
+  body.innerHTML =
+    '<div style="text-align:center;margin-bottom:28px">'
+    + '<div style="font-size:56px;margin-bottom:14px">\u{1F4B0}</div>'
+    + '<div style="font-family:Cormorant Garamond,serif;font-size:30px;font-weight:700;color:var(--gold);margin-bottom:8px">'+(prenom?'Bienvenue, '+prenom+' !':'Bienvenue !')+'</div>'
+    + '<div style="font-size:14px;color:var(--muted);line-height:1.7;max-width:480px;margin:0 auto">En 15 minutes, tu vas <strong style="color:var(--text)">trouver ton id\u00e9e de Plan B</strong> et <strong style="color:var(--text)">pr\u00e9parer tes 90 premiers jours</strong> d\u2019action.</div>'
+    + '</div>'
+
+    + '<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px">'
+    + '<div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px">Les 6 \u00e9tapes</div>'
+    + [['\u23F1\uFE0F','Test des 90 jours','D\u00e9finis ton niveau d\u2019urgence et ta vraie motivation'],
+       ['\u26A1\uFE0F','Angle 1 — Tes comp\u00e9tences','Ce que tu fais naturellement bien'],
+       ['\u{1F440}','Angle 2 — Les besoins','Ce dont les gens autour de toi ont besoin'],
+       ['\u{1F4CA}','Angle 3 — Le march\u00e9','Ce qui se vend d\u00e9j\u00e0 dans ton environnement'],
+       ['\u{1F4A1}','Choix de ton id\u00e9e','3 id\u00e9es g\u00e9n\u00e9r\u00e9es selon tes r\u00e9ponses'],
+       ['\u{1F4DD}','Ton offre + 10 contacts','Tu rends ton id\u00e9e concr\u00e8te et vendable']
+      ].map(([icon,title,desc],i) =>
+        '<div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
+        + '<div style="width:36px;height:36px;border-radius:10px;background:rgba(201,168,76,.1);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">'+icon+'</div>'
+        + '<div><div style="font-size:13px;font-weight:600;color:var(--text)">'+title+'</div>'
+        + '<div style="font-size:12px;color:var(--muted);margin-top:2px">'+desc+'</div></div>'
+        + '</div>'
+      ).join('')
+    + '</div>'
+
+    + '<div style="background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.2);border-radius:12px;padding:14px;margin-bottom:20px">'
+    + '<div style="font-family:Cormorant Garamond,serif;font-size:15px;font-style:italic;color:var(--text);line-height:1.6">"R\u00e9ponds honn\u00eatement \u2014 plus tu es pr\u00e9cis, plus tes id\u00e9es seront adapt\u00e9es \u00e0 ta r\u00e9alit\u00e9."</div>'
+    + '<div style="font-size:12px;color:var(--gold);margin-top:6px;font-weight:600">\u2014 Coach Redouane</div>'
+    + '</div>'
+
+    + '<button onclick="startProcess()" style="width:100%;padding:16px;background:linear-gradient(135deg,var(--gold),#A8842A);border:none;border-radius:12px;color:var(--dark);font-family:DM Sans,sans-serif;font-size:16px;font-weight:700;cursor:pointer">Je suis pr\u00eat \u2014 Commencer \u2192</button>';
+}
+
+function startProcess() {
+  sessionStorage.setItem('planb_intro', '1');
+  renderTest90(document.getElementById('jbody'));
+}
+
 function renderTest90(body) {
+  if(!sessionStorage.getItem('planb_intro')) { renderIntro(body); return; }
   const prenom = S.user?S.user.prenom:'';
   body.innerHTML =
     '<div style="text-align:center;margin-bottom:24px">'
@@ -726,34 +828,61 @@ function valIdee(){
 
 // ── OFFRE ──
 function renderOffre(body){
-  const id=J.ideeChoisie||{};
-  body.innerHTML=jBack('idee')
-    +'<div style="text-align:center;margin-bottom:20px">'
-    +'<div style="font-size:32px;margin-bottom:6px">✅</div>'
-    +'<div style="font-family:\'Cormorant Garamond\',serif;font-size:22px;font-weight:700;color:var(--gold);margin-bottom:2px">Idée choisie !</div>'
-    +'<div style="font-size:14px;color:var(--text);font-weight:600">'+id.nom+'</div>'
-    +'<div style="font-size:12px;color:var(--muted);margin-top:4px">Maintenant on la rend concrète et vendable</div>'
-    +'</div>'
-    +jCard('📝','Formule ton offre','Si tu ne peux pas l\'expliquer en 2 phrases, elle n\'est pas prête',
-      jQuote('"J\'aide _______ à _______ grâce à _______"')
-      +jField('"J\'aide _______ à _______" — Complète cette phrase','j-offre','Ex: J\'aide les restaurants à remplir leurs tables grâce aux réseaux sociaux','text',J.offre)
-      +jField('Mon prix de départ (sois précis)','j-prix','Ex: 30 000 FCFA/mois · 5 000 FCFA/séance · 2 000 FCFA/livraison','text',J.prix)
-    )
-    +jCard('👥','Mes 10 premiers contacts','Tes premiers clients sont dans ton téléphone',
-      jQuote('"Avant de chercher des inconnus, liste 10 personnes que tu connais déjà."')
-      +jField('Liste 10 prénoms (famille, amis, collègues, voisins...)','j-contacts','1. Ahmed\n2. Fatima\n3. Mon frère Ibrahim\n4. Ma collègue Sara\n5...','textarea',J.contacts)
-      +jBtn('Lancer la Semaine 1 de mon Plan B →','valOffre()')
-    );
+  const ic = J.ideeChoisie || {};
+  const saved10 = J.contacts10 && J.contacts10.length ? J.contacts10 : Array(10).fill('');
+
+  let contactFields = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">';
+  for(let i=0;i<10;i++){
+    contactFields += '<div style="display:flex;align-items:center;gap:8px;background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:8px 10px">'
+      + '<div style="width:22px;height:22px;border-radius:50%;background:rgba(201,168,76,.12);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--gold);flex-shrink:0">'+(i+1)+'</div>'
+      + '<input id="c'+i+'" type="text" placeholder="Pr\u00e9nom..." value="'+(saved10[i]||'')+'" style="background:none;border:none;outline:none;color:var(--text);font-family:DM Sans,sans-serif;font-size:13px;width:100%">'
+      + '</div>';
+  }
+  contactFields += '</div>';
+
+  body.innerHTML = jBack('idee')
+    + '<div style="text-align:center;margin-bottom:20px">'
+    + '<div style="font-size:32px;margin-bottom:6px">\u2705</div>'
+    + '<div style="font-family:Cormorant Garamond,serif;font-size:22px;font-weight:700;color:var(--gold);margin-bottom:2px">Id\u00e9e choisie !</div>'
+    + '<div style="font-size:14px;color:var(--text);font-weight:600">'+(ic.nom||J.ideeLibre||'')+'</div>'
+    + '<div style="font-size:12px;color:var(--muted);margin-top:4px">Maintenant on la rend concr\u00e8te et vendable</div>'
+    + '</div>'
+
+    + '<div class="jcard">'
+    + '<div class="jcard-header"><div class="jcard-icon">\u{1F4DD}</div><div><div class="jcard-title">Formule ton offre</div><div class="jcard-sub">Si tu ne peux pas l’expliquer en 2 phrases, elle n’est pas pr\u00eate</div></div></div>'
+    + '<div class="jquote">"J’aide _______ \u00e0 _______ gr\u00e2ce \u00e0 _______"</div>'
+    + '<div class="jq">Ton offre en 1 phrase \u2014 compl\u00e8te : "J’aide _______ \u00e0 _______"</div>'
+    + '<input class="jinp" id="j-offre" type="text" placeholder="Ex: J’aide les restaurants \u00e0 remplir leurs tables gr\u00e2ce aux r\u00e9seaux sociaux" value="'+(J.offre||'')+'">'
+    + '<div class="jq" style="margin-top:12px">Mon prix de d\u00e9part (sois pr\u00e9cis)</div>'
+    + '<input class="jinp" id="j-prix" type="text" placeholder="Ex: 30 000 FCFA/mois \u00b7 5 000 FCFA/s\u00e9ance" value="'+(J.prix||'')+'">'
+    + '</div>'
+
+    + '<div class="jcard">'
+    + '<div class="jcard-header"><div class="jcard-icon">\u{1F465}</div><div><div class="jcard-title">Mes 10 premiers contacts</div><div class="jcard-sub">Tes premiers clients sont dans ton t\u00e9l\u00e9phone</div></div></div>'
+    + '<div class="jquote">"Avant de chercher des inconnus, contacte d’abord les gens que tu connais."</div>'
+    + contactFields
+    + '<button class="btn-next" onclick="valOffre()" style="margin-top:16px">Lancer la Semaine 1 de mon Plan B \u2192</button>'
+    + '</div>';
 }
 
+
 function valOffre(){
-  J.offre=document.getElementById('j-offre')?.value?.trim()||'';
-  J.prix=document.getElementById('j-prix')?.value?.trim()||'';
-  J.contacts=document.getElementById('j-contacts')?.value?.trim()||'';
+  J.offre = document.getElementById('j-offre')?.value?.trim() || '';
+  J.prix = document.getElementById('j-prix')?.value?.trim() || '';
+  // Read 10 individual contact fields
+  const contacts10 = [];
+  for(let i=0;i<10;i++){
+    const el = document.getElementById('c'+i);
+    contacts10.push(el ? el.value.trim() : '');
+  }
+  J.contacts10 = contacts10;
+  J.contacts = contacts10.filter(Boolean).join(', ');
   if(!J.offre){alert('Formule ton offre en 1 phrase pour continuer.');return;}
-  const ic=J.ideeChoisie||{}; S.ideaActive={nom:ic.nom||J.ideeLibre||'Mon idée',offre:J.offre,prix:J.prix,public:ic.public||'',benefice:ic.benefice||''};
-  S.prog.semaineActuelle=1;
-  S.actions=genActions();
+  const ic = J.ideeChoisie || {};
+  S.ideaActive = {nom: ic.nom || J.ideeLibre || 'Mon idée', offre: J.offre, prix: J.prix, public: ic.public||'', benefice: ic.benefice||''};
+  S.prog.semaineActuelle = 1;
+  S.actions = [];
+  genActions().forEach(a => S.actions.push(a));
   save();
   renderJ('s1');
 }
@@ -840,11 +969,11 @@ function renderSem(body, num){
 
   const actsHtml=acts.length
     ?'<div style="font-size:11px;color:var(--muted);margin-bottom:10px">'+doneCnt+'/'+acts.length+' complétées</div>'
-      +acts.map(a=>'<div class="act-row" onclick="toggleAct('+a.id+','+num+')">'
-        +'<div class="act-chk '+(a.done?'done':'')+'">'+(a.done?'✓':'')+'</div>'
-        +'<div style="font-size:13px;color:'+(a.done?'var(--muted)':'var(--text)')+';'+(a.done?'text-decoration:line-through':'')+';line-height:1.5">'+a.text+'</div>'
-        +'</div>').join('')
-    :'<div style="font-size:12px;color:var(--muted)">Actions générées automatiquement.</div>';
+      +acts.map(a=>'<div class="act-row" style="display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
+        +'<div onclick="toggleAct('+a.id+','+num+')" class="act-chk '+(a.done?'done':'')+'" style="cursor:pointer;flex-shrink:0">'+(a.done?'\u2713':'')+'</div>'
+        +'<div onclick="toggleAct('+a.id+','+num+')" style="font-size:13px;color:'+(a.done?'var(--muted)':'var(--text)')+';'+(a.done?'text-decoration:line-through':'')+';line-height:1.5;flex:1;cursor:pointer">'+a.text+'</div>'
+        +'<button onclick="delAction('+a.id+','+num+')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0 4px;line-height:1;flex-shrink:0">&times;</button>'
+        +'</div>').join('')    :'<div style="font-size:12px;color:var(--muted)">Actions générées automatiquement.</div>';
   // Add custom action button
   actsHtml += '<button onclick="addCustomAction('+num+')" style="width:100%;margin-top:10px;padding:9px;background:transparent;border:1px dashed var(--border);border-radius:8px;color:var(--muted);font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;transition:all .2s"rgba(201,168,76,.4)\';this.style.color=\'var(--gold)\';"var(--border)\';this.style.color=\'var(--muted)\';">+ Ajouter une action personnalisée</button>';
 
@@ -893,6 +1022,30 @@ function renderSem(body, num){
 function toggleAct(id, num){
   const a=S.actions.find(x=>x.id===id);
   if(a){a.done=!a.done;save();renderSem(document.getElementById('jbody'),num);}
+}
+
+function toggleDashAct(id){
+  const a=S.actions.find(x=>x.id===id);
+  if(a){a.done=!a.done;save();updateDash();}
+}
+
+function toggleActModal(id,num){
+  const a=S.actions.find(x=>x.id===id);
+  if(a){a.done=!a.done;save();openSemaineDetail(num);}
+}
+
+function addCustomAction(num){
+  const txt=prompt('Ajouter une action pour Semaine '+num+' :');
+  if(!txt||!txt.trim())return;
+  S.actions.push({id:S.nextId++,text:txt.trim(),week:'Semaine '+num,done:false});
+  save();
+  renderSem(document.getElementById('jbody'),num);
+}
+
+function delAction(id,num){
+  if(!confirm('Supprimer cette action ?'))return;
+  const idx=S.actions.findIndex(x=>x.id===id);
+  if(idx>=0){S.actions.splice(idx,1);save();renderSem(document.getElementById('jbody'),num);}
 }
 
 function valSem(num){
@@ -968,39 +1121,38 @@ function updateDash(){
   if(al){
     const next=S.actions.filter(a=>!a.done).slice(0,5);
     al.innerHTML=next.length
-      ?next.map(a=>'<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
-        +'<div style="width:20px;height:20px;border-radius:50%;border:2px solid var(--border);flex-shrink:0"></div>'
-        +'<span style="font-size:13px;color:var(--text)">'+a.text+'</span>'
-        +'<span style="font-size:11px;color:var(--muted);margin-left:auto;white-space:nowrap">'+a.week+'</span>'
+      ?next.map(a=>'<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer" onclick="toggleDashAct('+a.id+')">'
+        +'<div style="width:22px;height:22px;border-radius:50%;border:2px solid '+(a.done?'var(--success)':'var(--border)')+';background:'+(a.done?'rgba(46,204,113,.15)':'transparent')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;color:var(--success);font-weight:700">'+(a.done?'\u2713':'')+'</div>'
+        +'<span style="font-size:13px;color:'+(a.done?'var(--muted)':'var(--text)')+';'+(a.done?'text-decoration:line-through':'')+';flex:1">'+a.text+'</span>'
+        +'<span style="font-size:11px;color:var(--muted);white-space:nowrap;margin-right:4px">'+a.week+'</span>'
+        +'<div onclick="showActionTip('+a.id+')" style="width:20px;height:20px;border-radius:50%;border:1px solid rgba(201,168,76,.3);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--gold);flex-shrink:0;cursor:pointer;font-style:italic;font-weight:600">i</div>'
         +'</div>').join('')
-      :'<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">✅ Toutes les actions sont cochées !</div>';
+      :'<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">\u2705 Toutes les actions sont coch\u00e9es !</div>';
+
   }
 }
 
 function openSemaineDetail(n) {
-  // Show semaine detail inside app (modal overlay on plan page)
   const d = SEM[n];
   if(!d) return;
   const isDone = J.semaines[n] && J.semaines[n].validee;
   const acts = S.actions.filter(a => a.week === 'Semaine ' + n);
   const doneCnt = acts.filter(a=>a.done).length;
   const phL = n<=4?'Phase 1 — Lancer & Encaisser':n<=8?'Phase 2 — Répéter & Structurer':'Phase 3 — Optimiser & Sécuriser';
-
-  let actsHtml = acts.map(a =>
-    '<div style="display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer" onclick="toggleActModal('+a.id+','+n+')">'
-    +'<div style="width:22px;height:22px;border-radius:50%;border:2px solid '+(a.done?'var(--success)':'var(--border)')+';background:'+(a.done?'rgba(46,204,113,.15)':'transparent')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;color:var(--success);font-weight:700">'+(a.done?'✓':'')+'</div>'
-    +'<div style="font-size:13px;color:'+(a.done?'var(--muted)':'var(--text)')+';'+(a.done?'text-decoration:line-through':'')+';line-height:1.5">'+a.text+'</div>'
-    +'</div>'
-  ).join('');
-
-  let qsHtml = '';
   const saved = J.semaines[n] || {};
+  let qsHtml = '';
   (d.qs||[]).forEach(q => {
     const val = saved.answers && saved.answers[q.id] ? saved.answers[q.id] : '';
     if(val) qsHtml += '<div style="margin-bottom:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:3px">'+q.l+'</div><div style="font-size:13px;color:var(--text);background:var(--darker);border-radius:6px;padding:8px 10px;line-height:1.6">'+val+'</div></div>';
   });
+  let actsHtml = acts.map(a =>
+    '<div onclick="toggleActModal('+a.id+','+n+')" style="display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer">'
+    +'<div style="width:22px;height:22px;border-radius:50%;border:2px solid '+(a.done?'var(--success)':'var(--border)')+';background:'+(a.done?'rgba(46,204,113,.15)':'transparent')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;color:var(--success);font-weight:700">'+(a.done?'\u2713':'')+'</div>'
+    +'<div style="font-size:13px;color:'+(a.done?'var(--muted)':'var(--text)')+';'+(a.done?'text-decoration:line-through':'')+';line-height:1.5">'+a.text+'</div>'
+    +'</div>'
+  ).join('');
 
-  document.getElementById('sem-modal-body').innerHTML =
+    document.getElementById('sem-modal-body').innerHTML =
     '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">'
     +'<div style="width:44px;height:44px;border-radius:50%;background:rgba(201,168,76,.15);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--gold);flex-shrink:0">'+n+'</div>'
     +'<div><div style="font-family:Cormorant Garamond,serif;font-size:18px;font-weight:700;color:var(--gold)">Semaine '+n+' — '+d.titre+'</div>'
@@ -1096,9 +1248,49 @@ function renderRevenus(){
 function renderArchive(){
   const el=document.getElementById('arc-list');
   if(!el)return;
-  if(!S.archives.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:36px;margin-bottom:10px">📁</div><div style="font-size:14px">Aucune idée archivée pour l\'instant</div></div>';return;}
-  el.innerHTML=S.archives.map(a=>'<div style="background:var(--darker);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:10px"><div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px">'+a.nom+'</div><div style="font-size:12px;color:var(--muted)">'+a.date+'</div></div>').join('');
+  if(!S.archives.length){
+    el.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:36px;margin-bottom:10px">\u{1F4C1}</div><div style="font-size:14px">Aucune id\u00e9e archiv\u00e9e pour l\u2019instant</div></div>';
+    return;
+  }
+  el.innerHTML=S.archives.map((a,i)=>
+    '<div style="background:var(--darker);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px">'
+    +'<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">'
+    +'<div><div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px">'+a.nom+'</div>'
+    +'<div style="font-size:12px;color:var(--muted)">Archiv\u00e9e le '+(a.debut||'—')+'</div>'
+    +(a.done!==undefined?'<div style="font-size:11px;color:var(--gold);margin-top:2px">'+a.done+'/'+(a.total||0)+' actions \u2022 '+a.statut+'</div>':'')
+    +'</div></div>'
+    +'<div style="display:flex;gap:8px">'
+    +'<button onclick="reprendreArchive('+i+')" style="flex:1;padding:9px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.3);border-radius:8px;color:var(--gold);font-family:DM Sans,sans-serif;font-size:13px;font-weight:600;cursor:pointer">\u25B6 Reprendre cette id\u00e9e</button>'
+    +'<button onclick="supprimerArchive('+i+')" style="padding:9px 14px;background:transparent;border:1px solid rgba(231,76,60,.3);border-radius:8px;color:var(--danger);font-family:DM Sans,sans-serif;font-size:13px;cursor:pointer">\u{1F5D1}</button>'
+    +'</div></div>'
+  ).join('');
 }
+
+function reprendreArchive(i){
+  const a = S.archives[i];
+  if(!a) return;
+  if(S.ideaActive){
+    if(!confirm('Tu as d\u00e9j\u00e0 une id\u00e9e active. Elle sera archiv\u00e9e. Continuer ?')) return;
+    S.archives.push({nom:S.ideaActive.nom,debut:new Date().toLocaleDateString('fr-FR'),done:S.actions.filter(x=>x.done).length,total:S.actions.length,statut:'Archiv\u00e9e'});
+  }
+  S.ideaActive = {nom:a.nom, offre:a.offre||'', prix:'', public:'', benefice:''};
+  S.actions = a.actions && a.actions.length ? a.actions.map(x=>({...x,id:S.nextId++})) : [];
+  S.prog.semaineActuelle = a.semActuelle || 1;
+  S.archives.splice(i,1);
+  save();
+  renderArchive();
+  updateDash();
+  showPage('dashboard');
+  alert('Id\u00e9e «'+S.ideaActive.nom+'» reprise ! Tu es sur le Tableau de bord.');
+}
+
+function supprimerArchive(i){
+  if(!confirm('Supprimer d\u00e9finitivement cette id\u00e9e archiv\u00e9e ?')) return;
+  S.archives.splice(i,1);
+  save();
+  renderArchive();
+}
+
 
 function openProfile(){
   if(!S.user)return;
@@ -1264,6 +1456,14 @@ function reprendreJourney() {
   renderJ(step);
 }
 
+function confirmerNouvelleIdee() {
+  const ideaNom = S.ideaActive ? S.ideaActive.nom : '';
+  if(ideaNom) {
+    if(!confirm('Ton id\u00e9e \u00ab ' + ideaNom + ' \u00bb sera archiv\u00e9e. Tu pourras la reprendre depuis l\u2019Archive.\n\nContinuer avec une nouvelle id\u00e9e ?')) return;
+  }
+  nouvelleIdee();
+}
+
 function nouvelleIdee() {
   // Keep profile and test90, reset angles + idea + semaines
   if(S.ideaActive) {
@@ -1298,6 +1498,26 @@ function toutRecommencer() {
   localStorage.removeItem('planb_S');
   localStorage.removeItem('planb_J');
   location.reload();
+}
+
+
+function showActionTip(id) {
+  const a = S.actions.find(x => x.id === id);
+  if(!a) return;
+  const weekNum = parseInt(a.week.replace('Semaine ',''));
+  const d = SEM[weekNum];
+  let detail = '';
+  if(d) {
+    detail = '<div style="font-size:12px;color:var(--muted);margin-top:10px;padding:10px;background:rgba(201,168,76,.06);border-radius:6px;line-height:1.7">'
+      + '<div><strong style="color:var(--gold)">' + a.week + ' — ' + d.titre + '</strong></div>'
+      + '<div style="margin-top:4px">\u{1F3AF} Objectif : ' + d.objectif + '</div>'
+      + '<div style="margin-top:4px">\u2705 KPI : ' + d.kpi + '</div>'
+      + '</div>';
+  }
+  const modal = document.getElementById('action-tip-modal');
+  const body = document.getElementById('action-tip-body');
+  if(body) body.innerHTML = '<div style="font-size:14px;color:var(--text);line-height:1.6;font-weight:500">'+a.text+'</div>'+detail;
+  if(modal) modal.classList.add('open');
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -1349,6 +1569,35 @@ document.addEventListener('DOMContentLoaded', function() {
       <button onclick="closeM('sem-detail-modal')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;line-height:1">✕</button>
     </div>
     <div id="sem-modal-body"></div>
+  </div>
+</div>
+
+
+
+<!-- Action Tip Modal -->
+<div class="mover" id="action-tip-modal">
+  <div class="mbox" style="width:400px;max-width:94vw">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-size:13px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px">&#x1F4CB; D&#xe9;tail de l&#8217;action</div>
+      <button onclick="closeM('action-tip-modal')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:22px;line-height:1">&#x2715;</button>
+    </div>
+    <div id="action-tip-body"></div>
+    <button onclick="closeM('action-tip-modal')" style="width:100%;margin-top:14px;padding:11px;background:var(--darker);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer">Fermer</button>
+  </div>
+</div>
+
+<!-- Help Modal -->
+<div class="mover" id="help-modal">
+  <div class="mbox" style="width:500px;max-width:94vw;max-height:85vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:var(--gold)" id="help-title">Aide</div>
+      <button onclick="closeM('help-modal')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:22px;line-height:1">&#x2715;</button>
+    </div>
+    <div style="background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.2);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--muted)">
+      &#x1F4A1; Ces questions sont l&#8217;essence de la m&#233;thode Coach Redouane. Prends 2 minutes pour y r&#233;fl&#233;chir.
+    </div>
+    <div id="help-body"></div>
+    <button onclick="closeM('help-modal')" style="width:100%;margin-top:16px;padding:12px;background:linear-gradient(135deg,var(--gold),#A8842A);border:none;border-radius:8px;color:var(--dark);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer">Compris &#x2192; Je r&#233;ponds</button>
   </div>
 </div>
 
