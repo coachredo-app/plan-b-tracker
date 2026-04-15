@@ -6,8 +6,8 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Plan B Tracker — Coach Redouane v4</title>
-<meta name="version" content="3.0.0">
+<title>Plan B Tracker — Coach Redouane v5</title>
+<meta name="version" content="5.0.0">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -134,6 +134,24 @@ textarea.jinp{resize:vertical;min-height:70px;line-height:1.6}
     <div style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:22px">La méthode Plan B Rentable — Entre ton prénom pour commencer</div>
     <label style="display:block;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px;font-weight:600">Ton prénom *</label>
     <input class="fi" id="onb-prenom" placeholder="Ex: Ahmed, Fatima, Ibrahim..." style="font-size:16px;padding:13px 16px" onkeydown="if(event.key==='Enter')startJourney()">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Ton pays</label>
+        <select id="onb-pays" class="fi" style="font-size:14px;padding:11px 14px;cursor:pointer;width:100%">
+          <option value="">— Pays —</option>
+          <option>Sénégal</option><option>Côte d'Ivoire</option><option>Cameroun</option>
+          <option>Mali</option><option>Burkina Faso</option><option>Niger</option>
+          <option>Guinée</option><option>Togo</option><option>Bénin</option>
+          <option>RD Congo</option><option>Congo-Brazzaville</option><option>Gabon</option>
+          <option>Madagascar</option><option>Maroc</option><option>Algérie</option>
+          <option>Tunisie</option><option>Mauritanie</option><option>Sénégal</option><option>Autre</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Ta ville</label>
+        <input id="onb-ville" class="fi" type="text" placeholder="Ex: Dakar, Abidjan..." style="font-size:14px;padding:11px 14px;width:100%">
+      </div>
+    </div>
     <button class="btn-gold" onclick="startJourney()">Commencer mon Plan B 🚀</button>
     <div style="text-align:center;margin-top:14px;font-size:12px;color:var(--muted)">Gratuit · Aucune inscription · Tes données restent sur ton appareil</div>
   </div>
@@ -291,11 +309,34 @@ textarea.jinp{resize:vertical;min-height:70px;line-height:1.6}
 </div>
 
 <script>
+// Guard against cached const declarations
+(function() {
+  try {
+    // Test if S is writable
+    if(typeof S !== 'undefined') {
+      var _test = S;
+      _test.actions = _test.actions || [];
+    }
+  } catch(e) {
+    // S was declared const in cache - clear the cache
+    if('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(regs) {
+        regs.forEach(function(r) { r.unregister(); });
+      });
+    }
+    // Force a reload with cache bypass
+    if(!location.search.includes('nocache')) {
+      location.href = location.href.split('?')[0] + '?nocache=' + Date.now();
+    }
+  }
+})();
+
+
 // ═══════════════════════════════════════════════════════════════
 //  ÉTAT — Source de vérité unique
 // ═══════════════════════════════════════════════════════════════
 let S = {
-  user: null,          // {prenom, depuis}
+  user: null,          // {prenom, depuis, pays, ville}
   devise: 'FCFA',
   actions: [],         // [{id, text, week, done}]
   revenus: [],         // [{id, label, montant, type, date}]
@@ -313,7 +354,7 @@ let J = {            // Réponses du parcours guidé
   a3q1:'',a3q2:'',a3q3:'',
   ideeIdx: -1, ideeLibre: '',
   ideeChoisie: null,
-  offre: '', prix: '', contacts: '', contacts10: [],
+  offre: '', prix: '', contacts: '', contacts10: [], a2selections: [], a3selections: [],
   semaines: {},  // {1:{validee,date,note,answers}}
 };
 
@@ -428,7 +469,9 @@ function startJourney() {
   const inp = document.getElementById('onb-prenom');
   const v = inp ? inp.value.trim() : '';
   if(!v) { if(inp){inp.style.borderColor='var(--danger)';inp.focus();} return; }
-  S.user = { prenom: v, depuis: new Date().toLocaleDateString('fr-FR') };
+  const pays = document.getElementById('onb-pays')?.value || '';
+  const ville = document.getElementById('onb-ville')?.value?.trim() || '';
+  S.user = { prenom: v, depuis: new Date().toLocaleDateString('fr-FR'), pays: pays, ville: ville };
   save();
   showScreen('scr-journey');
   renderJ('test90');
@@ -707,11 +750,19 @@ function renderAngle2(body){
     );
 }
 function valA2(){
-  J.a2q1=document.getElementById('j-a21')?.value?.trim()||'';
-  J.a2q2=document.getElementById('j-a22')?.value?.trim()||'';
-  J.a2q3=document.getElementById('j-a23')?.value?.trim()||'';
-  J.angle2=[J.a2q1,J.a2q2,J.a2q3].filter(Boolean).join(' / ');
-  if(!J.angle2){alert('Réponds à au moins une question pour continuer.');return;}
+  // Collect checked suggestions
+  const checked = [];
+  document.querySelectorAll('[id^="a2cb"]').forEach(cb => {
+    if(cb.checked) checked.push(cb.value);
+  });
+  const extra = document.getElementById('a2-extra')?.value?.trim() || '';
+  if(extra) checked.push(extra);
+  J.a2q1 = checked.join('|||');
+  J.a2q2 = extra;
+  J.a2selections = checked;
+  J.angle2 = checked.join(' / ');
+  if(!J.angle2){ alert('Coche au moins un besoin ou ajoute le tien pour continuer.'); return; }
+  save();
   renderJ('angle3');
 }
 
@@ -733,11 +784,17 @@ function renderAngle3(body){
     );
 }
 function valA3(){
-  J.a3q1=document.getElementById('j-a31')?.value?.trim()||'';
-  J.a3q2=document.getElementById('j-a32')?.value?.trim()||'';
-  J.a3q3=document.getElementById('j-a33')?.value?.trim()||'';
-  J.angle3=[J.a3q1,J.a3q2,J.a3q3].filter(Boolean).join(' / ');
-  if(!J.angle3){alert('Réponds à au moins une question pour continuer.');return;}
+  const checked = [];
+  document.querySelectorAll('[id^="a3cb"]').forEach(cb => {
+    if(cb.checked) checked.push(cb.value);
+  });
+  const extra = document.getElementById('a3-extra')?.value?.trim() || '';
+  if(extra) checked.push(extra);
+  J.a3q2 = extra;
+  J.a3selections = checked;
+  J.angle3 = checked.join(' / ');
+  if(!J.angle3){ alert('Coche au moins une activité ou ajoute la tienne pour continuer.'); return; }
+  save();
   renderJ('idee');
 }
 
@@ -823,7 +880,7 @@ function genIdees(txt){
     if(sc >= 30) sc += 15;
 
     return {...idea, sc};
-  }).sort((a,b) => b.sc - a.sc).slice(0,3);
+  }).sort((a,b) => b.sc - a.sc).slice(0,5);
 }
 
 
@@ -846,7 +903,7 @@ function renderIdee(body){
     +'<div style="text-align:center;margin-bottom:20px">'
     +'<div style="font-size:36px;margin-bottom:8px">💡</div>'
     +'<div style="font-family:\'Cormorant Garamond\',serif;font-size:24px;font-weight:700;color:var(--gold);margin-bottom:4px">Tes idées recommandées</div>'
-    +'<div style="font-size:13px;color:var(--muted)">Basées sur tes 3 angles — Choisis UNE seule idée</div>'
+    +'<div style="font-size:13px;color:var(--muted)">5 id\u00e9es bas\u00e9es sur tes 3 angles \u2014 Choisis celle qui te parle le plus</div>'
     +'</div>'
     +'<div style="background:rgba(201,168,76,.04);border:1px solid rgba(201,168,76,.1);border-radius:10px;padding:12px;margin-bottom:16px">'
     +(J.angle1?'<div style="font-size:12px;color:var(--muted);margin-bottom:6px"><strong style="color:var(--gold)">\u26A1\uFE0F Comp\u00e9tences :</strong> '+J.angle1.slice(0,120)+(J.angle1.length>120?'...':'')+'</div>':'')
@@ -1722,4 +1779,131 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 </body>
-</html>
+</html>function renderAngle2(body) {
+  const prenom = S.user ? S.user.prenom : '';
+  const pays = S.user ? (S.user.pays || S.user.ville || 'ton pays') : 'ton pays';
+  const angle1 = J.angle1 || '';
+  
+  // Generate suggestions based on Angle 1 keywords
+  const a1Lower = angle1.toLowerCase();
+  const NEEDS_BY_SECTOR = {
+    cuisine:   ['Des repas faits maison pour familles et salariés','Des plats cuisinés livrés à domicile','Un service traiteur pour petites cérémonies','Des gâteaux et pâtisseries sur commande'],
+    mode:      ['Des tenues stylées à prix accessibles','Un conseil vestimentaire personnalisé','Des vêtements sur mesure pour événements','Un service de shopping personnalisé'],
+    dessin:    ['Des cours de dessin pour enfants et adultes','Des tableaux et décorations murales','Des illustrations pour logos et affiches','Des ateliers artistiques collectifs'],
+    tech:      ['La réparation rapide de téléphones','La gestion des réseaux sociaux pour commerces','La création de sites web simples','La formation en informatique de base'],
+    beaute:    ['Des soins capillaires et coiffure à domicile','Du maquillage pour mariages et événements','Des massages et soins bien-être','Des soins de peau naturels'],
+    transport: ['Le transport de personnes à prix fixe','La livraison express de colis','Le taxi scolaire pour enfants','Le service de déménagement'],
+    education: ['Du soutien scolaire pour collégiens et lycéens','Des cours d'anglais et langues étrangères','Des formations professionnelles courtes','L'aide aux devoirs pour primaire'],
+    default:   ['Des services de nettoyage et ménage','De la livraison de produits du quotidien','Du conseil et accompagnement professionnel','La vente de produits importés de qualité']
+  };
+  
+  let sector = 'default';
+  if(/cuisi|repas|plat|nourri|chef|gateau|patiss/i.test(a1Lower)) sector = 'cuisine';
+  else if(/vetement|mode|habit|style|look|fashion|shopping/i.test(a1Lower)) sector = 'mode';
+  else if(/dessin|peintur|tableau|art|crayon|esquisse/i.test(a1Lower)) sector = 'dessin';
+  else if(/phone|mobile|ordi|tech|digital|réseau|facebook|instagram/i.test(a1Lower)) sector = 'tech';
+  else if(/coiffure|cheveux|beaute|maquill|soin|massage|estheti/i.test(a1Lower)) sector = 'beaute';
+  else if(/voiture|moto|taxi|transport|conduire|livrai/i.test(a1Lower)) sector = 'transport';
+  else if(/cours|enseign|apprend|école|eleve|soutien|educat/i.test(a1Lower)) sector = 'education';
+  
+  const suggestions = NEEDS_BY_SECTOR[sector];
+  const saved = (J.a2q1 || '').split('|||').filter(Boolean);
+  
+  // Build checkboxes
+  let checkHtml = '<div style="display:flex;flex-direction:column;gap:8px;margin:12px 0">';
+  suggestions.forEach((s, i) => {
+    const checked = saved.includes(s) || (J.a2selections && J.a2selections.includes(s));
+    checkHtml += '<label style="display:flex;align-items:flex-start;gap:12px;background:var(--darker);border:1px solid '+(checked?'var(--gold)':'var(--border)')+';border-radius:10px;padding:12px;cursor:pointer">'
+      + '<input type="checkbox" id="a2cb'+i+'" value="'+s+'" '+(checked?'checked':'')+' onchange="updateA2border(this)" style="margin-top:2px;accent-color:var(--gold);width:16px;height:16px;flex-shrink:0">'
+      + '<span style="font-size:13px;color:var(--text);line-height:1.5">'+s+'</span>'
+      + '</label>';
+  });
+  checkHtml += '</div>';
+  
+  const jcHeader = '<div class="jcard-header">'
+    + '<div class="jcard-icon">\u{1F440}</div>'
+    + '<div><div class="jcard-title">Les besoins autour de toi \u00e0 '+pays+'</div>'
+    + '<div class="jcard-sub">Coche ce que tu observes r\u00e9ellement dans ton environnement</div></div></div>';
+  
+  body.innerHTML = jBack('angle1')
+    + '<div style="background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.2);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--text);line-height:1.6">'
+    + '\u{1F4A1} Bas\u00e9 sur tes comp\u00e9tences en <strong style="color:var(--gold)">'+(angle1.slice(0,60)||'...')+'</strong>, voici ce dont les gens ont besoin.'
+    + '</div>'
+    + '<div class="jcard">'
+    + jcHeader
+    + '<button onclick="showHelp('angle2')" style="margin-bottom:12px;padding:6px 14px;background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.25);border-radius:20px;color:var(--gold);font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;display:inline-flex;align-items:center;gap:6px">\u{1F4A1} Je bloque \u2014 aide-moi</button>'
+    + checkHtml
+    + '<div class="jq" style="margin-top:14px">Tu observes un autre besoin que tu ne vois pas dans la liste ?</div>'
+    + '<input class="jinp" id="a2-extra" type="text" placeholder="Ex: Les gens cherchent un bon mécanicien abordable..." value="'+(J.a2q2||'')+'">'
+    + jBtn('Angle 3 \u2192','valA2()')
+    + '</div>';
+}
+
+function updateA2border(el) {
+  el.closest('label').style.borderColor = el.checked ? 'var(--gold)' : 'var(--border)';
+}
+
+function renderAngle3(body) {
+  const pays = S.user ? (S.user.pays || 'ton pays') : 'ton pays';
+  const angle1Lower = (J.angle1||'').toLowerCase();
+  const angle2Lower = (J.angle2||'').toLowerCase();
+  
+  // Market suggestions by sector (what sells in African markets)
+  const MARKET_BY_SECTOR = {
+    cuisine:   ['Vente de repas cuisinés à la commande','Traiteur pour mariages et cérémonies','Livraison de petits déjeuners aux bureaux','Pâtisseries et gâteaux d'anniversaire','Vente de jus naturels et boissons locales'],
+    mode:      ['Personal shopper et conseil en style','Revente de vêtements sélectionnés','Boutique en ligne de mode','Couture et retouches sur mesure','Location de tenues pour événements'],
+    dessin:    ['Cours de dessin et peinture pour enfants','Vente de tableaux décoratifs','Création de logos et identités visuelles','Fresques et décoration murale','Ateliers créatifs pour groupes'],
+    tech:      ['Réparation de smartphones','Gestion de réseaux sociaux pour PME','Création de sites simples','Formation à l'informatique','Montage vidéo et contenu digital'],
+    beaute:    ['Coiffure et soins à domicile','Maquillage pour mariages','Vente de produits capillaires naturels','Ongles et nail art','Soins corps et massages'],
+    transport: ['Transport de personnes (taxi)','Livraison express locale','Taxi scolaire','Location de véhicule','Service de déménagement'],
+    education: ['Cours particuliers toutes matières','Formation en langues','Coaching scolaire','Aide aux devoirs','Formation professionnelle courte'],
+    default:   ['Nettoyage de maisons et bureaux','Revente de produits importés','Vente sur Facebook/WhatsApp','Service de livraison','Coaching et accompagnement']
+  };
+  
+  let sector = 'default';
+  const combined = angle1Lower + ' ' + angle2Lower;
+  if(/cuisi|repas|plat|nourri|chef|gateau|patiss/i.test(combined)) sector = 'cuisine';
+  else if(/vetement|mode|habit|style|look|fashion|shopping/i.test(combined)) sector = 'mode';
+  else if(/dessin|peintur|tableau|art|crayon/i.test(combined)) sector = 'dessin';
+  else if(/phone|mobile|ordi|tech|digital|réseau|facebook|instagram/i.test(combined)) sector = 'tech';
+  else if(/coiffure|cheveux|beaute|maquill|soin|massage/i.test(combined)) sector = 'beaute';
+  else if(/voiture|moto|taxi|transport|conduire|livrai/i.test(combined)) sector = 'transport';
+  else if(/cours|enseign|apprend|école|eleve|soutien/i.test(combined)) sector = 'education';
+  
+  const suggestions = MARKET_BY_SECTOR[sector];
+  const savedSel = J.a3selections || [];
+  
+  let checkHtml = '<div style="display:flex;flex-direction:column;gap:8px;margin:12px 0">';
+  suggestions.forEach((s, i) => {
+    const checked = savedSel.includes(s);
+    checkHtml += '<label style="display:flex;align-items:flex-start;gap:12px;background:var(--darker);border:1px solid '+(checked?'var(--gold)':'var(--border)')+';border-radius:10px;padding:12px;cursor:pointer">'
+      + '<input type="checkbox" id="a3cb'+i+'" value="'+s+'" '+(checked?'checked':'')+' onchange="updateA3border(this)" style="margin-top:2px;accent-color:var(--gold);width:16px;height:16px;flex-shrink:0">'
+      + '<span style="font-size:13px;color:var(--text);line-height:1.5">'+s+'</span>'
+      + '</label>';
+  });
+  checkHtml += '</div>';
+  
+  const jcHeader = '<div class="jcard-header">'
+    + '<div class="jcard-icon">\u{1F4CA}</div>'
+    + '<div><div class="jcard-title">Ce qui se vend \u00e0 '+pays+'</div>'
+    + '<div class="jcard-sub">Coche les activit\u00e9s que tu vois fonctionner autour de toi</div></div></div>';
+  
+  body.innerHTML = jBack('angle2')
+    + '<div style="background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.2);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--text);line-height:1.6">'
+    + '\u{1F4CA} Voici ce qui se vend bien dans ton march\u00e9. Coche ce que tu as d\u00e9j\u00e0 vu marcher dans ta ville.'
+    + '</div>'
+    + '<div class="jcard">'
+    + jcHeader
+    + '<button onclick="showHelp('angle3')" style="margin-bottom:12px;padding:6px 14px;background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.25);border-radius:20px;color:var(--gold);font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;display:inline-flex;align-items:center;gap:6px">\u{1F4A1} Je bloque \u2014 aide-moi</button>'
+    + checkHtml
+    + '<div class="jq" style="margin-top:14px">Tu vois autre chose qui se vend bien dans ta ville ?</div>'
+    + '<input class="jinp" id="a3-extra" type="text" placeholder="Ex: Les gens paient bien pour la décoration de maisons..." value="'+(J.a3q2||'')+'">'
+    + jBtn('Voir mes id\u00e9es \u2192','valA3()')
+    + '</div>';
+}
+
+function updateA3border(el) {
+  el.closest('label').style.borderColor = el.checked ? 'var(--gold)' : 'var(--border)';
+}
+
+
