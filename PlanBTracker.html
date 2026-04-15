@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Plan B Tracker — Coach Redouane</title>
+<title>Plan B Tracker — Coach Redouane v4</title>
 <meta name="version" content="3.0.0">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -672,6 +672,14 @@ function renderAngle1(body){
       +jBtn('Angle 2 →','valA1()')
     );
 }
+function valTest90(){
+  const v = document.getElementById('j-t90')?.value?.trim();
+  if(!v || isNaN(parseInt(v))){alert('Entre un nombre de jours pour continuer.');return;}
+  J.test90 = v;
+  save();
+  renderJ('angle1');
+}
+
 function valA1(){
   J.a1q1=document.getElementById('j-a11')?.value?.trim()||'';
   J.a1q2=document.getElementById('j-a12')?.value?.trim()||'';
@@ -925,7 +933,7 @@ function valOffre(){
   const ic = J.ideeChoisie || {};
   S.ideaActive = {nom: ic.nom || J.ideeLibre || 'Mon idée', offre: J.offre, prix: J.prix, public: ic.public||'', benefice: ic.benefice||''};
   S.prog.semaineActuelle = 1;
-  S.actions = [];
+  S.actions.splice(0, S.actions.length);
   genActions().forEach(a => S.actions.push(a));
   save();
   showScreen('scr-journey');
@@ -1329,7 +1337,7 @@ function reprendreArchive(i){
   }
   // Restore full state from archive
   S.ideaActive = {nom:a.nom, offre:a.offre||'', prix:a.prix||'', public:'', benefice:''};
-  S.actions = a.actions && a.actions.length ? JSON.parse(JSON.stringify(a.actions)) : [];
+  S.actions.splice(0, S.actions.length); (a.actions||[]).forEach(x => S.actions.push(JSON.parse(JSON.stringify(x))));
   S.prog.semaineActuelle = a.semActuelle || 1;
   S.prog.semaines = a.semaines ? JSON.parse(JSON.stringify(a.semaines)) : {};
   if(a.jSemaines) J.semaines = JSON.parse(JSON.stringify(a.jSemaines));
@@ -1423,7 +1431,7 @@ function changerIdeeJourney() {
     });
   }
   S.ideaActive = null;
-  S.actions = [];
+  S.actions.splice(0, S.actions.length);
   J.ideeChoisie = null;
   J.ideeIdx = -1;
   J.ideeLibre = '';
@@ -1443,6 +1451,14 @@ function showAppFromJourney() {
 
 
 // ── RETOUR / RESET ────────────────────────────────────
+function reprendreDepuisOnb() {
+  load();
+  if(S.user && S.user.prenom) {
+    showScreen('scr-journey');
+    renderWelcomeBack();
+  }
+}
+
 function renderWelcomeBack() {
   const body = document.getElementById('jbody');
   if(!body) return;
@@ -1550,7 +1566,7 @@ function nouvelleIdee() {
   }
   // Reset idea-related state
   S.ideaActive = null;
-  S.actions = [];
+  S.actions.splice(0, S.actions.length);
   S.prog.semaineActuelle = 1;
   S.prog.semaines = {};
   J.angle1 = ''; J.angle2 = ''; J.angle3 = '';
@@ -1594,6 +1610,18 @@ function showActionTip(id) {
 
 document.addEventListener('DOMContentLoaded', function() {
   load();
+
+  // Show "reprendre" on onboarding if saved session exists
+  try {
+    const ps = localStorage.getItem('planb_S');
+    if(ps) {
+      const parsed = JSON.parse(ps);
+      if(parsed && parsed.user && parsed.user.prenom) {
+        const btn = document.getElementById('onb-reprendre');
+        if(btn) btn.style.display = 'block';
+      }
+    }
+  } catch(e) {}
 
   if(S.user && S.user.prenom) {
     // Utilisateur existant
