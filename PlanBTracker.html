@@ -772,44 +772,60 @@ const IDEAS=[
   {nom:'Comptabilité et gestion pour PME',mots:['comptabilité','gestion','finance','chiffre','compte','bilan','trésorerie','entrepreneur'],description:'Tu gères la comptabilité des petites entreprises.',tags:['Finance','Récurrent'],offre:'Je gère la comptabilité et les finances des petites entreprises.'},
   {nom:'Électricité et plomberie',mots:['électricité','plomberie','installation','réparation','panne','câble','tuyau','maison'],description:'Tu interviens pour des travaux électriques et plomberie.',tags:['Technique','Local'],offre:'J’interviens rapidement pour tous travaux électriques et plomberie.'},
   {nom:'Jardinage et entretien espaces verts',mots:['jardin','plante','jardinage','entretien','gazon','arbre','fleur','vert'],description:'Tu entretiens jardins et espaces verts.',tags:['Service','Récurrent'],offre:'J’entretiens jardins et espaces verts pour particuliers et entreprises.'},
+  // ART & DESSIN
+  {nom:'Cours de dessin et peinture',mots:['dessin','dessiner','peinture','peindre','tableau','art','croquis','esquisse','artiste','crayon','couleur'],description:'Tu enseignes le dessin et la peinture à des particuliers ou des groupes.',tags:['Art','Enseignement','Récurrent'],offre:'J’enseigne le dessin et la peinture pour tous niveaux.'},
+  {nom:'Vente de tableaux et œuvres d’art',mots:['tableau','peinture','dessin','art','oeuvre','vendre','galerie','exposition','toile','artistique'],description:'Tu crées et vends tes œuvres directement ou via des galeries.',tags:['Art','Créatif','Premium'],offre:'Je crée et vends des tableaux et œuvres d’art originaux.'},
+  {nom:'Ateliers créatifs et artistiques',mots:['atelier','dessin','art','peinture','créatif','groupe','initiation','tableau','art sanat'],description:'Tu organises des ateliers d’art collectifs ou privés.',tags:['Art','Événementiel','Impact'],offre:'J’organise des ateliers créatifs de dessin et peinture.'},
+  {nom:'Illustration et design graphique',mots:['illustration','design','graphique','logo','dessin','visuel','créatif','affiche','digital','art'],description:'Tu crées des illustrations, logos et visuels pour des clients.',tags:['Créatif','Digital','Scalable'],offre:'Je crée des illustrations et visuels professionnels pour entreprises.'},
+  {nom:'Décoration intérieure et murale',mots:['décoration','mural','peinture','tableau','fresque','intérieur','ambiance','art','maison'],description:'Tu décores des maisons et locaux avec tes œuvres ou fresques murales.',tags:['Art','Déco','Premium'],offre:'Je transforme les espaces avec des peintures murales et décorations artistiques.'},
+  // DIGITAL & TECH
+  {nom:'Montage vidéo et motion design',mots:['video','montage','film','youtube','tiktok','contenu','monteur','clip','créatif'],description:'Tu montes et édites des vidéos pour YouTubers et entreprises.',tags:['Digital','Créatif','Récurrent'],offre:'Je monte des vidéos professionnelles pour créateurs et entreprises.'},
+  {nom:'Rédaction web et copywriting',mots:['rédaction','écrire','contenu','article','blog','texte','communication','marketing','langue'],description:'Tu rédiges du contenu web, articles et campagnes marketing.',tags:['Digital','Scalable'],offre:'Je rédige du contenu engageant pour sites web et réseaux sociaux.'},
+  // SANTE & SPORT
+  {nom:'Coach sportif et fitness',mots:['sport','fitness','musculation','entraînement','coach','body','santé','exercice','gym'],description:'Tu accompagnes des particuliers dans leur parcours sportif.',tags:['Sport','Récurrent','Santé'],offre:'J’accompagne mes clients pour atteindre leurs objectifs sportifs.'},
+  {nom:'Vente de produits de santé naturels',mots:['santé','naturel','bio','plante','tisane','huile','bien-être','herbe','remede'],description:'Tu sources et vends des produits de santé naturels locaux.',tags:['Santé','Commerce'],offre:'Je vends des produits de santé naturels et bien-être.'},
 ];
 
 let _ideas=[], _selIdx=-1;
 
 function genIdees(txt){
-  // Normalize: remove accents, lowercase
   function norm(s){
-    return s.toLowerCase()
-      .normalize('NFD').replace(/[̀-ͯ]/g,'')
-      .replace(/['']/g,"'");
+    return (s||'').toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[\u2018\u2019']/g,"'")
+      .replace(/[-_]/g,' ');
   }
-  const t = norm(txt);
-  
-  return IDEAS.map(i => {
-    let sc = 50; // base score
-    const mots = i.mots.map(m => norm(m));
-    
-    mots.forEach(m => {
-      if(t.includes(m)) sc += 15;           // exact match
-      // Partial: word root match (first 5 chars)
-      if(m.length >= 5 && t.includes(m.slice(0,5))) sc += 8;
-      // Check each word in txt against each mot
-      norm(txt).split(/\s+/).forEach(w => {
-        if(w.length >= 4 && m.length >= 4) {
-          if(m.includes(w) || w.includes(m)) sc += 6;
-        }
-      });
+
+  const input = norm(txt);
+  const words = input.split(/\s+/).filter(w => w.length >= 3);
+
+  return IDEAS.map(idea => {
+    const motNorms = idea.mots.map(m => norm(m));
+    const nomNorm = norm(idea.nom);
+    const descNorm = norm(idea.description);
+    const allText = nomNorm + ' ' + descNorm + ' ' + motNorms.join(' ');
+    let sc = 0;
+
+    words.forEach(w => {
+      // Exact match in mots
+      if(motNorms.some(m => m === w)) sc += 20;
+      // Exact match in nom or description
+      else if(allText.includes(w)) sc += 12;
+      // Stem match (first 5 chars) in mots
+      else if(w.length >= 5 && motNorms.some(m => m.startsWith(w.slice(0,5)) || w.startsWith(m.slice(0,5)))) sc += 10;
+      // Stem match in all text
+      else if(w.length >= 5 && allText.includes(w.slice(0,5))) sc += 6;
+      // Short word partial match
+      else if(w.length >= 3 && motNorms.some(m => m.includes(w))) sc += 4;
     });
-    
-    // Also score against idea name and description
-    const ideaNorm = norm(i.nom + ' ' + i.description);
-    norm(txt).split(/\s+/).forEach(w => {
-      if(w.length >= 4 && ideaNorm.includes(w)) sc += 5;
-    });
-    
-    return {...i, sc};
+
+    // Bonus: if idea matches multiple input words strongly
+    if(sc >= 30) sc += 15;
+
+    return {...idea, sc};
   }).sort((a,b) => b.sc - a.sc).slice(0,3);
 }
+
 
 function renderIdee(body){
   _ideas=genIdees([J.angle1,J.angle2,J.angle3].join(' '));
@@ -1539,8 +1555,11 @@ function reprendreJourney() {
 
 function confirmerNouvelleIdee() {
   const ideaNom = S.ideaActive ? S.ideaActive.nom : '';
+  const hasProgress = J.angle1 || J.angle2 || J.angle3 || J.ideeChoisie;
   if(ideaNom) {
-    if(!confirm('Ton id\u00e9e \u00ab ' + ideaNom + ' \u00bb sera archiv\u00e9e. Tu pourras la reprendre depuis l\u2019Archive.\n\nContinuer avec une nouvelle id\u00e9e ?')) return;
+    if(!confirm('Ton id\u00e9e \u00ab ' + ideaNom + ' \u00bb sera archiv\u00e9e.\nTu pourras la reprendre depuis l\u2019Archive.\n\nContinuer avec une nouvelle id\u00e9e ?')) return;
+  } else if(hasProgress) {
+    if(!confirm('Ton parcours en cours sera r\u00e9initialis\u00e9. Continuer avec une nouvelle id\u00e9e ?')) return;
   }
   nouvelleIdee();
 }
@@ -1578,6 +1597,7 @@ function nouvelleIdee() {
   J.semaines = {};
   J.step = 'angle1';
   save();
+  showScreen('scr-journey');
   renderJ('angle1');
 }
 
