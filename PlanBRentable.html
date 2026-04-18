@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#0d1b2a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="description" content="Plan B Rentable — Trouve et lance ton activité parallèle en 90 jours">
+<title>Plan B Rentable — Coach Redouane</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --navy:#0d1b2a;--navy2:#142338;--card:#1a2f4a;
+  --gold:#c9a84c;--gold2:#e8c068;
+  --text:#e8e8e8;--muted:#7a8fa6;
+  --ok:#4caf50;--err:#e53935;--r:14px;
+}
+html,body{height:100%;background:var(--navy);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:15px;line-height:1.5;overscroll-behavior:none}
+#app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;position:relative}
+
+/* ---- TOP BAR ---- */
+.topbar{background:var(--navy2);padding:10px 16px 8px;position:sticky;top:0;z-index:20;border-bottom:1px solid #1e3350}
+.topbar-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.topbar-title{font-size:12px;color:var(--gold);font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.topbar-phase{font-size:11px;color:var(--muted)}
+.pbar{height:3px;background:#1e3350;border-radius:2px;overflow:hidden}
+.pfill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:2px;transition:width .5s ease}
+
+/* ---- COACH BUBBLE ---- */
+.coach-wrap{display:flex;gap:10px;padding:14px 16px 6px;align-items:flex-start}
+.cavatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:var(--navy);flex-shrink:0;box-shadow:0 2px 8px #c9a84c44}
+.cbubble{background:var(--card);border-radius:0 var(--r) var(--r) var(--r);padding:11px 14px;font-size:13.5px;color:var(--text);line-height:1.65;border:1px solid #1e3350;flex:1}
+.cbubble b{color:var(--gold2)}
+.cbubble i{color:var(--gold);font-style:normal}
+
+/* ---- CONTENT ---- */
+.content{flex:1;padding:6px 16px 16px;display:flex;flex-direction:column;gap:11px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:80px}
+
+/* ---- CARDS ---- */
+.card{background:var(--card);border-radius:var(--r);padding:15px;border:1px solid #1e3350}
+.ctitle{font-size:11px;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:9px}
+
+/* ---- INPUTS ---- */
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;margin-top:8px}
+label:first-child{margin-top:0}
+textarea,input[type=text],input[type=number]{width:100%;background:#0a1520;border:1px solid #1e3350;border-radius:10px;padding:10px 12px;color:var(--text);font-size:14px;font-family:inherit;outline:none;transition:border-color .2s;resize:none}
+textarea:focus,input:focus{border-color:var(--gold)}
+textarea{min-height:75px;line-height:1.5}
+
+/* ---- BUTTONS ---- */
+.btn{display:block;width:100%;padding:13px;border:none;border-radius:11px;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .15s,transform .1s;font-family:inherit;letter-spacing:.2px}
+.btn:active{transform:scale(.97)}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--navy)}
+.btn-outline{background:transparent;color:var(--gold);border:1.5px solid var(--gold)}
+.btn-muted{background:var(--card);color:var(--muted);border:1px solid #1e3350}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.btn-sm{padding:9px 16px;font-size:13px;border-radius:9px;width:auto;display:inline-block}
+
+/* ---- NAV ---- */
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;display:flex;gap:8px;padding:10px 16px 14px;background:var(--navy);border-top:1px solid #1e3350;z-index:20}
+.nav .btn{margin:0;flex:1}
+.nav .btn-muted{flex:0 0 auto;width:auto;padding:13px 16px}
+
+/* ---- QUIZ ---- */
+.quiz-q{font-size:15.5px;font-weight:600;margin-bottom:13px;line-height:1.55}
+.qopt{display:block;width:100%;background:#0a1520;border:1.5px solid #1e3350;border-radius:10px;padding:11px 14px;color:var(--text);font-size:13.5px;text-align:left;cursor:pointer;margin-bottom:7px;transition:all .2s;font-family:inherit;line-height:1.4}
+.qopt:hover:not(:disabled){border-color:var(--gold);background:#142338}
+.qopt.correct{border-color:var(--ok);background:#1b3a1b;color:#a5d6a7}
+.qopt.wrong{border-color:var(--err);background:#3a1b1b;color:#ef9a9a}
+.qopt.show-ok{border-color:var(--ok)}
+.qopt:disabled{cursor:default}
+.explain{background:#142338;border-radius:10px;padding:11px;font-size:13px;border-left:3px solid var(--gold);margin-top:3px;line-height:1.6;color:#cdd9e5}
+.quiz-counter{font-size:12px;color:var(--muted);margin-bottom:4px}
+
+/* ---- SCORE ---- */
+.score-ring{width:110px;height:110px;border-radius:50%;border:5px solid var(--gold);display:flex;flex-direction:column;align-items:center;justify-content:center;margin:8px auto 14px}
+.score-ring.fail{border-color:var(--err)}
+.snum{font-size:30px;font-weight:800;color:var(--gold);line-height:1}
+.score-ring.fail .snum{color:var(--err)}
+.slabel{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* ---- STARS ---- */
+.stars-row{display:flex;gap:4px;margin-top:5px}
+.star{font-size:20px;cursor:pointer;color:#1e3350;transition:color .1s;padding:2px;user-select:none}
+.star.on{color:var(--gold)}
+
+/* ---- BOOL TOGGLE ---- */
+.bool-row{display:flex;gap:8px;margin-top:4px}
+.bool-btn{flex:1;padding:11px;border-radius:10px;border:2px solid #1e3350;background:#0a1520;color:var(--text);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit}
+.bool-btn.yes.sel{border-color:var(--ok);background:#1b3a1b;color:#a5d6a7}
+.bool-btn.no.sel{border-color:var(--err);background:#3a1b1b;color:#ef9a9a}
+
+/* ---- CHECKLIST ---- */
+.cl-cat{font-size:11px;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin:10px 0 5px}
+.cl-item{display:flex;align-items:flex-start;gap:10px;padding:9px 11px;border-radius:10px;background:#0a1520;border:1.5px solid #1e3350;margin-bottom:5px;cursor:pointer;transition:all .2s}
+.cl-item.chk{border-color:var(--gold);background:#1a2d10}
+.cl-box{width:19px;height:19px;border-radius:5px;border:2px solid #1e3350;flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:1px;transition:all .2s;font-size:11px}
+.cl-item.chk .cl-box{background:var(--gold);border-color:var(--gold);color:var(--navy)}
+.cl-text{font-size:13px;line-height:1.5}
+.cl-score-bar{background:#1e3350;border-radius:10px;height:6px;overflow:hidden;margin-top:6px}
+.cl-score-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--gold),var(--gold2));transition:width .4s ease}
+.cl-score-label{font-size:12px;color:var(--muted);margin-top:4px;text-align:right}
+
+/* ---- WEEK CARDS ---- */
+.week-grid{display:flex;flex-direction:column;gap:7px}
+.wcard{display:flex;align-items:center;gap:11px;background:var(--card);border-radius:12px;padding:13px;border:1.5px solid #1e3350;cursor:pointer;transition:all .2s}
+.wcard.active{border-color:var(--gold);background:#1a2a3a}
+.wcard.done{border-color:var(--ok)}
+.wcard.locked{opacity:.4;cursor:not-allowed}
+.wnum{width:34px;height:34px;border-radius:50%;background:#1e3350;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:var(--muted);flex-shrink:0}
+.wcard.active .wnum{background:var(--gold);color:var(--navy)}
+.wcard.done .wnum{background:var(--ok);color:#fff}
+.winfo{flex:1}
+.wtitle{font-size:13.5px;font-weight:600}
+.wphase{font-size:11px;color:var(--muted);margin-top:1px}
+.wkpi{font-size:11px;color:var(--gold);margin-top:2px}
+.wstatus{font-size:11px;color:var(--ok)}
+
+/* ---- IDEAS ---- */
+.idea-card{background:#0a1520;border:1.5px solid #1e3350;border-radius:10px;padding:12px;margin-bottom:8px;cursor:pointer;transition:all .2s}
+.idea-card:hover{border-color:var(--gold);background:#142338}
+.idea-card.sel{border-color:var(--ok);background:#1a2d10}
+.idea-name{font-size:14px;font-weight:600;color:var(--gold2);margin-bottom:3px}
+.idea-desc{font-size:12px;color:var(--muted);line-height:1.5}
+.idea-tool{font-size:11px;color:#546e7a;margin-top:4px}
+
+/* ---- IDEA SCORES ---- */
+.idea-score-wrap{border:1px solid #1e3350;border-radius:10px;padding:12px;margin-bottom:8px;background:#0a1520}
+.isw-title{font-size:13px;font-weight:600;margin-bottom:8px}
+.crit-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.crit-box{padding:8px;border-radius:8px;background:#142338;border:1px solid #1e3350}
+.crit-name{font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
+
+/* ---- REVENUE TABLE ---- */
+.rev-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:5px;margin-bottom:5px}
+.rev-cell{background:#0a1520;border:1px solid #1e3350;border-radius:7px;padding:7px 8px;font-size:12px;text-align:center}
+.rev-cell.hdr{color:var(--gold);font-weight:600;font-size:10px;text-transform:uppercase}
+.rev-total{color:var(--ok);font-weight:700}
+
+/* ---- REPORT ---- */
+.rep-section{background:var(--card);border-radius:var(--r);padding:14px;border:1px solid #1e3350;margin-bottom:9px}
+.rep-title{font-size:11px;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:9px}
+.rep-row{display:flex;justify-content:space-between;align-items:flex-start;font-size:13px;padding:5px 0;border-bottom:1px solid #1e3350;gap:8px}
+.rep-row:last-child{border:none}
+.rep-row span{color:var(--muted);flex-shrink:0}
+.rep-row strong{color:var(--text);text-align:right}
+
+/* ---- BADGE ---- */
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.3px}
+.badge-gold{background:#2a1e06;color:var(--gold);border:1px solid var(--gold)}
+.badge-ok{background:#1b3a1b;color:#a5d6a7;border:1px solid var(--ok)}
+.badge-muted{background:#1e3350;color:var(--muted)}
+
+/* ---- WELCOME ---- */
+.hero{text-align:center;padding:32px 16px 16px}
+.hero-logo{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:var(--navy);margin:0 auto 16px;box-shadow:0 4px 20px #c9a84c44}
+.hero-title{font-size:22px;font-weight:800;margin-bottom:6px}
+.hero-sub{font-size:13.5px;color:var(--muted);line-height:1.6;margin-bottom:20px}
+.step-list{text-align:left;margin-bottom:20px}
+.step-li{display:flex;gap:11px;align-items:flex-start;margin-bottom:10px}
+.step-ico{width:30px;height:30px;border-radius:50%;background:var(--card);border:1px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.step-txt{font-size:13px;color:var(--text);padding-top:4px}
+.step-txt small{display:block;color:var(--muted);font-size:12px}
+.progress-resume{background:var(--card);border-radius:var(--r);padding:14px;border:1px solid var(--gold);margin-bottom:12px}
+.pr-title{font-size:12px;color:var(--gold);font-weight:600;margin-bottom:6px}
+.pr-pct{font-size:28px;font-weight:800;color:var(--gold2)}
+.pr-label{font-size:12px;color:var(--muted)}
+
+/* ---- ANIM ---- */
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.content{animation:fi .25s ease}
+
+/* ---- TOAST ---- */
+.toast{position:fixed;bottom:85px;left:50%;transform:translateX(-50%);background:var(--gold);color:var(--navy);padding:9px 20px;border-radius:20px;font-size:13px;font-weight:700;z-index:99;white-space:nowrap;animation:fi .2s ease;pointer-events:none}
+
+/* ---- DIVIDER ---- */
+.divider{height:1px;background:#1e3350;margin:4px 0}
+
+/* ---- CONTACT LIST ---- */
+.contact-row{display:flex;gap:8px;align-items:center;margin-bottom:7px}
+.contact-num{width:26px;height:26px;border-radius:50%;background:var(--card);border:1px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--gold);flex-shrink:0}
+.contact-row input{flex:1;margin:0}
+
+/* ---- PLAN SECOURS ---- */
+.secours{background:#1e1a0a;border:1px solid var(--gold);border-radius:var(--r);padding:13px}
+.secours-title{font-size:12px;color:var(--gold);font-weight:700;margin-bottom:8px}
+.secours li{font-size:13px;color:var(--text);margin-left:16px;margin-bottom:4px;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+'use strict';
+
+/* ════════════════════════════════════════
+   CONSTANTS
+════════════════════════════════════════ */
+
+const QUIZ = [
+  {q:"Combien d'angles doit-on croiser pour trouver son Plan B selon la méthode ?",opts:["2 — compétences + passion","3 — compétences + besoins autour de toi + ce qui se vend","4 — compétences + capital + marché + réseau","1 — ce qui te passionne le plus"],ans:1,exp:"La Méthode 3 Angles croise : tes compétences naturelles, les besoins autour de toi, et ce qui se vend concrètement dans ton environnement. C'est ce croisement qui révèle une idée viable."},
+  {q:"Qu'est-ce que l'Heure d'Or dans le Plan B Rentable ?",opts:["L'heure où tu fais ta première vente","Le meilleur moment pour publier sur WhatsApp","60 minutes dédiées chaque jour exclusivement à ton Plan B","Une séance de méditation matinale pour te motiver"],ans:2,exp:"L'Heure d'Or = 60 minutes par jour réservées uniquement à ton Plan B. C'est ton investissement quotidien non-négociable. Pas besoin de plus — juste la constance."},
+  {q:"Que signifie 'tester avec un MVP' dans le contexte du Plan B ?",opts:["Créer un produit parfait avant toute vente","Attendre d'avoir du capital pour bien démarrer","Faire une grande campagne publicitaire dès le lancement","Proposer la version la plus simple de ton idée pour tester rapidement"],ans:3,exp:"MVP = version minimale viable. Tu proposes la forme la plus simple et rapide de ton idée. Tu testes d'abord, tu améliores après. Jamais l'inverse."},
+  {q:"Quel est l'objectif principal des 30 premiers jours du plan ?",opts:["Créer un site web professionnel","Avoir 100 abonnés sur Facebook","Recevoir au moins 1 paiement, peu importe le montant","Quitter ton emploi actuel"],ans:2,exp:"Le premier paiement est la preuve que ton idée est viable dans le monde réel. Le montant n'a aucune importance — c'est le signal qui compte. Il change tout psychologiquement."},
+  {q:"Quel outil est principalement recommandé pour ta visibilité au départ ?",opts:["Instagram Reels","YouTube","LinkedIn professionnel","WhatsApp"],ans:3,exp:"WhatsApp est l'outil de départ par excellence. Tu as déjà tes contacts, c'est gratuit, les messages sont lus, et les réponses arrivent. Commence là avant tout autre réseau."},
+  {q:"Selon la règle d'or du plan, que dois-tu faire AVANT d'améliorer ton offre ?",opts:["La parfaire pendant 3 mois minimum","Demander l'avis de 50 personnes","La tester d'abord, même imparfaite","Baisser ton prix au maximum pour attirer"],ans:2,exp:"\"Tu n'essaies pas d'améliorer avant d'avoir testé.\" C'est une règle fondamentale. Une offre imparfaite testée vaut infiniment plus qu'une offre parfaite jamais lancée."},
+  {q:"Combien de semaines dure le Test des 90 jours ?",opts:["8 semaines","10 semaines","12 semaines","16 semaines"],ans:2,exp:"90 jours = 12 semaines divisées en 3 phases : S1-S4 Lancer (obtenir le premier paiement), S5-S8 Répéter (structurer), S9-S12 Optimiser (consolider et grandir)."},
+  {q:"Quel est l'indicateur de réussite minimal de la Semaine 1 ?",opts:["Avoir fait ta première vente","Avoir publié 10 fois sur les réseaux sociaux","Avoir créé un logo et une page Facebook","Avoir listé 10 personnes à contacter"],ans:3,exp:"Si tu as 10 noms écrits à la fin de la Semaine 1, c'est réussi. Simple, concret, mesurable. Ces 10 personnes sont ta première audience."},
+  {q:"Si tu n'as rien vendu après 30 jours, que recommande le plan ?",opts:["Changer complètement d'idée et recommencer","Faire une pause de 2 semaines pour récupérer","Abandonner et réessayer dans 6 mois","Ajuster l'offre, augmenter les contacts, ne pas abandonner"],ans:3,exp:"\"Tu n'as pas échoué. Tu ajustes.\" Questions à se poser : Ai-je contacté assez de personnes ? Mon offre est-elle claire ? Ai-je vraiment proposé ? Le plan de secours est dans le bonus 3."},
+  {q:"Pourquoi séparer l'argent personnel et professionnel dès le début ?",opts:["C'est obligatoire par la loi","Pour impressionner tes premiers clients","Pour voir clairement ce que ton Plan B génère et décider en connaissance de cause","Pour payer moins d'impôts"],ans:2,exp:"Mélanger les deux = confusion totale. Tu ne sais plus si tu gagnes ou perds. Séparer = tu vois exactement combien ton Plan B génère chaque mois et tu peux ajuster intelligemment."}
+];
+
+const CHECKLIST = [
+  {cat:"Clarté de l'idée", items:[
+    "Mon idée est précise — pas vague (pas juste 'faire du commerce')",
+    "Je peux expliquer mon activité en une seule phrase simple",
+    "Je sais qui sont mes clients potentiels (profil précis)",
+    "Je connais le bénéfice concret que j'apporte à mes clients",
+    "Mon idée correspond à une vraie demande autour de moi"
+  ]},
+  {cat:"Faisabilité", items:[
+    "Je peux démarrer sans gros capital (ou avec très peu)",
+    "J'ai au moins 1 heure par jour disponible pour mon Plan B",
+    "J'ai les compétences de base ou je peux les acquérir rapidement",
+    "Je peux tester mon idée dans les 7 prochains jours",
+    "Je n'ai pas besoin d'infrastructures complexes pour commencer"
+  ]},
+  {cat:"Marché et demande", items:[
+    "Des personnes autour de moi ont réellement ce besoin",
+    "Ces personnes ont les moyens de payer pour cette solution",
+    "Je ne suis pas noyé dans une concurrence directe intense",
+    "Mon idée est adaptée à mon contexte (pays, ville, culture)",
+    "J'ai déjà identifié au moins 5 personnes à qui proposer"
+  ]},
+  {cat:"Offre et revenus", items:[
+    "J'ai un prix précis et réaliste en tête",
+    "Mon offre est simple à comprendre pour n'importe qui",
+    "Je sais exactement comment livrer mon service ou produit",
+    "Je peux viser 30 000 à 100 000 FCFA/mois avec cette idée",
+    "J'ai un moyen simple d'être payé (Mobile Money, cash, virement)"
+  ]},
+  {cat:"Mindset et engagement", items:[
+    "Je crois en cette idée et je veux la tester sérieusement",
+    "Je suis prêt à avancer même si ce n'est pas encore parfait",
+    "Je ne cherche pas une idée parfaite — je cherche une idée testable",
+    "Je suis prêt à contacter des gens pour leur proposer mon offre",
+    "Je m'engage à suivre ce plan pendant 90 jours minimum"
+  ]}
+];
+
+const WEEKS = [
+  {n:1,title:"Décision & préparation",phase:"Phase 1 — Lancer",obj:"Choisir UNE idée et la rendre vendable",actions:["Confirme ton idée finale et ne changes plus","Formule ton offre en 1 phrase claire","Fixe un prix précis et réaliste","Liste 10 personnes à contacter"],kpiQ:"Combien de personnes as-tu listées à contacter ?",kpiType:"number",kpiKey:"contacts",kpiMin:10,kpiUnit:"contacts listés",coachOK:"<b>Tu as tes 10 contacts.</b> C'est tout ce qu'il faut pour commencer. La plupart des gens passent des semaines à 'préparer' — toi tu agis. La semaine prochaine, on passe à l'exposition.",coachKO:"La seule chose à faire cette semaine : écrire 10 noms. Pas les contacter encore — juste les écrire. Tu peux le faire ce soir. Ouvre ton téléphone, regarde tes contacts, écris les 10 premiers qui pourraient être intéressés."},
+  {n:2,title:"Exposition contrôlée",phase:"Phase 1 — Lancer",obj:"Faire savoir que tu existes",actions:["Publie 3 statuts WhatsApp sur ton activité","Envoie 5 messages personnalisés à ta liste","Propose une offre test à prix découverte si nécessaire"],kpiQ:"Combien de personnes t'ont répondu (oui ou non, peu importe) ?",kpiType:"number",kpiKey:"replies",kpiMin:5,kpiUnit:"réponses reçues",coachOK:"<b>5 réponses.</b> Tu existes dans leur esprit maintenant. Une réponse — même négative — c'est un contact réel. Tu construis quelque chose. Continue.",coachKO:"Moins de 5 réponses ? Augmente le volume. Envoie 5 messages supplémentaires aujourd'hui. Les gens sont occupés — relancer n'est pas déranger, c'est rappeler que tu existes."},
+  {n:3,title:"Offre & retour terrain",phase:"Phase 1 — Lancer",obj:"Proposer clairement et écouter les retours",actions:["Présente ton offre directement à 5 personnes","Écoute les retours sans te défendre ni te justifier","Ajuste si plusieurs personnes font la même remarque"],kpiQ:"As-tu obtenu au moins 1 intérêt sérieux (accord, 'oui bientôt', engagement clair) ?",kpiType:"bool",kpiKey:"engagement",kpiMin:1,kpiUnit:"engagement sérieux",coachOK:"<b>Un engagement sérieux.</b> C'est la preuve que ton offre résonne. Prépare-toi — la semaine prochaine tu encaisses ton premier argent. Tiens-toi prêt.",coachKO:"Pas encore d'engagement ? Ce n'est pas ton idée — c'est peut-être la formulation. Essaie : <i>\"Je fais X pour les personnes qui ont le problème Y. Ça t'intéresse ?\"</i> Direct. Simple. Efficace."},
+  {n:4,title:"Première vente",phase:"Phase 1 — Lancer",obj:"Encaisser ton premier paiement",actions:["Relance les 3 personnes les plus intéressées","Finalise une vente, même petite","Livre correctement et demande un retour honnête"],kpiQ:"As-tu reçu au moins 1 paiement cette semaine ?",kpiType:"bool",kpiKey:"firstSale",kpiMin:1,kpiUnit:"premier paiement",coachOK:"<b>TU AS ENCAISSÉ.</b> Ce moment change tout. Tu n'es plus quelqu'un qui 'veut lancer quelque chose' — tu es quelqu'un qui vend. Garde ce sentiment. Il va te porter pour les 8 semaines qui suivent.",coachKO:"Utilise les scripts disponibles. Baisse temporairement ton prix si besoin — l'objectif c'est l'expérience, pas le montant. Et relance 3 personnes aujourd'hui, pas demain."},
+  {n:5,title:"Répétition & nouveaux contacts",phase:"Phase 2 — Structurer",obj:"Refaire ce qui a fonctionné, élargir la base",actions:["Refais exactement ce qui t'a amené ta première vente","Contacte 10 nouvelles personnes","Demande un témoignage ou retour à ton premier client"],kpiQ:"Combien de ventes au total depuis le début du plan ?",kpiType:"number",kpiKey:"totalSales",kpiMin:2,kpiUnit:"ventes cumulées",coachOK:"<b>2 ventes cumulées.</b> Ce n'est plus un hasard — c'est une méthode qui fonctionne. Ta mission maintenant : la répéter, la renforcer, la rendre automatique.",coachKO:"Toujours 1 seule vente ? La règle : plus tu contactes, plus tu vends. Ce n'est pas magique — c'est mathématique. Augmente le volume de 50% cette semaine."},
+  {n:6,title:"Recommandations & témoignages",phase:"Phase 2 — Structurer",obj:"Transformer tes clients en ambassadeurs",actions:["Demande à chaque client de te recommander à 2-3 personnes","Partage un témoignage sur tes statuts WhatsApp","Propose une offre spéciale à un ami de client"],kpiQ:"As-tu reçu au moins 1 contact recommandé par un client ?",kpiType:"bool",kpiKey:"referral",kpiMin:1,kpiUnit:"recommandation reçue",coachOK:"<b>Une recommandation.</b> La preuve que ton travail est assez bon pour qu'on en parle. C'est le début du bouche-à-oreille — l'outil marketing le plus puissant qui existe.",coachKO:"La plupart des gens sont prêts à recommander si tu demandes. Pose directement la question : <i>\"Tu connais quelqu'un qui pourrait bénéficier de ce que je fais ?\"</i> Simple. Direct."},
+  {n:7,title:"Organisation & routine",phase:"Phase 2 — Structurer",obj:"Installer un process clair et régulier",actions:["Définis tes créneaux Plan B fixes (jours + heures)","Mets en place le suivi revenus/dépenses","Crée ton message de présentation standard (1 paragraphe)"],kpiQ:"As-tu défini et respecté tes créneaux Plan B cette semaine ?",kpiType:"bool",kpiKey:"routine",kpiMin:1,kpiUnit:"routine installée",coachOK:"<b>Tu as une routine.</b> C'est là que la majorité abandonne — et toi tu continues. La régularité bat le talent à chaque fois. Garde ce rythme.",coachKO:"Choisis maintenant : quel jour, quelle heure, combien de temps pour ton Plan B chaque semaine. Pas demain. Maintenant. Note-le ici et respecte-le comme un rendez-vous médical."},
+  {n:8,title:"Clarifier le message",phase:"Phase 2 — Structurer",obj:"Être compris en 10 secondes",actions:["Réécris ton message de présentation — plus court, plus direct","Teste le nouveau message sur 5 personnes","Mets à jour tes statuts WhatsApp avec ce message amélioré"],kpiQ:"As-tu un nouveau message de présentation testé et validé ?",kpiType:"bool",kpiKey:"msgUpdated",kpiMin:1,kpiUnit:"message amélioré",coachOK:"<b>Message amélioré.</b> Un message clair = moins d'effort pour convaincre. Tu vas voir la différence directement dans la qualité des réponses que tu reçois.",coachKO:"Formule à essayer : <i>\"J'aide [qui précisément] à [résultat concret] — sans [obstacle principal].\"</i> Tiens-le en dessous de 2 lignes. Si tu dois en écrire 5 pour expliquer, c'est encore trop complexe."},
+  {n:9,title:"Optimisation du prix",phase:"Phase 3 — Optimiser",obj:"Augmenter la valeur par client",actions:["Augmente ton prix de 20 à 30%","Ajoute un bonus simple qui justifie cette hausse","Propose le nouveau prix à tes prochains clients"],kpiQ:"As-tu appliqué un prix augmenté à au moins 1 client cette semaine ?",kpiType:"bool",kpiKey:"priceUp",kpiMin:1,kpiUnit:"prix augmenté appliqué",coachOK:"<b>Tu as augmenté ton prix.</b> C'est une décision courageuse. Souviens-toi : les clients qui paient plus s'investissent davantage. Tout le monde y gagne.",coachKO:"Peur d'augmenter ? Rappelle-toi : si ton offre crée de la valeur réelle, un prix juste est la chose honnête à faire. Un prix trop bas dit souvent que toi-même tu ne crois pas encore assez en ce que tu fais."},
+  {n:10,title:"Nouveau canal de visibilité",phase:"Phase 3 — Optimiser",obj:"Toucher de nouvelles personnes",actions:["Identifie un nouveau canal (groupe Facebook, marché, réseau pro)","Fais 1 action de visibilité sur ce canal","Compare quel canal génère le plus de conversations"],kpiQ:"As-tu testé un nouveau canal de visibilité cette semaine ?",kpiType:"bool",kpiKey:"newChannel",kpiMin:1,kpiUnit:"nouveau canal activé",coachOK:"<b>Nouveau canal actif.</b> Tu diversifies sans te disperser — c'est exactement le bon équilibre. Continue à mesurer ce qui fonctionne.",coachKO:"Reste simple : un seul nouveau canal. Rejoins un groupe Facebook actif dans ton secteur et présente ton activité en 3 lignes. C'est suffisant pour cette semaine."},
+  {n:11,title:"Les 3 actions stables",phase:"Phase 3 — Optimiser",obj:"Conserver ce qui fonctionne, éliminer le reste",actions:["Liste les 3 actions qui ont généré le plus de résultats","Arrête ce qui prend de l'énergie sans résultat","Crée une offre récurrente simple (mensuelle ou hebdomadaire)"],kpiQ:"As-tu identifié tes 3 actions les plus efficaces et créé une offre récurrente ?",kpiType:"bool",kpiKey:"top3",kpiMin:1,kpiUnit:"système identifié",coachOK:"<b>Tu as ton système.</b> C'est ce que la plupart des entrepreneurs cherchent pendant des années. Garde-le, répète-le, et construis dessus.",coachKO:"Regarde tes 10 semaines passées : qu'est-ce qui a amené les meilleures réponses ? Les meilleures ventes ? Concentre-toi là et arrête tout le reste."},
+  {n:12,title:"Vision & consolidation",phase:"Phase 3 — Optimiser",obj:"Poser les bases des 6 prochains mois",actions:["Écris ta vision pour les 6 prochains mois (revenus, clients, offre)","Décide : continuer, améliorer ou transformer ton Plan B","Prépare ton plan pour le prochain cycle de 90 jours"],kpiQ:"As-tu rédigé ta vision pour les 6 prochains mois ?",kpiType:"bool",kpiKey:"vision",kpiMin:1,kpiUnit:"vision rédigée",coachOK:"<b>Tu as terminé les 90 jours.</b> C'est une réussite que très peu de personnes atteignent. Tu n'es plus au même endroit qu'il y a 12 semaines. Ce que tu as construit est réel. Félicitations.",coachKO:"Tu es à la dernière semaine. Prends 30 minutes aujourd'hui pour écrire où tu veux être dans 6 mois — revenus, nombre de clients, sentiment général. C'est le seul livrable qui compte maintenant."}
+];
+
+const SECTOR_IDEAS = {
+  danse:[
+    {nom:"Cours de danse privés",desc:"Propose des sessions individuelles ou en petit groupe depuis chez toi ou chez le client. 1h = 3 000-10 000 FCFA.",outils:"WhatsApp, téléphone"},
+    {nom:"Ateliers danse en groupe",desc:"Organise des sessions hebdomadaires (afro, salsa, kizomba, zumba) dans un espace local ou en plein air.",outils:"Espace local, musique"},
+    {nom:"Chorégraphies événementielles",desc:"Crée des chorégraphies pour mariages, anniversaires, galas, remises de diplômes.",outils:"Tes compétences"},
+    {nom:"Micro-formation danse en vidéo",desc:"Enregistre 5-10 tutoriels vidéo courts et vends-les en pack à 5 000-15 000 FCFA.",outils:"Téléphone, WhatsApp"},
+    {nom:"Coaching artistique de groupe",desc:"Guide des artistes ou équipes de danse dans leur développement scénique et technique.",outils:"Ton expertise"}
+  ],
+  musique:[
+    {nom:"Cours de musique ou chant",desc:"Sessions privées ou en groupe selon ton instrument : guitare, piano, voix, djembé...",outils:"Instrument, WhatsApp"},
+    {nom:"Beatmaking & production",desc:"Produis des instrumentaux ou des arrangements pour artistes locaux.",outils:"Logiciel DAW, ordinateur"},
+    {nom:"DJ pour événements",desc:"Anime des fêtes, mariages, soirées d'entreprise. Les débutants commencent avec un téléphone et une enceinte.",outils:"Matériel DJ, contacts"},
+    {nom:"Micro-formation musicale",desc:"Guide en PDF ou audio sur la théorie musicale, les accords de base, ou la production pour débutants.",outils:"WhatsApp, PDF"}
+  ],
+  sport:[
+    {nom:"Coaching fitness personnalisé",desc:"Séances individuelles ou en groupe à domicile, dans un parc, ou en ligne via WhatsApp/Zoom.",outils:"Ton corps, motivation"},
+    {nom:"Coaching nutrition sportive",desc:"Plans alimentaires simples et adaptés à l'Afrique, sans produits importés coûteux.",outils:"Connaissances, WhatsApp"},
+    {nom:"Cours de sport en plein air",desc:"Organise des sessions matinales dans un parc. Abonnement mensuel = revenu récurrent.",outils:"Espace public, réseaux"}
+  ],
+  beaute:[
+    {nom:"Coiffure à domicile",desc:"Tresses, locks, défrisage, soins capillaires — tu te déplaces chez le client.",outils:"Matériel coiffure"},
+    {nom:"Maquillage pour événements",desc:"Mariages, baptêmes, soirées. Construis un portfolio avec des photos avant/après.",outils:"Kit maquillage, téléphone"},
+    {nom:"Conseils beauté en ligne",desc:"Consultations WhatsApp, guide de routines beauté adaptées aux peaux africaines.",outils:"WhatsApp, Canva"}
+  ],
+  tech:[
+    {nom:"Création de CV & LinkedIn",desc:"Recrée des CV avec Canva, optimise les profils LinkedIn. Zéro investissement, très demandé.",outils:"Canva, WhatsApp"},
+    {nom:"Montage vidéo & contenu",desc:"Montage simple avec CapCut ou InShot pour petites entreprises. Forfait mensuel possible.",outils:"Téléphone, CapCut"},
+    {nom:"Gestion WhatsApp Business",desc:"Gère les messages, commandes et statuts des commerçants locaux depuis ton téléphone.",outils:"Téléphone, WhatsApp"}
+  ],
+  cuisine:[
+    {nom:"Plats à emporter ou livraison",desc:"Cuisine des plats locaux et vends-les via WhatsApp dans ton quartier.",outils:"Cuisine, WhatsApp"},
+    {nom:"Cours de cuisine à domicile",desc:"Enseigne des recettes spécifiques (pâtisserie, cuisine africaine, cuisine saine) en groupe.",outils:"Cuisine, ingrédients"},
+    {nom:"Traiteur événementiel",desc:"Prépare des repas pour événements familiaux et professionnels.",outils:"Matériel cuisine, réseau"}
+  ],
+  couture:[
+    {nom:"Confection sur mesure",desc:"Crée des tenues personnalisées avec tissus locaux (wax, pagne). Commandes via WhatsApp.",outils:"Machine à coudre, tissus"},
+    {nom:"Retouches & réparations",desc:"Service rapide et très demandé. Pickup/delivery possible.",outils:"Machine, fil, aiguilles"},
+    {nom:"Formation couture débutantes",desc:"Ateliers pour apprendre les bases à des particulières ou jeunes filles.",outils:"Machine, espace, matériel"}
+  ],
+  default:[
+    {nom:"Micro-formation en ligne",desc:"Tu maîtrises quelque chose ? Crée 5 leçons en PDF ou audio et vends-les à 2 000-10 000 FCFA.",outils:"WhatsApp, Canva"},
+    {nom:"Vente de mini-guides PDF",desc:"Guide de 10-20 pages sur un sujet que tu maîtrises : finances, organisation, conseils pro...",outils:"Canva, WhatsApp"},
+    {nom:"Service d'assistance locale",desc:"Aide les gens avec la rédaction, les formulaires, la mise en page, les documents admin.",outils:"Téléphone, WhatsApp"},
+    {nom:"Coach local (compétence)",desc:"Tu maîtrises quelque chose ? Propose des sessions WhatsApp ou en personne. Ton savoir = revenu.",outils:"Ton expertise, WhatsApp"},
+    {nom:"Revente intelligente",desc:"Achète un petit stock (accessoires, parfums, gadgets) et revends avec marge sur WhatsApp/Facebook.",outils:"Petit capital, téléphone"}
+  ]
+};
+
+function getSector(t) {
+  if(!t) return 'default';
+  t = t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  if(/dans|danc|choreo|ballet|hip.?hop|afrobeat|zumba|salsa|kizomba|danse/i.test(t)) return 'danse';
+  if(/music|chant|guitare|piano|djembe|djing|\bdj\b|beatmaker|rap|chanson|melodie|instrument/i.test(t)) return 'musique';
+  if(/fitness|sport|musculation|coach.sport|nutrition|regime|entrainement|running/i.test(t)) return 'sport';
+  if(/coiffure|maquillage|beaute|ongle|nail|esthetique|soin.capillaire|tresse|locks/i.test(t)) return 'beaute';
+  if(/code|dev|web|app|informatique|montage.video|design|graphisme|canva|cv\b|linkedin/i.test(t)) return 'tech';
+  if(/cuisine|patisserie|traiteur|gateau|repas|livraison.repas|restauration/i.test(t)) return 'cuisine';
+  if(/couture|tissu|wax|pagne|tailleur|broderie|confection|vetement/i.test(t)) return 'couture';
+  return 'default';
+}
+
+/* ════════════════════════════════════════
+   STATE
+════════════════════════════════════════ */
+const EMPTY_STATE = {
+  screen:'welcome', step:0,
+  quiz:{q:0,answers:[],answered:false,score:0,passed:false},
+  p1:{step:0,fear:'',maintain:'',bigFear:'',truths:['','',''],beliefs:['','',''],choice:'',a1:'',a2:'',a3:'',ideas:['','','','',''],ideaScores:[{t:0,c:0,s:0,d:0},{t:0,c:0,s:0,d:0},{t:0,c:0,s:0,d:0},{t:0,c:0,s:0,d:0},{t:0,c:0,s:0,d:0}],chosenSuggestion:-1,customIdea:'',chosenIdea:'',sector:''},
+  p2:{step:0,audience:'',service:'',benefit:'',price:'',offerSentence:'',checklist:{},mvp24:'',mvp72:'',mvpWeek:'',contacts:['','','','','']},
+  p3:{week:1,unlocked:1,weekData:{}},
+  p4:{revenues:[]},
+  completed:false
+};
+
+let S = JSON.parse(JSON.stringify(EMPTY_STATE));
+
+function save(){try{localStorage.setItem('planb_v2',JSON.stringify(S));}catch(e){}}
+function load(){try{const d=localStorage.getItem('planb_v2');if(d){const p=JSON.parse(d);S=Object.assign(JSON.parse(JSON.stringify(EMPTY_STATE)),p);}}catch(e){}}
+
+function globalProgress(){
+  // 0-100 based on phase
+  const phases = {welcome:0,quiz:5,'quiz-result':S.quiz.passed?10:5,p1:20,p2:40,p3:60,p4:90,p5:100};
+  let base = phases[S.screen]||0;
+  if(S.screen==='p3'){
+    base = 60 + Math.round((S.p3.unlocked-1)/12*30);
+  }
+  return base;
+}
+
+/* ════════════════════════════════════════
+   RENDER ENGINE
+════════════════════════════════════════ */
+function render(){
+  const app = document.getElementById('app');
+  app.innerHTML = getScreen();
+  window.scrollTo(0,0);
+}
+
+function getScreen(){
+  switch(S.screen){
+    case 'welcome': return renderWelcome();
+    case 'quiz': return renderQuiz();
+    case 'quiz-result': return renderQuizResult();
+    case 'p1': return renderP1();
+    case 'p2': return renderP2();
+    case 'p3': return renderP3Hub();
+    case 'p3-week': return renderP3Week();
+    case 'p4': return renderP4();
+    case 'p5': return renderP5();
+    default: return renderWelcome();
+  }
+}
+
+function topbar(label, phaseName, pct){
+  return `<div class="topbar">
+    <div class="topbar-row">
+      <span class="topbar-title">Plan B Rentable</span>
+      <span class="topbar-phase">${phaseName||''}</span>
+    </div>
+    <div class="pbar"><div class="pfill" style="width:${pct||0}%"></div></div>
+  </div>`;
+}
+
+function coach(msg){
+  return `<div class="coach-wrap">
+    <div class="cavatar">CR</div>
+    <div class="cbubble">${msg}</div>
+  </div>`;
+}
+
+function nav(backFn, nextFn, nextLabel, nextDisabled, backLabel){
+  const bk = backFn ? `<button class="btn btn-muted btn-sm" onclick="${backFn}()">${backLabel||'←'}</button>` : '';
+  const nx = nextFn ? `<button class="btn btn-gold" onclick="${nextFn}()" ${nextDisabled?'disabled':''}>${nextLabel||'Continuer →'}</button>` : '';
+  return `<div class="nav">${bk}${nx}</div>`;
+}
+
+/* ════════════════════════════════════════
+   WELCOME
+════════════════════════════════════════ */
+function renderWelcome(){
+  const returning = S.quiz.passed || S.quiz.score > 0;
+  const pct = globalProgress();
+  return topbar('Accueil','',pct) + `
+  <div class="content">
+    <div class="hero">
+      <div class="hero-logo">CR</div>
+      <div class="hero-title">Plan B Rentable</div>
+      <div class="hero-sub">Trouve et lance ton activité parallèle en 90 jours — guidé étape par étape comme si Coach Redouane était là avec toi.</div>
+    </div>
+    ${returning ? `<div class="progress-resume card">
+      <div class="pr-title">📍 Ta progression</div>
+      <div class="pr-pct">${pct}%</div>
+      <div class="pr-label">${getProgressLabel()}</div>
+    </div>` : ''}
+    <div class="step-list">
+      <div class="step-li"><div class="step-ico">📚</div><div class="step-txt">Quiz de compréhension<small>Vérifie que tu as les bases pour réussir</small></div></div>
+      <div class="step-li"><div class="step-ico">🔍</div><div class="step-txt">Découverte de ton idée<small>Méthode 3 Angles — trouve ce qui est fait pour toi</small></div></div>
+      <div class="step-li"><div class="step-ico">🎯</div><div class="step-txt">Construire ton offre<small>Clarifier, tester, valider en 25 critères</small></div></div>
+      <div class="step-li"><div class="step-ico">🗓</div><div class="step-txt">Plan 90 jours — semaine par semaine<small>12 semaines avec KPI précis et coaching à chaque étape</small></div></div>
+      <div class="step-li"><div class="step-ico">📊</div><div class="step-txt">Suivi & rapport final<small>Revenus, visibilité, bilan complet</small></div></div>
+    </div>
+    <button class="btn btn-gold" onclick="startApp()">${returning ? 'Continuer mon parcours' : 'Commencer maintenant'}</button>
+    ${returning ? `<button class="btn btn-outline" style="margin-top:8px" onclick="resetApp()">Recommencer à zéro</button>` : ''}
+  </div>`;
+}
+
+function getProgressLabel(){
+  if(S.screen==='p5'||S.completed) return 'Parcours terminé — Félicitations !';
+  if(S.screen==='p3'||S.screen==='p3-week') return `Plan 90 jours — Semaine ${S.p3.unlocked}/12`;
+  if(S.screen==='p2') return 'Phase 2 — Construction de l\'offre';
+  if(S.screen==='p1') return 'Phase 1 — Découverte de ton idée';
+  if(S.quiz.passed) return 'Quiz validé — Phase 1 en cours';
+  return 'Quiz en cours';
+}
+
+window.startApp = function(){
+  if(S.quiz.passed){
+    go(S.screen==='welcome' ? 'p1' : S.screen);
+  } else {
+    go('quiz');
+  }
+};
+
+window.resetApp = function(){
+  if(!confirm('Effacer tout le progrès et recommencer ?')) return;
+  S = JSON.parse(JSON.stringify(EMPTY_STATE));
+  save();
+  render();
+};
+
+/* ════════════════════════════════════════
+   QUIZ (Phase 0)
+════════════════════════════════════════ */
+function renderQuiz(){
+  const qi = S.quiz.q;
+  const q = QUIZ[qi];
+  const ans = S.quiz.answers[qi];
+  const answered = ans !== undefined;
+  const correct = q.ans;
+  const pct = Math.round((qi/10)*40)+5;
+
+  let optsHtml = q.opts.map((o,i)=>{
+    let cls = '';
+    if(answered){
+      if(i===correct) cls='correct';
+      else if(i===ans && ans!==correct) cls='wrong';
+    }
+    return `<button class="qopt ${cls}" onclick="${answered?'':'selectAnswer('+i+')'}" ${answered?'disabled':''}>${o}</button>`;
+  }).join('');
+
+  let explainHtml = answered ? `<div class="explain">${ans===correct?'✅':'❌'} ${q.exp}</div>` : '';
+
+  return topbar('Quiz','Phase 0 — Quiz',pct) +
+  coach(qi===0 ? `Avant de commencer, je dois m'assurer que tu as bien compris le livre. <b>10 questions</b> t'attendent. Score minimum pour continuer : <i>7/10</i>. Si tu n'as pas encore lu le livre, fais-le d'abord — ça changera tout.` : `Question ${qi+1}/10 — Continue, tu es sur la bonne voie.`) +
+  `<div class="content">
+    <div class="card">
+      <div class="quiz-counter">Question ${qi+1} / ${QUIZ.length}</div>
+      <div class="quiz-q">${q.q}</div>
+      ${optsHtml}
+      ${explainHtml}
+    </div>
+  </div>` +
+  (answered ? `<div class="nav"><button class="btn btn-gold" onclick="nextQuizQ()">${qi<QUIZ.length-1?'Question suivante →':'Voir mon résultat'}</button></div>` : '');
+}
+
+window.selectAnswer = function(i){
+  const qi = S.quiz.q;
+  S.quiz.answers[qi] = i;
+  if(i===QUIZ[qi].ans) S.quiz.score++;
+  save(); render();
+};
+
+window.nextQuizQ = function(){
+  if(S.quiz.q < QUIZ.length-1){
+    S.quiz.q++;
+    S.quiz.answers[S.quiz.q] = undefined;
+    save(); render();
+  } else {
+    S.quiz.passed = S.quiz.score >= 7;
+    S.screen = 'quiz-result';
+    save(); render();
+  }
+};
+
+function renderQuizResult(){
+  const sc = S.quiz.score;
+  const pass = S.quiz.passed;
+  const wrong = QUIZ.map((q,i)=>S.quiz.answers[i]!==q.ans?q:null).filter(Boolean);
+
+  return topbar('Résultat','Phase 0 — Résultat',pass?10:5) +
+  coach(pass ? `<b>${sc}/10 — Excellent !</b> Tu as assimilé les bases du Plan B Rentable. Tu es prêt pour passer à l'action. La vraie aventure commence maintenant.` : `<b>${sc}/10 — Pas encore.</b> Ce n'est pas un échec — c'est un signal. Relis les chapitres concernés, puis reviens. Je t'attends.`) +
+  `<div class="content">
+    <div style="text-align:center">
+      <div class="score-ring ${pass?'':'fail'}">
+        <div class="snum">${sc}/10</div>
+        <div class="slabel">${pass?'Validé ✓':'Insuffisant'}</div>
+      </div>
+      <div class="badge ${pass?'badge-ok':'badge-muted'}" style="margin-bottom:12px">${pass?'Quiz réussi — Phase 1 débloquée':'Score minimum : 7/10'}</div>
+    </div>
+    ${!pass && wrong.length ? `<div class="card">
+      <div class="ctitle">Concepts à revoir</div>
+      ${wrong.map(q=>`<div style="font-size:13px;color:var(--muted);margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid #1e3350">❌ ${q.q.substring(0,60)}...</div>`).join('')}
+    </div>` : ''}
+    ${pass ? `<button class="btn btn-gold" onclick="go('p1')">Commencer Phase 1 — Découverte →</button>` :
+    `<button class="btn btn-outline" onclick="retryQuiz()">Réessayer le quiz</button>`}
+  </div>`;
+}
+
+window.retryQuiz = function(){
+  S.quiz = {q:0,answers:[],answered:false,score:0,passed:false};
+  S.screen = 'quiz';
+  save(); render();
+};
+
+/* ════════════════════════════════════════
+   PHASE 1 — DÉCOUVERTE (7 étapes)
+════════════════════════════════════════ */
+const P1_STEPS = 7;
+
+function renderP1(){
+  const s = S.p1.step;
+  const pct = 10 + Math.round((s/P1_STEPS)*25);
+
+  const steps = [renderP1S0, renderP1S1, renderP1S2, renderP1S3, renderP1S4, renderP1S5, renderP1S6];
+  return topbar('Découverte','Phase 1 — Découverte',pct) + steps[s]();
+}
+
+// P1 Step 0: Intro
+function renderP1S0(){
+  return coach(`Bienvenue dans la Phase 1. <b>On va trouver ton idée.</b><br><br>
+Pas n'importe quelle idée — <i>la bonne idée pour toi</i>, celle qui croise ce que tu sais faire naturellement, les besoins autour de toi, et ce qui se vend vraiment.<br><br>
+Prends le temps de répondre honnêtement. Personne d'autre ne lira tes réponses.`) +
+  `<div class="content"></div>` +
+  nav(null,'p1Next','Commencer la Phase 1 →');
+}
+
+// P1 Step 1: Reality check
+function renderP1S1(){
+  return coach(`D'abord, une question difficile mais essentielle.<br><br><b>Si ton salaire s'arrêtait demain...</b><br><br>Réponds honnêtement. Cette clarté est le point de départ de tout.`) +
+  `<div class="content">
+    <div class="card">
+      <div class="ctitle">Ta réalité aujourd'hui</div>
+      <label>Ce qui deviendrait difficile immédiatement :</label>
+      <textarea id="fear" placeholder="Ex: payer le loyer, scolarité des enfants, nourriture...">${S.p1.fear}</textarea>
+      <label>Ce que tu pourrais maintenir malgré tout :</label>
+      <textarea id="maintain" placeholder="Ex: le réseau téléphonique, quelques dépenses légères...">${S.p1.maintain}</textarea>
+      <label>Ce qui te fait le plus peur dans cette situation :</label>
+      <textarea id="bigFear" placeholder="Écris ta peur réelle, sans filtre...">${S.p1.bigFear}</textarea>
+    </div>
+  </div>` +
+  nav('p1Back','p1Next','Continuer →');
+}
+
+// P1 Step 2: 3 truths
+function renderP1S2(){
+  return coach(`Maintenant, quelque chose de courageux.<br><br>Écris <b>3 vérités</b> que tu ressens profondément mais que tu n'assumes pas encore à voix haute.<br><br><i>"Je sais que..." "J'ai toujours voulu..." "La vérité c'est que..."</i>`) +
+  `<div class="content">
+    <div class="card">
+      <div class="ctitle">3 vérités à ne plus ignorer</div>
+      ${[0,1,2].map(i=>`
+        <label>Vérité ${i+1} :</label>
+        <textarea id="truth${i}" placeholder="Écris librement..." style="min-height:65px">${S.p1.truths[i]}</textarea>
+      `).join('')}
+    </div>
+    <div class="card">
+      <div class="ctitle">Ma décision à partir d'aujourd'hui</div>
+      <label>Je choisis de :</label>
+      <textarea id="choice" placeholder="À partir d'aujourd'hui, je choisis de...">${S.p1.choice}</textarea>
+    </div>
+  </div>` +
+  nav('p1Back','p1Next','Continuer →');
+}
+
+// P1 Step 3: Limiting beliefs
+function renderP1S3(){
+  return coach(`Avant d'avancer, on va identifier ce qui te bloque.<br><br>Quelles <b>croyances limitantes</b> te maintiennent dans l'inaction ?<br><br><i>"Je ne suis pas assez..." "Il me faut d'abord..." "Ce n'est pas fait pour moi..."</i>`) +
+  `<div class="content">
+    <div class="card">
+      <div class="ctitle">Croyances qui t'empêchent d'avancer</div>
+      ${[0,1,2].map(i=>`
+        <label>Croyance ${i+1} :</label>
+        <textarea id="belief${i}" placeholder="Ex: Je n'ai pas assez de temps, Je ne suis pas expert..." style="min-height:60px">${S.p1.beliefs[i]}</textarea>
+      `).join('')}
+    </div>
+  </div>` +
+  nav('p1Back','p1Next','Continuer →');
+}
+
+// P1 Step 4: 3 Angles
+function renderP1S4(){
+  return coach(`On y est. <b>La Méthode 3 Angles.</b><br><br>C'est le cœur du Plan B Rentable. Réponds à chaque question sans te censurer — écris tout ce qui te vient naturellement.`) +
+  `<div class="content">
+    <div class="card">
+      <div class="ctitle">Angle 1 — Tes compétences naturelles</div>
+      <label>Ce que tu sais faire sans effort, ce que les autres remarquent chez toi, ce qui te semble simple mais pas pour tout le monde :</label>
+      <textarea id="a1" placeholder="Ex: j'explique bien les choses, je sais cuisiner rapidement, je danse depuis toujours, je suis organisé..." style="min-height:90px">${S.p1.a1}</textarea>
+    </div>
+    <div class="card">
+      <div class="ctitle">Angle 2 — Les besoins autour de toi</div>
+      <label>Qu'est-ce que les gens autour de toi cherchent, paient, demandent ? Dans ton quartier, ta famille, ton travail, tes amis :</label>
+      <textarea id="a2" placeholder="Ex: des cours pour enfants, de la nourriture à emporter, quelqu'un pour réparer, des conseils pour trouver du travail..." style="min-height:90px">${S.p1.a2}</textarea>
+    </div>
+    <div class="card">
+      <div class="ctitle">Angle 3 — Ce qui se vend</div>
+      <label>Qu'est-ce que tu as vu d'autres vendre avec succès, même sans grande expertise ? Ce qui attire des clients dans ton environnement :</label>
+      <textarea id="a3" placeholder="Ex: des cours particuliers, de la pâtisserie, des services digitaux, du transport, de la couture..." style="min-height:90px">${S.p1.a3}</textarea>
+    </div>
+  </div>` +
+  nav('p1Back','p1Next','Continuer →');
+}
+
+// P1 Step 5: 5 ideas + scoring
+function renderP1S5(){
+  const scores = S.p1.ideaScores;
+  const ideas = S.p1.ideas;
+
+  let ideasHtml = ideas.map((idea,i)=>{
+    const sc = scores[i]||{t:0,c:0,s:0,d:0};
+    const total = sc.t+sc.c+sc.s+sc.d;
+    const critNames = ['Temps','Coût','Compét.','Demande'];
+    const critKeys = ['t','c','s','d'];
+    const critDescs = ['Temps dispo','Faible coût','Compétences','Demande locale'];
+    return `<div class="idea-score-wrap">
+      <label>Idée ${i+1} :</label>
+      <input type="text" id="idea${i}" value="${idea}" placeholder="Ex: Cours de danse, Service livraison, Coiffure..." oninput="saveIdeaText(${i},this.value)">
+      <div style="margin-top:8px">
+        <div class="crit-grid">
+          ${critKeys.map((k,ci)=>`<div class="crit-box">
+            <div class="crit-name">${critDescs[ci]}</div>
+            <div class="stars-row">
+              ${[1,2,3,4,5].map(v=>`<span class="star ${sc[k]>=v?'on':''}" onclick="setStar(${i},'${k}',${v})">★</span>`).join('')}
+            </div>
+          </div>`).join('')}
+        </div>
+        <div style="margin-top:6px;font-size:12px;color:var(--muted);text-align:right">Score total : <b style="color:${total>=14?'var(--ok)':total>=8?'var(--gold)':'var(--err)'}">${total}/20</b></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  return coach(`Maintenant, <b>5 idées libres.</b> Sans filtre, sans jugement.<br><br>Écris les premières idées qui te viennent. Puis évalue chacune sur 4 critères (1 = faible, 5 = excellent). L'idée avec le <b>meilleur score</b> sera ta candidate principale.`) +
+  `<div class="content">
+    ${ideasHtml}
+  </div>` +
+  nav('p1Back','p1Next','Choisir mon idée →');
+}
+
+window.saveIdeaText = function(i,v){ S.p1.ideas[i]=v; save(); };
+window.setStar = function(i,k,v){ S.p1.ideaScores[i][k]=v; save(); render(); };
+
+// P1 Step 6: Choose final idea
+function renderP1S6(){
+  // Find best scoring idea
+  const scores = S.p1.ideaScores.map((sc,i)=>({i,total:sc.t+sc.c+sc.s+sc.d,name:S.p1.ideas[i]}));
+  scores.sort((a,b)=>b.total-a.total);
+  const bestIdea = scores[0];
+
+  // Detect sector from angles
+  const combined = (S.p1.a1+' '+S.p1.a2+' '+S.p1.a3+' '+(S.p1.ideas.join(' '))).toLowerCase();
+  const sector = getSector(combined);
+  S.p1.sector = sector;
+
+  const suggestions = SECTOR_IDEAS[sector] || SECTOR_IDEAS.default;
+
+  const chosen = S.p1.chosenSuggestion;
+
+  return coach(`Basé sur tes 3 angles et tes idées, voici mes <b>suggestions personnalisées</b> pour toi.<br><br>${bestIdea&&bestIdea.name?`Ton idée la mieux notée : <i>${bestIdea.name} (${bestIdea.total}/20)</i>.<br><br>`:''} Choisis l'idée qui te donne envie d'agir <i>aujourd'hui</i>, pas demain.`) +
+  `<div class="content">
+    <div class="card">
+      <div class="ctitle">Idées recommandées pour toi</div>
+      ${suggestions.map((idea,i)=>`
+        <div class="idea-card ${chosen===i?'sel':''}" onclick="chooseSuggestion(${i})">
+          <div class="idea-name">${chosen===i?'✓ ':''} ${idea.nom}</div>
+          <div class="idea-desc">${idea.desc}</div>
+          <div class="idea-tool">🔧 ${idea.outils}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="card">
+      <div class="ctitle">Ou écris ta propre idée</div>
+      <label>Mon idée personnelle :</label>
+      <textarea id="customIdea" placeholder="Décris ton idée en 1-2 phrases claires..." style="min-height:70px">${S.p1.customIdea}</textarea>
+      <button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="useCustomIdea()">Utiliser cette idée →</button>
+    </div>
+    ${S.p1.chosenIdea ? `<div class="badge badge-ok" style="display:block;text-align:center;padding:10px">✓ Idée choisie : ${S.p1.chosenIdea}</div>` : ''}
+  </div>` +
+  nav('p1Back','validateP1','Valider mon idée →', !S.p1.chosenIdea);
+}
+
+window.chooseSuggestion = function(i){
+  const sector = S.p1.sector;
+  const suggestions = SECTOR_IDEAS[sector] || SECTOR_IDEAS.default;
+  S.p1.chosenSuggestion = i;
+  S.p1.chosenIdea = suggestions[i].nom;
+  S.p1.customIdea = '';
+  save(); render();
+};
+
+window.useCustomIdea = function(){
+  const v = document.getElementById('customIdea')?.value.trim();
+  if(!v){toast('Écris ton idée d\'abord'); return;}
+  S.p1.customIdea = v;
+  S.p1.chosenIdea = v;
+  S.p1.chosenSuggestion = -1;
+  save(); render();
+};
+
+window.validateP1 = function(){
+  if(!S.p1.chosenIdea){toast('Choisis une idée pour continuer'); return;}
+  go('p2');
+};
+
+window.p1Next = function(){
+  capP1();
+  const s = S.p1.step;
+  // Validate
+  if(s===1 && !S.p1.fear.trim()){toast('Réponds à la première question pour continuer'); return;}
+  if(s===4 && !S.p1.a1.trim() && !S.p1.a2.trim()){toast('Remplis au moins les 2 premiers angles'); return;}
+  if(s < P1_STEPS-1){ S.p1.step++; save(); render(); }
+};
+
+window.p1Back = function(){
+  capP1();
+  if(S.p1.step > 0){ S.p1.step--; save(); render(); }
+  else { go('quiz-result'); }
+};
+
+function capP1(){
+  // Capture all current inputs
+  const gets = id => document.getElementById(id)?.value||'';
+  if(S.p1.step===1){ S.p1.fear=gets('fear'); S.p1.maintain=gets('maintain'); S.p1.bigFear=gets('bigFear'); }
+  if(S.p1.step===2){ S.p1.truths=[gets('truth0'),gets('truth1'),gets('truth2')]; S.p1.choice=gets('choice'); }
+  if(S.p1.step===3){ S.p1.beliefs=[gets('belief0'),gets('belief1'),gets('belief2')]; }
+  if(S.p1.step===4){ S.p1.a1=gets('a1'); S.p1.a2=gets('a2'); S.p1.a3=gets('a3'); }
+  if(S.p1.step===5){ S.p1.ideas=[gets('idea0'),gets('idea1'),gets('idea2'),gets('idea3'),gets('idea4')]; }
+  if(S.p1.step===6){ S.p1.customIdea=gets('customIdea'); }
+  save();
+}
+
+/* ════════════════════════════════════════
+   PHASE 2 — OFFRE (6 étapes)
+════════════════════════════════════════ */
+const P2_STEPS = 6;
+
+function renderP2(){
+  const s = S.p2.step;
+  const pct = 40 + Math.round((s/P2_STEPS)*20);
+  const steps = [renderP2S0, renderP2S1, renderP2S2, renderP2S3, renderP2S4, renderP2S5];
+  return topbar('Ton offre','Phase 2 — Offre',pct) + steps[s]();
+}
+
+// P2 Step 0: Intro
+function renderP2S0(){
+  return coach(`Tu as ton idée : <b>${S.p1.chosenIdea}</b>.<br><br>Maintenant on va la transformer en <b>offre vendable</b>. Une offre claire, avec un prix précis, pour un public précis.<br><br>À la fin de cette phase, tu seras prêt à proposer à tes 5 premiers clients.`) +
+  `<div class="content">
+    <div class="card">
+      <div class="ctitle">Ton idée retenue</div>
+      <div style="font-size:16px;font-weight:700;color:var(--gold2)">${S.p1.chosenIdea}</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:6px">Secteur détecté : ${S.p1.sector}</div>
+    </div>
+  </div>` +
+  nav('p2Back','p2Next','Construire mon offre →');
+}
+
+// P2 Step 1: Offer formula
+function renderP2S1(){
+  const ex = {danse:"danseurs débutants","à apprendre les bases de la danse afro en 4 semaines",musique:"musiciens débutants","à jouer leurs premiers accords de guitare",beaute:"femmes actives","à avoir une belle coiffure sans se déplacer",default:"personnes en recherche","à résoudre leur problème rapidement"};
+  return coach(`La formule magique de toute offre rentable :<br><br><b>"J'aide [QUI] à [RÉSULTAT CONCRET]"</b><br><br>C'est simple, direct, et ça dit exactement ce que tu fais. Remplis chaque champ.`) +
+  `<div class="content">
+    <div class="card">
+      <div class="ctitle">Formule de ton offre</div>
+      <label>J'aide :</label>
+      <input type="text" id="audience" value="${S.p2.audience}" placeholder="Ex: les mamans de mon quartier, les jeunes diplômés, les commerçants...">
+      <label>À :</label>
+      <input type="text" id="service" value="${S.p2.service}" placeholder="Ex: apprendre à danser afro, trouver leur premier client, créer un CV professionnel...">
+      <label>Le bénéfice concret qu'ils obtiennent :</label>
+      <input type="text" id="benefit" value="${S.p2.benefit}" placeholder="Ex: confiance en soi, plus de revenus, économiser du temps...">
+      <label>Mon prix de départ (sois réaliste) :</label>
+      <input type="text" id="price" value="${S.p2.price}" placeholder="Ex: 5 000 FCFA la séance, 15 000 FCFA le mois...">
+    </div>
+    <div class="card" style="background:#0a1520">
+      <div class="ctitle">Ta phrase d'offre complète</div>
+      <div style="font-size:14px;color:var(--text);font-style:italic;line-height:1.6" id="offerPreview">Remplis les champs ci-dessus pour voir ta phrase...</div>
+    </div>
+  </div>
+  <script>
+    function updatePreview(){
+      const a=document.getElementById('audience')?.value||'...';
+      const s=document.getElementById('service')?.value||'...';
+      const b=document.getElementById('benefit')?.value||'';
+      document.getElementById('offerPreview').textContent='J\'aide '+a+' à '+s+(b?' — pour '+b:'')+'.'
+    }
+    document.querySelectorAll('#audience,#service,#benefit,#price').forEach(el=>el.addEventListener('input',updatePreview));
+    updatePreview();
+  <\/script>` +
+  nav('p2Back','p2Next','Continuer →');
+}
+
+// P2 Step 2: Public / benefit / price — more detail
+function renderP2S2(){
+  return coach(`Parfait. Maintenant affine ton positionnement.<br><br>Ces 3 éléments — <b>pour qui, le bénéfice, et pourquoi toi</b> — sont ce qui va convaincre tes premiers clients.`) +
+  `<div class="content">
+    <div class="card">
+      <div class="ctitle">Ton offre en version claire</div>
+      <div style="font-size:14px;color:var(--gold2);padding:10px;background:#0a1520;border-radius:8px;margin-bottom:12px">"J'aide <b>${S.p2.audience||'...'}</b> à <b>${S.p2.service||'...'}</b>"</div>
+      <label>Qui a le plus besoin de toi ? (décris précisément) :</label>
+      <textarea id="audienceDetail" placeholder="Ex: Les mamans entre 25 et 40 ans de mon quartier qui veulent perdre du poids mais n'ont pas le temps d'aller en salle...">${S.p2.audience}</textarea>
+      <label>Ce que ton client gagne concrètement grâce à toi :</label>
+      <textarea id="benefitDetail" placeholder="Ex: En 4 semaines, elles retrouvent de l'énergie et une routine sportive qu'elles peuvent maintenir seules...">${S.p2.benefit}</textarea>
+      <label>Pourquoi toi — ton atout naturel :</label>
+      <textarea id="whyMe" placeholder="Ex: J'ai moi-même transformé mon corps sans salle de sport, je connais les contraintes des mamans africaines..." style="min-height:65px">${S.p2.offerSentence}</textarea>
+    </div>
+  </div>` +
+  nav('p2Back','p2Next','Checklist des 25 critères →');
+}
+
+// P2 Step 3: Checklist 25 points
+function renderP2S3(){
+  const chk = S.p2.checklist;
+  let idx = 0;
+  let total = Object.values(chk).filter(Boolean).length;
+  const pct = Math.round((total/25)*100);
+  let color = pct>=80?'var(--ok)':pct>=60?'var(--gold)':'var(--err)';
+  let verdict = pct>=80?'✅ Solide — tu es prêt à démarrer':pct>=60?'⚡ Bon potentiel — quelques ajustements':pct>=40?'⚠️ À reformuler avant de continuer':'❌ Retourne à la découverte de ton idée';
+
+  let html = `<div class="cl-score-bar"><div class="cl-score-fill" style="width:${pct}%"></div></div>
+    <div class="cl-score-label" style="color:${color}">${total}/25 — ${verdict}</div>`;
+
+  CHECKLIST.forEach(cat=>{
+    html += `<div class="cl-cat">${cat.cat}</div>`;
+    cat.items.forEach(item=>{
+      const i = idx++;
+      const checked = !!chk[i];
+      html += `<div class="cl-item ${checked?'chk':''}" onclick="toggleCheck(${i})">
+        <div class="cl-box">${checked?'✓':''}</div>
+        <div class="cl-text">${item}</div>
+      </div>`;
+    });
+  });
+
+  return coach(`La <b>Checklist Premium 25 points</b>. Coche honnêtement chaque critère que tu remplis.<br><br><b>20+/25</b> = tu es prêt. <b>15-19</b> = ajuste. <b>-15</b> = reformule ton idée.`) +
+  `<div class="content">
+    <div class="card">
+      <div class="ctitle">Checklist 25 critères</div>
+      ${html}
+    </div>
+  </div>` +
+  nav('p2Back','p2Next','Continuer →');
+}
+
+window.toggleCheck = function(i){
+  S.p2.checklist[i] = !S.p2.checklist[i];
+  save(); render();
+};
+
+// P2 Step 4: MVP
+function renderP2S4(){
+  return coach(`Avant de viser grand, commence <b>petit et rapide</b>.<br><br>La version minimale de ton idée — ton <b>MVP</b> — c'est ce que tu peux proposer dès aujourd'hui. Pas dans 3 mois. Aujourd'hui.`) +
+  `<div class="content">
+    <div class="card">
+      <div class="ctitle">Ton MVP — Version minimale</div>
+      <label>Ce que tu peux faire en 24 heures :</label>
+      <textarea id="mvp24" placeholder="Ex: Envoyer un message WhatsApp à 5 personnes, faire 1 statut, appeler 1 ami..." style="min-height:65px">${S.p2.mvp24}</textarea>
+      <label>Ce que tu peux faire en 72 heures :</label>
+      <textarea id="mvp72" placeholder="Ex: Avoir eu 3 conversations, proposé 1 service test à prix réduit..." style="min-height:65px">${S.p2.mvp72}</textarea>
+      <label>Ce que tu peux faire cette semaine :</label>
+      <textarea id="mvpWeek" placeholder="Ex: Avoir livré un premier service, reçu un retour, ajusté l'offre..." style="min-height:65px">${S.p2.mvpWeek}</textarea>
+    </div>
+    <div class="card" style="background:#1a2500;border-color:var(--ok)">
+      <div class="ctitle" style="color:var(--ok)">Ton offre test</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Une offre simple, concrète et proposable immédiatement :</div>
+      <div style="font-size:13.5px;font-weight:600;color:var(--text)">"Je propose <b>${S.p2.service||'mon service'}</b> à <b>${S.p2.price||'[prix]'}</b> — pour les 3 premiers clients."</div>
+    </div>
+  </div>` +
+  nav('p2Back','p2Next','Mes 5 premiers contacts →');
+}
+
+// P2 Step 5: 5 contacts
+function renderP2S5(){
+  return coach(`La dernière étape de cette phase : nommer tes <b>5 premiers contacts</b>.<br><br>Pas 50. Pas 100. Juste 5. Des personnes réelles — amis, famille, collègues, voisins — à qui tu vas proposer ton service cette semaine.<br><br>Si tu écris leurs noms ici, tu t'engages à les contacter.`) +
+  `<div class="content">
+    <div class="card">
+      <div class="ctitle">Mes 5 premiers contacts</div>
+      ${[0,1,2,3,4].map(i=>`
+        <div class="contact-row">
+          <div class="contact-num">${i+1}</div>
+          <input type="text" id="contact${i}" value="${S.p2.contacts[i]}" placeholder="Prénom + relation (ex: Marie, collègue)">
+        </div>
+      `).join('')}
+    </div>
+    <div class="card" style="background:#0a1520">
+      <div class="ctitle">Ton message de départ</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Script prêt à copier sur WhatsApp :</div>
+      <div style="font-size:13px;color:var(--text);background:#142338;padding:12px;border-radius:8px;line-height:1.6;border-left:3px solid var(--gold)">
+        "Salut [Prénom] 👋<br>
+        Je lance une petite activité et tu es parmi les premières personnes à qui j'en parle.<br>
+        J'aide ${S.p2.audience||'...'} à ${S.p2.service||'...'}<br>
+        Prix de lancement : ${S.p2.price||'...'}<br>
+        Ça pourrait t'intéresser ou quelqu'un que tu connais ?<br>
+        Je suis disponible pour en parler 😊"
+      </div>
+    </div>
+  </div>` +
+  nav('p2Back','validateP2','Démarrer le Plan 90 jours →');
+}
+
+window.p2Next = function(){
+  capP2();
+  const s = S.p2.step;
+  if(s===1 && !S.p2.audience){toast('Remplis les champs de ton offre'); return;}
+  if(s < P2_STEPS-1){ S.p2.step++; save(); render(); }
+};
+
+window.p2Back = function(){
+  capP2();
+  if(S.p2.step > 0){ S.p2.step--; save(); render(); }
+  else { go('p1'); S.p1.step=6; save(); render(); }
+};
+
+window.validateP2 = function(){
+  capP2();
+  if(!S.p2.contacts[0]){toast('Nomme au moins ton 1er contact'); return;}
+  go('p3');
+};
+
+function capP2(){
+  const gets = id => document.getElementById(id)?.value||'';
+  if(S.p2.step===1){ S.p2.audience=gets('audience'); S.p2.service=gets('service'); S.p2.benefit=gets('benefit'); S.p2.price=gets('price'); }
+  if(S.p2.step===2){ S.p2.audience=gets('audienceDetail')||S.p2.audience; S.p2.benefit=gets('benefitDetail')||S.p2.benefit; S.p2.offerSentence=gets('whyMe'); }
+  if(S.p2.step===4){ S.p2.mvp24=gets('mvp24'); S.p2.mvp72=gets('mvp72'); S.p2.mvpWeek=gets('mvpWeek'); }
+  if(S.p2.step===5){ S.p2.contacts=[gets('contact0'),gets('contact1'),gets('contact2'),gets('contact3'),gets('contact4')]; }
+  save();
+}
+
+/* ════════════════════════════════════════
+   PHASE 3 — PLAN 90 JOURS
+════════════════════════════════════════ */
+function renderP3Hub(){
+  const unlocked = S.p3.unlocked;
+  const wd = S.p3.weekData;
+  const totalSales = getTotalSales();
+
+  return topbar('Plan 90 jours','Phase 3 — 90 Jours',60+Math.round((unlocked-1)/12*30)) +
+  coach(`Ton plan d'exécution. <b>12 semaines, une par une.</b><br><br>Chaque semaine a un objectif précis et un KPI minimum. Tu ne passes pas à la suivante sans avoir avancé.<br><br>Idée : <i>${S.p1.chosenIdea}</i> | Ventes cumulées : <b>${totalSales}</b>`) +
+  `<div class="content">
+    ${[1,2,3].map(phase=>{
+      const phaseNames = {1:'Phase 1 — Lancer (J1-J30)',2:'Phase 2 — Structurer (J31-J60)',3:'Phase 3 — Optimiser (J61-J90)'};
+      const weekRange = {1:[1,2,3,4],2:[5,6,7,8],3:[9,10,11,12]};
+      return `<div><div style="font-size:11px;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px">${phaseNames[phase]}</div>
+      <div class="week-grid">${weekRange[phase].map(n=>{
+        const w = WEEKS[n-1];
+        const isDone = wd[n]?.done;
+        const isActive = n===unlocked && !isDone;
+        const isLocked = n>unlocked;
+        const kpiVal = wd[n]?.kpiValue;
+        return `<div class="wcard ${isDone?'done':isActive?'active':isLocked?'locked':''}" onclick="${isLocked?'':'openWeek('+n+')'}">
+          <div class="wnum">${isDone?'✓':n}</div>
+          <div class="winfo">
+            <div class="wtitle">S${n} — ${w.title}</div>
+            <div class="wphase">${w.phase}</div>
+            ${isDone?`<div class="wstatus">✓ ${kpiVal!==undefined?kpiVal+' '+w.kpiUnit:'Terminée'}</div>`:isActive?`<div class="wkpi">KPI : ${w.kpiUnit}</div>`:''}
+          </div>
+          ${isLocked?'<span style="font-size:16px;color:var(--muted)">🔒</span>':isDone?'<span style="font-size:16px;color:var(--ok)">✓</span>':'<span style="font-size:16px;color:var(--gold)">→</span>'}
+        </div>`;
+      }).join('')}</div></div>`;
+    }).join('')}
+    ${S.p3.unlocked>4?`<div class="card" style="background:#0a1520">
+      <div class="ctitle">Suivi financier rapide</div>
+      <button class="btn btn-outline" style="margin-bottom:8px" onclick="go('p4')">📊 Voir mon tableau de bord →</button>
+    </div>`:''}
+    ${S.p3.unlocked>11&&wd[12]?.done?`<button class="btn btn-gold" onclick="go('p5')">🏆 Voir mon rapport final →</button>`:''}
+  </div>`;
+}
+
+function getTotalSales(){
+  const wd = S.p3.weekData;
+  // Check week 5 cumulative
+  if(wd[5]?.kpiValue) return wd[5].kpiValue;
+  if(wd[4]?.done) return 1;
+  return 0;
+}
+
+window.openWeek = function(n){
+  S.p3.week = n;
+  S.screen = 'p3-week';
+  save(); render();
+};
+
+function renderP3Week(){
+  const n = S.p3.week;
+  const w = WEEKS[n-1];
+  const wd = S.p3.weekData[n] || {};
+  const isDone = wd.done;
+  const pct = 60+Math.round((n/12)*30);
+
+  // KPI input
+  let kpiHtml = '';
+  if(!isDone){
+    if(w.kpiType==='number'){
+      kpiHtml = `<div class="card" style="border-color:var(--gold)">
+        <div class="ctitle" style="color:var(--gold)">KPI Semaine ${n} — ${w.kpiUnit}</div>
+        <label>${w.kpiQ}</label>
+        <input type="number" id="kpiInput" value="${wd.kpiValue||0}" min="0" placeholder="0">
+      </div>`;
+    } else {
+      const boolVal = wd.kpiValue;
+      kpiHtml = `<div class="card" style="border-color:var(--gold)">
+        <div class="ctitle" style="color:var(--gold)">KPI Semaine ${n} — ${w.kpiUnit}</div>
+        <label>${w.kpiQ}</label>
+        <div class="bool-row">
+          <button class="bool-btn yes ${boolVal===true?'sel':''}" onclick="setBool(true)">✓ Oui</button>
+          <button class="bool-btn no ${boolVal===false?'sel':''}" onclick="setBool(false)">✗ Pas encore</button>
+        </div>
+      </div>`;
+    }
+  }
+
+  // Notes input
+  let notesHtml = `<div class="card">
+    <div class="ctitle">Mes notes de la semaine</div>
+    <textarea id="weekNotes" placeholder="Ce qui s'est passé cette semaine, mes apprentissages, mes blocages..." style="min-height:80px">${wd.notes||''}</textarea>
+  </div>`;
+
+  // If done: show coach message
+  let doneHtml = '';
+  if(isDone){
+    const metKpi = w.kpiType==='number' ? (wd.kpiValue||0)>=w.kpiMin : wd.kpiValue===true;
+    doneHtml = `<div class="card" style="background:${metKpi?'#1b3a1b':'#1e1a0a'};border-color:${metKpi?'var(--ok)':'var(--gold)'}">
+      <div class="ctitle" style="color:${metKpi?'var(--ok)':'var(--gold)'}">${metKpi?'🎯 KPI atteint !':'💡 Plan de secours'}</div>
+      <div style="font-size:13.5px;line-height:1.65">${metKpi?w.coachOK:w.coachKO}</div>
+    </div>`;
+    if(!metKpi){
+      doneHtml += `<div class="secours">
+        <div class="secours-title">📋 Actions correctives :</div>
+        <ul>
+          <li>Augmente le volume de contacts</li>
+          <li>Simplifie ton offre à l'essentiel</li>
+          <li>Utilise le script WhatsApp de départ</li>
+          <li>Baisse temporairement le prix si nécessaire</li>
+        </ul>
+      </div>`;
+    }
+  }
+
+  const extraInput = w.kpiKey==='firstSale' && !isDone ? `<div class="card">
+    <label>Montant encaissé (si oui) :</label>
+    <input type="text" id="saleAmount" value="${wd.saleAmount||''}" placeholder="Ex: 5 000 FCFA, 10 000 FCFA...">
+  </div>` : '';
+
+  return topbar(`Semaine ${n}`,w.phase,pct) +
+  coach(isDone ? `Semaine ${n} terminée. ${wd.done?'Bien joué.':'Tu avances.'}` : `<b>Semaine ${n} — ${w.title}</b><br><br><i>${w.obj}</i>`) +
+  `<div class="content">
+    <div class="card">
+      <div class="ctitle">Objectif</div>
+      <div style="font-size:14px;color:var(--gold2);font-weight:600">${w.obj}</div>
+    </div>
+    <div class="card">
+      <div class="ctitle">Actions de la semaine</div>
+      ${w.actions.map(a=>`<div style="display:flex;gap:8px;margin-bottom:7px;font-size:13.5px"><span style="color:var(--gold);flex-shrink:0">→</span>${a}</div>`).join('')}
+    </div>
+    ${kpiHtml}
+    ${extraInput}
+    ${notesHtml}
+    ${doneHtml}
+  </div>` +
+  `<div class="nav">
+    <button class="btn btn-muted btn-sm" onclick="backToHub()">← Hub</button>
+    ${!isDone?`<button class="btn btn-gold" onclick="submitWeek(${n})">Valider la semaine ${n} →</button>`:''}
+    ${isDone&&n<12?`<button class="btn btn-gold" onclick="goNextWeek(${n})">Semaine ${n+1} →</button>`:''}
+    ${isDone&&n===12?`<button class="btn btn-gold" onclick="go('p5')">Rapport final →</button>`:''}
+  </div>`;
+}
+
+window.setBool = function(v){
+  if(!S.p3.weekData[S.p3.week]) S.p3.weekData[S.p3.week]={};
+  S.p3.weekData[S.p3.week].kpiValue = v;
+  save(); render();
+};
+
+window.submitWeek = function(n){
+  const w = WEEKS[n-1];
+  let kpiVal;
+  if(w.kpiType==='number'){
+    kpiVal = parseInt(document.getElementById('kpiInput')?.value)||0;
+  } else {
+    kpiVal = S.p3.weekData[n]?.kpiValue;
+    if(kpiVal===undefined){toast('Réponds au KPI (Oui ou Non)'); return;}
+  }
+  const notes = document.getElementById('weekNotes')?.value||'';
+  const saleAmount = document.getElementById('saleAmount')?.value||'';
+
+  if(!S.p3.weekData[n]) S.p3.weekData[n]={};
+  S.p3.weekData[n].kpiValue = kpiVal;
+  S.p3.weekData[n].notes = notes;
+  S.p3.weekData[n].done = true;
+  if(saleAmount) S.p3.weekData[n].saleAmount = saleAmount;
+
+  // Unlock next week
+  if(n >= S.p3.unlocked && n < 12){
+    S.p3.unlocked = n+1;
+  } else if(n===12){
+    S.p3.unlocked = 12;
+    S.completed = true;
+  }
+
+  save(); render();
+};
+
+window.goNextWeek = function(n){
+  S.p3.week = n+1;
+  save(); render();
+};
+
+window.backToHub = function(){
+  S.screen = 'p3';
+  save(); render();
+};
+
+/* ════════════════════════════════════════
+   PHASE 4 — TABLEAU DE BORD
+════════════════════════════════════════ */
+function renderP4(){
+  const revs = S.p4.revenues;
+  const total = revs.reduce((a,r)=>a+(parseFloat(r.rev)||0),0);
+  const totalDep = revs.reduce((a,r)=>a+(parseFloat(r.dep)||0),0);
+  const net = total - totalDep;
+
+  let tableHtml = `<div class="rev-row">
+    <div class="rev-cell hdr">Mois</div>
+    <div class="rev-cell hdr">Revenus</div>
+    <div class="rev-cell hdr">Dépenses</div>
+    <div class="rev-cell hdr">Net</div>
+  </div>`;
+
+  revs.forEach((r,i)=>{
+    const n = (parseFloat(r.rev)||0)-(parseFloat(r.dep)||0);
+    tableHtml += `<div class="rev-row">
+      <div class="rev-cell">${r.month||'—'}</div>
+      <div class="rev-cell">${r.rev||0}</div>
+      <div class="rev-cell">${r.dep||0}</div>
+      <div class="rev-cell rev-total" style="color:${n>=0?'var(--ok)':'var(--err)'}">${n.toFixed(0)}</div>
+    </div>`;
+  });
+
+  if(revs.length>0){
+    tableHtml += `<div class="rev-row">
+      <div class="rev-cell hdr">TOTAL</div>
+      <div class="rev-cell rev-total">${total.toFixed(0)}</div>
+      <div class="rev-cell rev-total">${totalDep.toFixed(0)}</div>
+      <div class="rev-cell rev-total" style="color:${net>=0?'var(--ok)':'var(--err)'}">${net.toFixed(0)}</div>
+    </div>`;
+  }
+
+  return topbar('Tableau de bord','Phase 4 — Dashboard',90) +
+  coach(`Ton <b>tableau de bord financier</b>. Saisis tes revenus et dépenses chaque mois pour voir où tu en es. Un Plan B rentable, ça se mesure.`) +
+  `<div class="content">
+    <div class="card">
+      <div class="ctitle">Ajouter une entrée mensuelle</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:8px">
+        <div>
+          <label>Mois</label>
+          <input type="text" id="revMonth" placeholder="Ex: Avril">
+        </div>
+        <div>
+          <label>Revenus</label>
+          <input type="number" id="revAmt" placeholder="0">
+        </div>
+        <div>
+          <label>Dépenses</label>
+          <input type="number" id="depAmt" placeholder="0">
+        </div>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="addRevenue()">+ Ajouter</button>
+    </div>
+    <div class="card">
+      <div class="ctitle">Suivi financier Plan B</div>
+      ${revs.length===0?`<div style="color:var(--muted);font-size:13px;text-align:center;padding:12px">Aucune entrée pour l'instant</div>`:tableHtml}
+    </div>
+    <div class="card" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div style="text-align:center">
+        <div style="font-size:11px;color:var(--muted)">Total revenus</div>
+        <div style="font-size:22px;font-weight:800;color:var(--ok)">${total.toFixed(0)}</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:11px;color:var(--muted)">Bénéfice net</div>
+        <div style="font-size:22px;font-weight:800;color:${net>=0?'var(--ok)':'var(--err)'}">${net.toFixed(0)}</div>
+      </div>
+    </div>
+  </div>` +
+  nav(null,'p4Back','← Plan 90 jours',false,'');
+
+}
+
+window.p4Back = function(){ go('p3'); };
+
+window.addRevenue = function(){
+  const month = document.getElementById('revMonth')?.value.trim();
+  const rev = document.getElementById('revAmt')?.value||'0';
+  const dep = document.getElementById('depAmt')?.value||'0';
+  if(!month){toast('Indique le mois'); return;}
+  S.p4.revenues.push({month,rev,dep});
+  save(); render();
+};
+
+/* ════════════════════════════════════════
+   PHASE 5 — RAPPORT FINAL
+════════════════════════════════════════ */
+function renderP5(){
+  const wd = S.p3.weekData;
+  const totalRevenu = S.p4.revenues.reduce((a,r)=>a+(parseFloat(r.rev)||0),0);
+  const totalNet = S.p4.revenues.reduce((a,r)=>a+(parseFloat(r.rev)||0)-(parseFloat(r.dep)||0),0);
+  const weeksCompleted = Object.values(wd).filter(w=>w.done).length;
+  const kpisMet = WEEKS.filter((w,i)=>{
+    const d=wd[w.n];
+    if(!d?.done) return false;
+    if(w.kpiType==='number') return (d.kpiValue||0)>=w.kpiMin;
+    return d.kpiValue===true;
+  }).length;
+
+  return topbar('Rapport Final','Phase 5 — Rapport',100) +
+  coach(`<b>Tu as terminé les 90 jours.</b><br><br>Ce rapport résume tout ce que tu as construit. C'est la preuve tangible de ton travail. Garde-le. Reviens y dans 6 mois pour mesurer chemin parcouru.`) +
+  `<div class="content">
+    <div style="text-align:center;margin-bottom:8px">
+      <div style="font-size:36px">🏆</div>
+      <div style="font-size:20px;font-weight:800;color:var(--gold2);margin-bottom:4px">Plan B Complété</div>
+      <div class="badge badge-ok" style="display:inline-block">90 jours — Mission accomplie</div>
+    </div>
+
+    <div class="rep-section">
+      <div class="rep-title">Mon Plan B</div>
+      <div class="rep-row"><span>Idée choisie</span><strong>${S.p1.chosenIdea||'—'}</strong></div>
+      <div class="rep-row"><span>Offre</span><strong>${S.p2.audience&&S.p2.service?'J\'aide '+S.p2.audience+' à '+S.p2.service:'—'}</strong></div>
+      <div class="rep-row"><span>Prix</span><strong>${S.p2.price||'—'}</strong></div>
+    </div>
+
+    <div class="rep-section">
+      <div class="rep-title">Résultats des 90 jours</div>
+      <div class="rep-row"><span>Semaines complétées</span><strong>${weeksCompleted}/12</strong></div>
+      <div class="rep-row"><span>KPIs atteints</span><strong>${kpisMet}/12</strong></div>
+      <div class="rep-row"><span>Revenus totaux</span><strong style="color:var(--ok)">${totalRevenu.toFixed(0)} FCFA</strong></div>
+      <div class="rep-row"><span>Bénéfice net</span><strong style="color:${totalNet>=0?'var(--ok)':'var(--err)'}">${totalNet.toFixed(0)} FCFA</strong></div>
+    </div>
+
+    <div class="rep-section">
+      <div class="rep-title">Mon parcours — Moments clés</div>
+      ${wd[4]?.done?`<div class="rep-row"><span>1ère vente</span><strong style="color:var(--ok)">${wd[4].saleAmount||'Réalisée ✓'}</strong></div>`:''}
+      ${wd[6]?.done?`<div class="rep-row"><span>1ère recommandation</span><strong style="color:var(--ok)">${wd[6].kpiValue===true?'✓ Reçue':'Pas encore'}</strong></div>`:''}
+      ${wd[12]?.notes?`<div class="rep-row"><span>Vision 6 mois</span><strong>${wd[12].notes.substring(0,60)}...</strong></div>`:''}
+    </div>
+
+    <div class="rep-section">
+      <div class="rep-title">Mon identité entrepreneuriale</div>
+      <div class="rep-row"><span>Ce que je fais</span><strong>${S.p2.service||'—'}</strong></div>
+      <div class="rep-row"><span>Pour qui</span><strong>${S.p2.audience||'—'}</strong></div>
+      <div class="rep-row"><span>Mon atout naturel</span><strong>${S.p1.a1?S.p1.a1.substring(0,60)+'...':'—'}</strong></div>
+    </div>
+
+    <div class="card" style="background:linear-gradient(135deg,#1a2500,#0a1520);border-color:var(--gold);text-align:center;padding:20px">
+      <div style="font-size:14px;color:var(--gold2);font-weight:600;line-height:1.7">"Ton futur ne dépend pas des circonstances.<br>Il dépend de ta capacité à avancer avec<br>lucidité, courage et constance."</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:8px">— Coach Redouane</div>
+    </div>
+
+    <button class="btn btn-gold" onclick="go('p3')">← Revenir au plan 90 jours</button>
+  </div>`;
+}
+
+/* ════════════════════════════════════════
+   NAVIGATION UTILS
+════════════════════════════════════════ */
+window.go = function(screen){
+  S.screen = screen;
+  save(); render();
+};
+
+function toast(msg){
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), 2400);
+}
+
+/* ════════════════════════════════════════
+   INIT
+════════════════════════════════════════ */
+load();
+render();
+</script>
+</body>
+</html>
