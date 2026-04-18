@@ -790,34 +790,29 @@ function renderP2S0(){
 // P2 Step 1: Offer formula
 function renderP2S1(){
   const ex = {danse:"danseurs débutants","à apprendre les bases de la danse afro en 4 semaines",musique:"musiciens débutants","à jouer leurs premiers accords de guitare",beaute:"femmes actives","à avoir une belle coiffure sans se déplacer",default:"personnes en recherche","à résoudre leur problème rapidement"};
+  const previewA = S.p2.audience||'...';
+  const previewS = S.p2.service||'...';
+  const previewB = S.p2.benefit;
+  const previewText = `J'aide ${previewA} à ${previewS}${previewB?' — pour '+previewB:''}.`;
+
   return coach(`La formule magique de toute offre rentable :<br><br><b>"J'aide [QUI] à [RÉSULTAT CONCRET]"</b><br><br>C'est simple, direct, et ça dit exactement ce que tu fais. Remplis chaque champ.`) +
   `<div class="content">
     <div class="card">
       <div class="ctitle">Formule de ton offre</div>
       <label>J'aide :</label>
-      <input type="text" id="audience" value="${S.p2.audience}" placeholder="Ex: les mamans de mon quartier, les jeunes diplômés, les commerçants...">
+      <input type="text" id="audience" value="${S.p2.audience}" placeholder="Ex: les mamans de mon quartier, les jeunes diplômés, les commerçants..." oninput="updateOfferPreview()">
       <label>À :</label>
-      <input type="text" id="service" value="${S.p2.service}" placeholder="Ex: apprendre à danser afro, trouver leur premier client, créer un CV professionnel...">
+      <input type="text" id="service" value="${S.p2.service}" placeholder="Ex: apprendre à danser afro, trouver leur premier client, créer un CV professionnel..." oninput="updateOfferPreview()">
       <label>Le bénéfice concret qu'ils obtiennent :</label>
-      <input type="text" id="benefit" value="${S.p2.benefit}" placeholder="Ex: confiance en soi, plus de revenus, économiser du temps...">
+      <input type="text" id="benefit" value="${S.p2.benefit}" placeholder="Ex: confiance en soi, plus de revenus, économiser du temps..." oninput="updateOfferPreview()">
       <label>Mon prix de départ (sois réaliste) :</label>
       <input type="text" id="price" value="${S.p2.price}" placeholder="Ex: 5 000 FCFA la séance, 15 000 FCFA le mois...">
     </div>
     <div class="card" style="background:#0a1520">
       <div class="ctitle">Ta phrase d'offre complète</div>
-      <div style="font-size:14px;color:var(--text);font-style:italic;line-height:1.6" id="offerPreview">Remplis les champs ci-dessus pour voir ta phrase...</div>
+      <div style="font-size:14px;color:var(--text);font-style:italic;line-height:1.6" id="offerPreview">${previewText}</div>
     </div>
-  </div>
-  <script>
-    function updatePreview(){
-      const a=document.getElementById('audience')?.value||'...';
-      const s=document.getElementById('service')?.value||'...';
-      const b=document.getElementById('benefit')?.value||'';
-      document.getElementById('offerPreview').textContent='J\'aide '+a+' à '+s+(b?' — pour '+b:'')+'.'
-    }
-    document.querySelectorAll('#audience,#service,#benefit,#price').forEach(el=>el.addEventListener('input',updatePreview));
-    updatePreview();
-  <\/script>` +
+  </div>` +
   nav('p2Back','p2Next','Continuer →');
 }
 
@@ -928,6 +923,14 @@ function renderP2S5(){
   </div>` +
   nav('p2Back','validateP2','Démarrer le Plan 90 jours →');
 }
+
+window.updateOfferPreview = function(){
+  const a=document.getElementById('audience')?.value||'...';
+  const s=document.getElementById('service')?.value||'...';
+  const b=document.getElementById('benefit')?.value||'';
+  const el=document.getElementById('offerPreview');
+  if(el) el.textContent="J'aide "+a+" à "+s+(b?' — pour '+b:'')+'.';
+};
 
 window.p2Next = function(){
   capP2();
@@ -1212,7 +1215,7 @@ function renderP4(){
       </div>
     </div>
   </div>` +
-  nav(null,'p4Back','← Plan 90 jours',false,'');
+  `<div class="nav"><button class="btn btn-outline" onclick="p4Back()">← Plan 90 jours</button></div>`;
 
 }
 
