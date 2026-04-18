@@ -275,25 +275,37 @@ textarea.jinp{min-height:80px}
     <button onclick="closeM('help-modal')" class="btn-next" style="margin-top:16px">Compris &#x2192; Je r&#xe9;ponds</button>
   </div>
 </div>
+<div class="mover" id="rapport-modal">
+  <div class="mbox" style="max-height:90vh;overflow-y:auto;width:560px;max-width:96vw">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;position:sticky;top:-28px;background:var(--card);padding:4px 0 12px;border-bottom:1px solid var(--border);z-index:10">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--gold);font-weight:700">&#x1F4CB; Rapport complet</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button onclick="imprimerRapport()" style="padding:6px 14px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.3);border-radius:6px;color:var(--gold);font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">&#x1F4E5; PDF</button>
+        <button onclick="closeM('rapport-modal')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:22px">&#x2715;</button>
+      </div>
+    </div>
+    <div id="rapport-body"></div>
+  </div>
+</div>
 
 <script>
 function getSector(text) {
   var t = (text||'').toLowerCase()
     .replace(/[\u00e9\u00e8\u00ea\u00eb]/g,'e').replace(/[\u00e0\u00e2]/g,'a')
     .replace(/[\u00f9\u00fb]/g,'u').replace(/\u00f4/g,'o').replace(/\u00ee/g,'i').replace(/\u00e7/g,'c');
-  if(/dans[e|eur]|choreo|ballet|hip.?hop|afrobeat|zumba|salsa|kizomba|danse/i.test(t)) return 'danse';
-  if(/music|chant|guitare|piano|batterie|djing|\bdj\b|beatmaker|rap|studio.*son/i.test(t)) return 'musique';
-  if(/photo|photographi|cameraman|montage.*vid|youtube|podcast|tiktok|influenc/i.test(t)) return 'media';
-  if(/\bsport\b|foot|basket|fitness|musculation|boxe|natation|yoga|entraineur|coach.*sport/i.test(t)) return 'sport';
-  if(/cuisi|repas|plat|nourri|chef|gateau|patiss|traiteur|jus/i.test(t)) return 'cuisine';
-  if(/vetement|mode|habit|style|look|fashion|shopping|vesti|coutur|personal.shop/i.test(t)) return 'mode';
-  if(/dessin|peintur|tableau|illustr|aquarell|bd\b|bande.dessin/i.test(t)) return 'dessin';
-  if(/phone|mobile|ordi|tech|digital|reseau|facebook|site.web|informatique|repair/i.test(t)) return 'tech';
-  if(/coiffure|cheveux|beaute|maquill|soin|massage|estheti|ongle|nail/i.test(t)) return 'beaute';
-  if(/voiture|moto|taxi|transport|conduire|livrai|chauffeur/i.test(t)) return 'transport';
-  if(/cours|enseign|apprend|ecole|eleve|soutien|educat|formation|tuteur/i.test(t)) return 'education';
-  if(/nettoyage|menage|entretien/i.test(t)) return 'nettoyage';
-  if(/tailleur|broderie|tissu|pagne|wax/i.test(t)) return 'couture';
+  if(/dans(e|eur|euse|ant|ons)?|danc(e|ing|er)?|choreo|choregraph|ballet|hip.?hop|afrobeat|zumba|salsa|kizomba|twerk|cours.de.danse|spectacle.danse|danse.africain|mouvement.danse/i.test(t)) return 'danse';
+  if(/music|chant(e|er|eur|euse)?|guitare|piano|batterie|djing|\bdj\b|beatmaker|rap|studio.son|chanson|melodie|instrument/i.test(t)) return 'musique';
+  if(/photo|photographi|cameraman|montage.vid|youtube|podcast|tiktok|influenc|filmer|clip.video/i.test(t)) return 'media';
+  if(/\bsport\b|foot(ball)?|basket|fitness|musculation|boxe|natation|yoga|entraineur|coach.sport|athletisme|cardio|gym/i.test(t)) return 'sport';
+  if(/cuisi(ne|nier|niere)?|repas|plat|nourri|chef|gateau|patiss|traiteur|jus|restaurant|recette/i.test(t)) return 'cuisine';
+  if(/vetement|mode|habit|style|look|fashion|shopping|vesti|personal.shop|tenue|s.habiller/i.test(t)) return 'mode';
+  if(/dessin|dessiner|peintur|peindre|tableau|illustr|aquarell|\bbd\b|bande.dessin|croquis|gravure|artiste.visuel/i.test(t)) return 'dessin';
+  if(/phone|mobile|ordi|tech|digital|reseau|facebook|site.web|informatique|repair|smartphone|application|programmation/i.test(t)) return 'tech';
+  if(/coiffure|cheveux|tresse|beaute|maquill|soin.capillaire|massage|estheti|ongle|nail|spa/i.test(t)) return 'beaute';
+  if(/voiture|moto|taxi|transport|conduire|livrai|chauffeur|coursier|deplacement/i.test(t)) return 'transport';
+  if(/cours|enseign|apprend|ecole|eleve|soutien|educat|formation|tuteur|apprentissage|professeur/i.test(t)) return 'education';
+  if(/nettoyage|menage|nettoyer|proprete|entretien.maison|entretien.bureau/i.test(t)) return 'nettoyage';
+  if(/tailleur|broderie|tissu|pagne|wax|coutur|confection|coudre/i.test(t)) return 'couture';
   return 'default';
 }
 
@@ -387,6 +399,7 @@ var J = {            // Réponses du parcours guidé
   ideeChoisie: null,
   offre: '', prix: '', contacts: '', contacts10: [], offerSel: -1, s1fields: {}, a2selections: [], a3selections: [],
   semaines: {},  // {1:{validee,date,note,answers}}
+  weekFields: {}, // {weekNum: {key: value}} — champs interactifs semaines 2-12
 };
 
 function save() {
@@ -1400,13 +1413,10 @@ function renderSem(body, num){
         +'<div onclick="toggleAct('+a.id+','+num+')" style="font-size:13px;color:'+(a.done?'var(--muted)':'var(--text)')+';'+(a.done?'text-decoration:line-through':'')+';line-height:1.5;flex:1;cursor:pointer">'+a.text+'</div>'
         +'<button onclick="delAction('+a.id+','+num+')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0 4px;line-height:1;flex-shrink:0">&times;</button>'
         +'</div>').join('')    :'<div style="font-size:12px;color:var(--muted)">Actions générées automatiquement.</div>';
-  // Add custom action button
-  // Interactive result fields for non-auto-checked tasks (S1 specific)
-  if(num === 1) {
-    actsHtml += buildS1TaskFields();
-  }
+  // Interactive fields for each week
+  actsHtml += buildWeekTaskFields(num);
 
-  actsHtml += '<button onclick="addCustomAction('+num+')" style="width:100%;margin-top:10px;padding:9px;background:transparent;border:1px dashed var(--border);border-radius:8px;color:var(--muted);font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;transition:all .2s"rgba(201,168,76,.4)\';this.style.color=\'var(--gold)\';"var(--border)\';this.style.color=\'var(--muted)\';">+ Ajouter une action personnalisée</button>';
+  actsHtml += '<button onclick="addCustomAction('+num+')" style="width:100%;margin-top:10px;padding:9px;background:transparent;border:1px dashed var(--border);border-radius:8px;color:var(--muted);font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;transition:all .2s">+ Ajouter une action personnalisée</button>';
 
   const qsHtml=(d.qs||[]).map(q=>'<div style="margin-bottom:2px">'
     +'<div class="jq">'+q.l+'</div>'
@@ -1822,17 +1832,21 @@ function renderPlanPage(){
   if(ni)ni.style.display='none';
   if(!pc)return;
   const sem=S.prog.semaineActuelle||1;
-  const pct=Math.round(((sem-1)/12)*100);
+  // Check if all 12 semaines are done (from either store)
+  var allDone = true; for(var _n=1;_n<=12;_n++){var _sv=(S.prog.semaines[_n]||(J.semaines&&J.semaines[_n])||{});if(!_sv.validee){allDone=false;break;}}
+  const pct=allDone?100:Math.round(((sem-1)/12)*100);
+  const semLabel = allDone ? '12/12 — 100% accompli 🏆' : 'Semaine '+sem+'/12 — '+pct+'% accompli';
   let html='<div class="card" style="margin-bottom:14px">'
     +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
-    +'<div><div class="card-title" style="margin-bottom:0">Progression</div><div style="font-size:12px;color:var(--muted)">Semaine '+sem+'/12 — '+pct+'% accompli</div></div>'
+    +'<div><div class="card-title" style="margin-bottom:0">Progression</div><div style="font-size:12px;color:var(--muted)">'+semLabel+'</div></div>'
     +'<div style="font-family:\'Cormorant Garamond\',serif;font-size:28px;font-weight:700;color:var(--gold)">S'+sem+'</div></div>'
     +'<div style="background:var(--darker);border-radius:6px;height:6px;overflow:hidden"><div style="height:100%;background:linear-gradient(90deg,var(--gold),#E8C96A);width:'+pct+'%;border-radius:6px"></div></div>'
     +'</div>';
   for(let n=1;n<=12;n++){
     const d=SEM[n];
-    const sv=S.prog.semaines[n]||{};
-    const isDone=sv.validee;const isAct=n===sem;const isLocked=n>sem;
+    // Fallback: use J.semaines if S.prog.semaines not set (older data format)
+    const sv=(S.prog.semaines[n]&&S.prog.semaines[n].validee?S.prog.semaines[n]:null)||(J.semaines&&J.semaines[n])||{};
+    const isDone=sv.validee;const isAct=n===sem&&!allDone;const isLocked=n>sem&&!allDone&&!isDone;
     const bc=isDone?'rgba(46,204,113,.3)':isAct?'rgba(201,168,76,.4)':'var(--border)';
     const sp=n<=4?1:n<=8?2:3;const sw=n<=4?n:n<=8?n-4:n-8;const phL='S'+sp+'.'+sw;
     html+='<div style="background:var(--card);border:1px solid '+bc+';border-radius:12px;padding:14px;margin-bottom:10px;opacity:'+(isLocked?'0.4':'1')+';cursor:'+(isLocked?'default':'pointer')+'" '+(isLocked?'':'onclick="openSemaineDetail('+n+')"')+'>'
@@ -2310,6 +2324,167 @@ function saveS1Field(key, value) {
   if(!J.s1fields) J.s1fields = {};
   J.s1fields[key] = value;
   save();
+}
+
+function saveWeekField(num, key, value) {
+  if(!J.weekFields) J.weekFields = {};
+  if(!J.weekFields[num]) J.weekFields[num] = {};
+  J.weekFields[num][key] = value;
+  save();
+}
+
+function saveWeekCheckbox(num, key, idx, checked) {
+  if(!J.weekFields) J.weekFields = {};
+  if(!J.weekFields[num]) J.weekFields[num] = {};
+  if(!J.weekFields[num][key]) J.weekFields[num][key] = [];
+  if(checked) {
+    if(!J.weekFields[num][key].includes(idx)) J.weekFields[num][key].push(idx);
+  } else {
+    J.weekFields[num][key] = J.weekFields[num][key].filter(function(i){return i!==idx;});
+  }
+  save();
+  var body = document.getElementById('jbody');
+  if(body) renderSem(body, num);
+}
+
+function buildWeekTaskFields(num) {
+  if(num === 1) return buildS1TaskFields();
+  if(!J.weekFields) J.weekFields = {};
+  var saved = J.weekFields[num] || {};
+  var devise = S.devise || 'FCFA';
+  var html = '<div style="background:rgba(201,168,76,.04);border:1px solid rgba(201,168,76,.1);border-radius:10px;padding:14px;margin-top:12px">';
+  html += '<div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--gold);font-weight:700;margin-bottom:12px">\uD83D\uDCCB Suivi de tes actions cette semaine</div>';
+
+  if(num === 2) {
+    html += '<div style="margin-bottom:12px">'
+      + '<div class="jq" style="margin-bottom:6px">\uD83D\uDCF1 Combien de messages as-tu envoy\u00e9s ?</div>'
+      + '<div style="display:flex;align-items:center;gap:12px">'
+      + '<input class="jinp" id="wf-2-messages" type="number" min="0" max="200" placeholder="0" value="'+(saved.messages||'')+'" style="width:80px;text-align:center;margin-bottom:0;font-size:18px;font-weight:700" oninput="saveWeekField(2,\'messages\',this.value)">'
+      + '<span style="font-size:13px;color:var(--muted)">messages envoy\u00e9s</span></div></div>';
+    html += '<div style="margin-bottom:12px">'
+      + '<div class="jq" style="margin-bottom:6px">\u2709\uFE0F Combien ont r\u00e9pondu (oui ou non) ?</div>'
+      + '<div style="display:flex;align-items:center;gap:12px">'
+      + '<input class="jinp" id="wf-2-reponses" type="number" min="0" max="200" placeholder="0" value="'+(saved.reponses||'')+'" style="width:80px;text-align:center;margin-bottom:0;font-size:18px;font-weight:700;color:'+(parseInt(saved.reponses||0)>=5?'var(--success)':'inherit')+'" oninput="saveWeekField(2,\'reponses\',this.value)">'
+      + '<span style="font-size:13px;color:'+(parseInt(saved.reponses||0)>=5?'var(--success)':'var(--muted)')+'">r\u00e9ponses (KPI : 5 minimum)'+(parseInt(saved.reponses||0)>=5?' \u2705':'')+'</span></div></div>';
+    html += '<div class="jq" style="margin-bottom:6px">\uD83D\uDCAC Message qui a eu le meilleur retour :</div>'
+      + '<textarea class="jinp" id="wf-2-bestmsg" placeholder="Colle ici le message exact qui a fonctionn\u00e9..." style="min-height:70px;margin-bottom:0" oninput="saveWeekField(2,\'bestmsg\',this.value)">'+(saved.bestmsg||'')+'</textarea>';
+
+  } else if(num === 3) {
+    html += '<div class="jq" style="margin-bottom:6px">\uD83D\uDEE0\uFE0F Ta version MVP (la plus simple possible) :</div>'
+      + '<input class="jinp" id="wf-3-mvp" type="text" placeholder="Ex: 1 post/jour pendant 2 semaines \u00e0 10 000 FCFA au lieu de 30 000" value="'+(saved.mvp||'')+'" style="margin-bottom:12px" oninput="saveWeekField(3,\'mvp\',this.value)">';
+    var contacts = (J.contacts10 || []).filter(Boolean);
+    if(contacts.length) {
+      var testers = saved.testeurs || [];
+      html += '<div class="jq" style="margin-bottom:6px">\uD83D\uDC65 Tes testeurs pilotes (coche ceux qui ont accept\u00e9 tester) :</div>'
+        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px">';
+      contacts.slice(0,6).forEach(function(name, i) {
+        var tested = testers.includes(i);
+        html += '<label style="display:flex;align-items:center;gap:8px;background:var(--darker);border:1px solid '+(tested?'var(--success)':'var(--border)')+';border-radius:8px;padding:8px 10px;cursor:pointer">'
+          + '<input type="checkbox" '+(tested?'checked':'')+' onchange="saveWeekCheckbox(3,\'testeurs\','+i+',this.checked)" style="accent-color:var(--success);flex-shrink:0">'
+          + '<span style="font-size:13px;color:'+(tested?'var(--success)':'var(--text)')+'">'+name+'</span></label>';
+      });
+      html += '</div>';
+    }
+    html += '<div class="jq" style="margin-bottom:6px">\uD83D\uDCDD Ce que tes testeurs t\'ont dit :</div>'
+      + '<textarea class="jinp" id="wf-3-feedback" placeholder="Ex: Fatima a accept\u00e9 de tester. Ahmed trouve le prix \u00e9lev\u00e9 mais int\u00e9ress\u00e9." style="min-height:70px;margin-bottom:0" oninput="saveWeekField(3,\'feedback\',this.value)">'+(saved.feedback||'')+'</textarea>';
+
+  } else if(num === 4) {
+    var hasSale = saved.hasSale;
+    html += '<div style="margin-bottom:14px">'
+      + '<div class="jq" style="margin-bottom:8px">\uD83D\uDCB0 As-tu encaiss\u00e9 ta premi\u00e8re vente ?</div>'
+      + '<div style="display:flex;gap:8px">'
+      + '<button onclick="saveWeekField(4,\'hasSale\',true);renderSem(document.getElementById(\'jbody\'),4)" style="flex:1;padding:10px;background:'+(hasSale===true?'rgba(46,204,113,.2)':'var(--darker)')+';border:2px solid '+(hasSale===true?'var(--success)':'var(--border)')+';border-radius:8px;color:'+(hasSale===true?'var(--success)':'var(--muted)')+';font-family:DM Sans,sans-serif;font-size:13px;font-weight:700;cursor:pointer">\u2705 Oui !</button>'
+      + '<button onclick="saveWeekField(4,\'hasSale\',false);renderSem(document.getElementById(\'jbody\'),4)" style="flex:1;padding:10px;background:'+(hasSale===false?'rgba(231,76,60,.1)':'var(--darker)')+';border:2px solid '+(hasSale===false?'rgba(231,76,60,.4)':'var(--border)')+';border-radius:8px;color:'+(hasSale===false?'var(--danger)':'var(--muted)')+';font-family:DM Sans,sans-serif;font-size:13px;cursor:pointer">Pas encore</button>'
+      + '</div></div>';
+    if(hasSale === true) {
+      html += '<div class="jq" style="margin-bottom:6px">\uD83D\uDCB5 Montant encaiss\u00e9 ('+devise+') :</div>'
+        + '<input class="jinp" id="wf-4-montant" type="number" placeholder="Ex: 25000" value="'+(saved.montant||'')+'" style="margin-bottom:10px" oninput="saveWeekField(4,\'montant\',this.value)">';
+      html += '<div class="jq" style="margin-bottom:6px">\uD83E\uDD1D Comment tu as conclu cette vente :</div>'
+        + '<textarea class="jinp" id="wf-4-howsold" placeholder="Ex: Message WhatsApp direct \u00e0 Ibrahim, il a pay\u00e9 via Wave en 10 minutes." style="min-height:60px;margin-bottom:0" oninput="saveWeekField(4,\'howsold\',this.value)">'+(saved.howsold||'')+'</textarea>';
+    } else if(hasSale === false) {
+      html += '<div style="background:rgba(231,76,60,.05);border:1px solid rgba(231,76,60,.2);border-radius:8px;padding:12px;margin-bottom:10px">'
+        + '<div style="font-size:12px;color:var(--danger);font-weight:600;margin-bottom:6px">\uD83D\uDCA1 Plan de rebond \u2014 pas un \u00e9chec, un ajustement :</div>'
+        + ['Doubler le volume de messages WhatsApp', 'Baisser le prix temporairement', 'Changer ton message d\'accroche', 'Relancer les 3 personnes les plus int\u00e9ress\u00e9es'].map(function(a){ return '<div style="font-size:12px;color:var(--text);margin-bottom:3px">\u2192 '+a+'</div>'; }).join('')
+        + '</div>';
+      html += '<div class="jq" style="margin-bottom:6px">Qu\'est-ce qui t\'a bloqu\u00e9 ?</div>'
+        + '<textarea class="jinp" id="wf-4-blocker" placeholder="Ex: Peur du refus, pas s\u00fbr de mon prix, manque de temps..." style="min-height:60px;margin-bottom:0" oninput="saveWeekField(4,\'blocker\',this.value)">'+(saved.blocker||'')+'</textarea>';
+    }
+
+  } else if(num === 5) {
+    html += '<div class="jq" style="margin-bottom:6px">\uD83D\uDD04 Qu\'est-ce qui a g\u00e9n\u00e9r\u00e9 ta premi\u00e8re vente (ce que tu r\u00e9p\u00e8tes exactement) ?</div>'
+      + '<input class="jinp" id="wf-5-repeat" type="text" placeholder="Ex: Message WhatsApp direct + relance 3 jours apr\u00e8s" value="'+(saved.repeat||'')+'" style="margin-bottom:12px" oninput="saveWeekField(5,\'repeat\',this.value)">';
+    html += '<div class="jq" style="margin-bottom:6px">\uD83D\uDCDE Nouvelles personnes contact\u00e9es cette semaine :</div>'
+      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">'
+      + '<input class="jinp" id="wf-5-newcontacts" type="number" min="0" placeholder="0" value="'+(saved.newcontacts||'')+'" style="width:80px;text-align:center;margin-bottom:0;font-size:18px;font-weight:700;color:'+(parseInt(saved.newcontacts||0)>=10?'var(--success)':'inherit')+'" oninput="saveWeekField(5,\'newcontacts\',this.value)">'
+      + '<span style="font-size:13px;color:var(--muted)">personnes (objectif : 10)'+(parseInt(saved.newcontacts||0)>=10?' \u2705':'')+'</span></div>';
+    html += '<div class="jq" style="margin-bottom:6px">\uD83D\uDCCA R\u00e9sultat (ventes / int\u00e9ress\u00e9s) :</div>'
+      + '<input class="jinp" id="wf-5-result" type="text" placeholder="Ex: 2 int\u00e9ress\u00e9s, 1 vente confirm\u00e9e" value="'+(saved.result||'')+'" style="margin-bottom:0" oninput="saveWeekField(5,\'result\',this.value)">';
+
+  } else if(num === 6) {
+    html += '<div class="jq" style="margin-bottom:6px">\uD83E\uDD1D Qui t\'a recommand\u00e9 \u00e0 quelqu\'un ? (pr\u00e9nom + contexte)</div>'
+      + '<textarea class="jinp" id="wf-6-reco" placeholder="Ex: Fatima m\'a pr\u00e9sent\u00e9 \u00e0 sa s\u0153ur qui a une boutique mode." style="min-height:60px;margin-bottom:12px" oninput="saveWeekField(6,\'reco\',this.value)">'+(saved.reco||'')+'</textarea>';
+    html += '<div class="jq" style="margin-bottom:6px">\u2B50 T\u00e9moignage client (copie-le ici) :</div>'
+      + '<textarea class="jinp" id="wf-6-testimony" placeholder="Ex: &quot;Depuis qu\'il g\u00e8re ma page, j\'ai 3 nouveaux clients/semaine.&quot; \u2014 Ibrahim B." style="min-height:60px;margin-bottom:0" oninput="saveWeekField(6,\'testimony\',this.value)">'+(saved.testimony||'')+'</textarea>';
+
+  } else if(num === 7) {
+    html += '<div class="jq" style="margin-bottom:6px">\u23F0 Ta routine quotidienne Plan B (cr\u00e9neau + actions) :</div>'
+      + '<textarea class="jinp" id="wf-7-routine" placeholder="Ex: 18h00 : 3 messages prospects\n18h20 : cr\u00e9er 1 post\n18h45 : bilan du jour" style="min-height:90px;margin-bottom:12px" oninput="saveWeekField(7,\'routine\',this.value)">'+(saved.routine||'')+'</textarea>';
+    html += '<div class="jq" style="margin-bottom:6px">\uD83D\uDCAC Ton message de vente simplifi\u00e9 en 1-2 phrases :</div>'
+      + '<textarea class="jinp" id="wf-7-salesmsg" placeholder="Ex: Je g\u00e8re ta page Facebook pour 30 000 FCFA/mois. R\u00e9sultat garanti en 30 jours." style="min-height:60px;margin-bottom:0" oninput="saveWeekField(7,\'salesmsg\',this.value)">'+(saved.salesmsg||'')+'</textarea>';
+
+  } else if(num === 8) {
+    var totalR = S.revenus.filter(function(r){return r.type==='revenu';}).reduce(function(s,r){return s+r.montant;},0);
+    var totalD = S.revenus.filter(function(r){return r.type==='depense';}).reduce(function(s,r){return s+r.montant;},0);
+    html += '<div style="background:var(--darker);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px">'
+      + '<div style="font-size:11px;color:var(--muted);margin-bottom:8px">\uD83D\uDCCA Bilan automatique depuis l\'app Revenus</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'
+      + '<div><div style="font-size:10px;color:var(--muted)">Revenus</div><div style="font-size:16px;font-weight:700;color:var(--success)">+'+Math.round(totalR).toLocaleString()+' '+devise+'</div></div>'
+      + '<div><div style="font-size:10px;color:var(--muted)">D\u00e9penses</div><div style="font-size:16px;font-weight:700;color:var(--danger)">-'+Math.round(totalD).toLocaleString()+' '+devise+'</div></div>'
+      + '<div><div style="font-size:10px;color:var(--muted)">Solde net</div><div style="font-size:16px;font-weight:700;color:'+(totalR-totalD>=0?'var(--gold)':'var(--danger)')+'">'+Math.round(totalR-totalD).toLocaleString()+' '+devise+'</div></div>'
+      + '</div></div>';
+    html += '<div class="jq" style="margin-bottom:6px">\uD83C\uDFAF Ce que tu as appris ce Mois 1 :</div>'
+      + '<textarea class="jinp" id="wf-8-learnings" placeholder="Ex: Les restaurants sont plus faciles que les boutiques. Le WhatsApp direct marche mieux que les groupes." style="min-height:70px;margin-bottom:12px" oninput="saveWeekField(8,\'learnings\',this.value)">'+(saved.learnings||'')+'</textarea>';
+    html += '<div class="jq" style="margin-bottom:6px">\u26A1\uFE0F Une t\u00e2che \u00e0 simplifier ou d\u00e9l\u00e9guer :</div>'
+      + '<input class="jinp" id="wf-8-delegate" type="text" placeholder="Ex: Cr\u00e9er des mod\u00e8les de posts pour ne plus partir de z\u00e9ro" value="'+(saved.delegate||'')+'" style="margin-bottom:0" oninput="saveWeekField(8,\'delegate\',this.value)">';
+
+  } else if(num === 9) {
+    html += '<div class="jq" style="margin-bottom:6px">\uD83D\uDCB5 Ton nouveau prix (+10 \u00e0 20%) :</div>'
+      + '<input class="jinp" id="wf-9-newprice" type="text" placeholder="Ex: Avant 30 000, maintenant 35 000 '+devise+'/mois" value="'+(saved.newprice||'')+'" style="margin-bottom:12px" oninput="saveWeekField(9,\'newprice\',this.value)">';
+    html += '<div class="jq" style="margin-bottom:6px">\uD83C\uDF81 Bonus ajout\u00e9 pour justifier le nouveau prix :</div>'
+      + '<input class="jinp" id="wf-9-bonus" type="text" placeholder="Ex: 1 session conseil mensuelle + rapport de r\u00e9sultats" value="'+(saved.bonus||'')+'" style="margin-bottom:12px" oninput="saveWeekField(9,\'bonus\',this.value)">';
+    html += '<div class="jq" style="margin-bottom:6px">\uD83D\uDCDE R\u00e9action de tes clients au nouveau prix :</div>'
+      + '<textarea class="jinp" id="wf-9-reaction" placeholder="Ex: 2 clients ont accept\u00e9 sans h\u00e9siter. 1 a n\u00e9goci\u00e9..." style="min-height:60px;margin-bottom:0" oninput="saveWeekField(9,\'reaction\',this.value)">'+(saved.reaction||'')+'</textarea>';
+
+  } else if(num === 10) {
+    html += '<div class="jq" style="margin-bottom:6px">\uD83D\uDC64 Ton client id\u00e9al (profil pr\u00e9cis) :</div>'
+      + '<textarea class="jinp" id="wf-10-client" placeholder="Ex: G\u00e9rant de boutique mode, 30-45 ans, Abidjan, n\'a pas le temps pour les r\u00e9seaux, veut des clients r\u00e9guliers" style="min-height:70px;margin-bottom:12px" oninput="saveWeekField(10,\'client\',this.value)">'+(saved.client||'')+'</textarea>';
+    html += '<div class="jq" style="margin-bottom:6px">\uD83D\uDCE1 Nouveau canal test\u00e9 et r\u00e9sultat :</div>'
+      + '<input class="jinp" id="wf-10-channel" type="text" placeholder="Ex: Groupe Facebook commer\u00e7ants \u2192 4 demandes en 2 jours" value="'+(saved.channel||'')+'" style="margin-bottom:0" oninput="saveWeekField(10,\'channel\',this.value)">';
+
+  } else if(num === 11) {
+    html += '<div class="jq" style="margin-bottom:6px">\uD83D\uDD1D Tes 3 actions les plus rentables (class\u00e9es par impact) :</div>'
+      + '<textarea class="jinp" id="wf-11-top3" placeholder="1. Messages WhatsApp directs\n2. Recommandations clients\n3. Groupes Facebook pros" style="min-height:80px;margin-bottom:12px" oninput="saveWeekField(11,\'top3\',this.value)">'+(saved.top3||'')+'</textarea>';
+    html += '<div class="jq" style="margin-bottom:6px">\uD83D\uDD04 Ton offre r\u00e9currente (abonnement mensuel) :</div>'
+      + '<textarea class="jinp" id="wf-11-recurring" placeholder="Ex: Abonnement 35 000 '+devise+'/mois = 15 posts + 2 sessions conseil + rapport mensuel" style="min-height:60px;margin-bottom:0" oninput="saveWeekField(11,\'recurring\',this.value)">'+(saved.recurring||'')+'</textarea>';
+
+  } else if(num === 12) {
+    var totalR = S.revenus.filter(function(r){return r.type==='revenu';}).reduce(function(s,r){return s+r.montant;},0);
+    var actDone = S.actions.filter(function(a){return a.done;}).length;
+    var actTotal = S.actions.length;
+    html += '<div style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.2);border-radius:8px;padding:14px;margin-bottom:12px">'
+      + '<div style="font-size:11px;color:var(--gold);font-weight:700;margin-bottom:8px">\uD83C\uDFC6 Ton bilan automatique 90 jours</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+      + '<div><div style="font-size:10px;color:var(--muted)">Revenus g\u00e9n\u00e9r\u00e9s</div><div style="font-size:18px;font-weight:700;color:var(--success)">'+Math.round(totalR).toLocaleString()+' '+devise+'</div></div>'
+      + '<div><div style="font-size:10px;color:var(--muted)">T\u00e2ches compl\u00e9t\u00e9es</div><div style="font-size:18px;font-weight:700;color:var(--gold)">'+actDone+'/'+actTotal+'</div></div>'
+      + '</div></div>';
+    html += '<div class="jq" style="margin-bottom:6px">\uD83C\uDFAF Ta d\u00e9cision pour le Cycle 2 :</div>'
+      + '<textarea class="jinp" id="wf-12-decision" placeholder="Ex: Je continue avec la m\u00eame id\u00e9e mais je me sp\u00e9cialise dans les restaurants." style="min-height:60px;margin-bottom:12px" oninput="saveWeekField(12,\'decision\',this.value)">'+(saved.decision||'')+'</textarea>';
+    html += '<div class="jq" style="margin-bottom:6px">\uD83D\uDD2D Ta vision dans 6 mois :</div>'
+      + '<textarea class="jinp" id="wf-12-vision6m" placeholder="Ex: 10 clients r\u00e9guliers, 350 000 '+devise+'/mois, un assistant \u00e0 temps partiel." style="min-height:60px;margin-bottom:0" oninput="saveWeekField(12,\'vision6m\',this.value)">'+(saved.vision6m||'')+'</textarea>';
+  }
+
+  html += '</div>';
+  return html;
 }
 
 function toggleContact(idx, checked) {
