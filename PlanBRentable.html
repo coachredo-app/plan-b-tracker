@@ -186,6 +186,41 @@ textarea{min-height:75px;line-height:1.5}
 .secours{background:#1e1a0a;border:1px solid var(--gold);border-radius:var(--r);padding:13px}
 .secours-title{font-size:12px;color:var(--gold);font-weight:700;margin-bottom:8px}
 .secours li{font-size:13px;color:var(--text);margin-left:16px;margin-bottom:4px;line-height:1.5}
+
+/* ---- ACTION ITEMS ---- */
+.action-item{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;border-radius:10px;background:#0a1520;border:1.5px solid #1e3350;margin-bottom:6px;cursor:pointer;transition:all .2s}
+.action-item.done{border-color:var(--ok);background:#1a2d10}
+.abox{width:20px;height:20px;border-radius:5px;border:2px solid #1e3350;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;font-size:11px;margin-top:1px}
+.action-item.done .abox{background:var(--ok);border-color:var(--ok);color:#fff}
+.atext{font-size:13.5px;line-height:1.5;flex:1}
+
+/* ---- STATS ---- */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat-box{background:#0a1520;border:1px solid #1e3350;border-radius:10px;padding:12px;text-align:center}
+.stat-num{font-size:22px;font-weight:800;color:var(--gold2);line-height:1}
+.stat-label{font-size:10px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.3px}
+.stat-box.ok .stat-num{color:var(--ok)}
+
+/* ---- PROFILE ---- */
+.prof-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #1e3350;font-size:13px}
+.prof-row:last-child{border:none}
+.prof-label{color:var(--muted);flex-shrink:0}
+.prof-value{color:var(--text);font-weight:600;text-align:right;margin-left:8px}
+.topbar-row .icon-btn{background:none;border:none;color:var(--gold);font-size:18px;cursor:pointer;padding:0 0 0 8px;line-height:1}
+
+/* ---- MSG PRESENTATION ---- */
+.msg-preview{background:#0a1520;border-radius:10px;padding:12px;border-left:3px solid var(--gold);font-size:13px;line-height:1.65;color:var(--text);margin-top:8px}
+
+/* ---- PRINT ---- */
+@media print{
+  .topbar,.nav,.coach-wrap,.no-print{display:none!important}
+  body{background:#fff;color:#000}
+  .content{padding-bottom:0;animation:none}
+  .card,.rep-section{border:1px solid #ccc;background:#f9f9f9;break-inside:avoid}
+  .ctitle,.rep-title{color:#555}
+  .rep-row span{color:#555}
+  .rep-row strong{color:#000}
+}
 </style>
 </head>
 <body>
@@ -330,6 +365,7 @@ function getSector(t) {
 ════════════════════════════════════════ */
 const EMPTY_STATE = {
   screen:'welcome', step:0,
+  profile:{name:'',city:'',startDate:'',houreor:'1h'},
   quiz:{q:0,answers:[],answered:false,score:0,passed:false},
   p1:{step:0,fear:'',maintain:'',bigFear:'',truths:['','',''],beliefs:['','',''],choice:'',a1:'',a2:'',a3:'',ideas:['','','','',''],ideaScores:[{t:0,c:0,s:0,d:0},{t:0,c:0,s:0,d:0},{t:0,c:0,s:0,d:0},{t:0,c:0,s:0,d:0},{t:0,c:0,s:0,d:0}],chosenSuggestion:-1,customIdea:'',chosenIdea:'',sector:''},
   p2:{step:0,audience:'',service:'',benefit:'',price:'',offerSentence:'',checklist:{},mvp24:'',mvp72:'',mvpWeek:'',contacts:['','','','','']},
@@ -356,10 +392,11 @@ function globalProgress(){
 /* ════════════════════════════════════════
    RENDER ENGINE
 ════════════════════════════════════════ */
-function render(){
+function render(keepScroll){
+  const y = keepScroll ? window.scrollY : 0;
   const app = document.getElementById('app');
   app.innerHTML = getScreen();
-  window.scrollTo(0,0);
+  window.scrollTo(0, y);
 }
 
 function getScreen(){
@@ -373,15 +410,20 @@ function getScreen(){
     case 'p3-week': return renderP3Week();
     case 'p4': return renderP4();
     case 'p5': return renderP5();
+    case 'profile': return renderProfile();
     default: return renderWelcome();
   }
 }
 
 function topbar(label, phaseName, pct){
+  const pname = S.profile && S.profile.name ? S.profile.name : (phaseName||'');
   return `<div class="topbar">
     <div class="topbar-row">
       <span class="topbar-title">Plan B Rentable</span>
-      <span class="topbar-phase">${phaseName||''}</span>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span class="topbar-phase">${pname}</span>
+        <button class="icon-btn no-print" onclick="go('profile')" title="Mon profil">👤</button>
+      </div>
     </div>
     <div class="pbar"><div class="pfill" style="width:${pct||0}%"></div></div>
   </div>`;
@@ -675,42 +717,68 @@ window.setStar = function(i,k,v){ S.p1.ideaScores[i][k]=v; save(); render(); };
 
 // P1 Step 6: Choose final idea
 function renderP1S6(){
-  // Find best scoring idea
-  const scores = S.p1.ideaScores.map((sc,i)=>({i,total:sc.t+sc.c+sc.s+sc.d,name:S.p1.ideas[i]}));
-  scores.sort((a,b)=>b.total-a.total);
-  const bestIdea = scores[0];
-
-  // Detect sector from angles
+  // Detect sector from angles + ideas text
   const combined = (S.p1.a1+' '+S.p1.a2+' '+S.p1.a3+' '+(S.p1.ideas.join(' '))).toLowerCase();
   const sector = getSector(combined);
   S.p1.sector = sector;
 
-  const suggestions = SECTOR_IDEAS[sector] || SECTOR_IDEAS.default;
+  // User's own ideas sorted by score (non-empty only)
+  const userIdeas = S.p1.ideaScores
+    .map((sc,i)=>({total:sc.t+sc.c+sc.s+sc.d, name:S.p1.ideas[i]||''}))
+    .filter(x=>x.name.trim())
+    .sort((a,b)=>b.total-a.total);
 
+  const sectorIdeas = SECTOR_IDEAS[sector] || SECTOR_IDEAS.default;
   const chosen = S.p1.chosenSuggestion;
 
-  return coach(`Basé sur tes 3 angles et tes idées, voici mes <b>suggestions personnalisées</b> pour toi.<br><br>${bestIdea&&bestIdea.name?`Ton idée la mieux notée : <i>${bestIdea.name} (${bestIdea.total}/20)</i>.<br><br>`:''} Choisis l'idée qui te donne envie d'agir <i>aujourd'hui</i>, pas demain.`) +
-  `<div class="content">
+  const userIdeasHtml = userIdeas.length ? `
     <div class="card">
-      <div class="ctitle">Idées recommandées pour toi</div>
-      ${suggestions.map((idea,i)=>`
-        <div class="idea-card ${chosen===i?'sel':''}" onclick="chooseSuggestion(${i})">
-          <div class="idea-name">${chosen===i?'✓ ':''} ${idea.nom}</div>
+      <div class="ctitle">Tes idées — classées par score</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Basées sur tes propres évaluations ci-dessus</div>
+      ${userIdeas.map((idea,i)=>`
+        <div class="idea-card ${S.p1.chosenIdea===idea.name?'sel':''}" onclick="chooseOwnIdea(${i})">
+          <div class="idea-name">${S.p1.chosenIdea===idea.name?'✓ ':''} ${idea.name}</div>
+          <div class="idea-desc">Score : <b style="color:${idea.total>=14?'var(--ok)':idea.total>=8?'var(--gold)':'var(--err)'}">${idea.total}/20</b></div>
+        </div>
+      `).join('')}
+    </div>` : '';
+
+  return coach(`Voici <b>tes propres idées classées</b> par score, et des suggestions additionnelles pour ton secteur.<br><br>Choisis l'idée qui te donne envie d'agir <i>aujourd'hui</i>. Tu peux aussi écrire une idée différente.`) +
+  `<div class="content">
+    ${userIdeasHtml}
+    <div class="card">
+      <div class="ctitle">Suggestions additionnelles — ${sector}</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Idées compatibles avec tes angles (${sector})</div>
+      ${sectorIdeas.map((idea,i)=>`
+        <div class="idea-card ${chosen===i&&!userIdeas.find(u=>S.p1.chosenIdea===u.name)?'sel':''}" onclick="chooseSuggestion(${i})">
+          <div class="idea-name">${chosen===i&&!userIdeas.find(u=>S.p1.chosenIdea===u.name)?'✓ ':''} ${idea.nom}</div>
           <div class="idea-desc">${idea.desc}</div>
           <div class="idea-tool">🔧 ${idea.outils}</div>
         </div>
       `).join('')}
     </div>
     <div class="card">
-      <div class="ctitle">Ou écris ta propre idée</div>
-      <label>Mon idée personnelle :</label>
-      <textarea id="customIdea" placeholder="Décris ton idée en 1-2 phrases claires..." style="min-height:70px">${S.p1.customIdea}</textarea>
+      <div class="ctitle">Ou écris une idée différente</div>
+      <textarea id="customIdea" placeholder="Décris ton idée en 1-2 phrases claires..." style="min-height:65px">${S.p1.customIdea}</textarea>
       <button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="useCustomIdea()">Utiliser cette idée →</button>
     </div>
     ${S.p1.chosenIdea ? `<div class="badge badge-ok" style="display:block;text-align:center;padding:10px">✓ Idée choisie : ${S.p1.chosenIdea}</div>` : ''}
   </div>` +
   nav('p1Back','validateP1','Valider mon idée →', !S.p1.chosenIdea);
 }
+
+window.chooseOwnIdea = function(idx){
+  const userIdeas = S.p1.ideaScores
+    .map((sc,i)=>({total:sc.t+sc.c+sc.s+sc.d,name:S.p1.ideas[i]||''}))
+    .filter(x=>x.name.trim())
+    .sort((a,b)=>b.total-a.total);
+  if(userIdeas[idx]){
+    S.p1.chosenIdea = userIdeas[idx].name;
+    S.p1.chosenSuggestion = -1;
+    S.p1.customIdea = '';
+    save(); render();
+  }
+};
 
 window.chooseSuggestion = function(i){
   const sector = S.p1.sector;
@@ -869,7 +937,14 @@ function renderP2S3(){
 
 window.toggleCheck = function(i){
   S.p2.checklist[i] = !S.p2.checklist[i];
-  save(); render();
+  save(); render(true); // keepScroll = true : ne remonte pas en haut
+};
+
+window.toggleAction = function(wi,ai){
+  if(!S.p3.weekData[wi]) S.p3.weekData[wi]={};
+  if(!S.p3.weekData[wi].actionsDone) S.p3.weekData[wi].actionsDone=[];
+  S.p3.weekData[wi].actionsDone[ai] = !S.p3.weekData[wi].actionsDone[ai];
+  save(); render(true); // keepScroll
 };
 
 // P2 Step 4: MVP
@@ -935,6 +1010,11 @@ window.p2Next = function(){
   capP2();
   const s = S.p2.step;
   if(s===1 && !S.p2.audience){toast('Remplis les champs de ton offre'); return;}
+  if(s===3){
+    const total = Object.values(S.p2.checklist).filter(Boolean).length;
+    if(total < 10){toast('Score trop bas ('+total+'/25) — retravaille ton idée avant de continuer'); return;}
+    if(total < 15){toast('⚠️ Score '+total+'/25 — minimum recommandé : 15. Continue mais ajuste ton idée.'); }
+  }
   if(s < P2_STEPS-1){ S.p2.step++; save(); render(); }
 };
 
@@ -991,10 +1071,10 @@ function renderP3Hub(){
         </div>`;
       }).join('')}</div></div>`;
     }).join('')}
-    ${S.p3.unlocked>4?`<div class="card" style="background:#0a1520">
-      <div class="ctitle">Suivi financier rapide</div>
-      <button class="btn btn-outline" style="margin-bottom:8px" onclick="go('p4')">📊 Voir mon tableau de bord →</button>
-    </div>`:''}
+    <div class="card" style="background:#0a1520">
+      <div class="ctitle">Tableau de bord</div>
+      <button class="btn btn-outline" onclick="go('p4')">📊 Voir mes statistiques →</button>
+    </div>
     ${S.p3.unlocked>11&&wd[12]?.done?`<button class="btn btn-gold" onclick="go('p5')">🏆 Voir mon rapport final →</button>`:''}
   </div>`;
 }
@@ -1009,6 +1089,7 @@ function getTotalSales(){
 
 window.openWeek = function(n){
   S.p3.week = n;
+  if(!S.p3.weekData[n]) S.p3.weekData[n] = {actionsDone:[]};
   S.screen = 'p3-week';
   save(); render();
 };
@@ -1019,6 +1100,19 @@ function renderP3Week(){
   const wd = S.p3.weekData[n] || {};
   const isDone = wd.done;
   const pct = 60+Math.round((n/12)*30);
+  const actionsDone = wd.actionsDone || [];
+  const actionsCount = actionsDone.filter(Boolean).length;
+
+  // Actions avec cases à cocher
+  const actionsHtml = `<div class="card">
+    <div class="ctitle">Actions de la semaine <span style="color:var(--muted);font-weight:400">${actionsCount}/${w.actions.length} faites</span></div>
+    ${w.actions.map((a,i)=>`
+      <div class="action-item ${actionsDone[i]?'done':''}" onclick="${isDone?'':'toggleAction('+n+','+i+')'}">
+        <div class="abox">${actionsDone[i]?'✓':''}</div>
+        <div class="atext">${a}</div>
+      </div>
+    `).join('')}
+  </div>`;
 
   // KPI input
   let kpiHtml = '';
@@ -1027,7 +1121,7 @@ function renderP3Week(){
       kpiHtml = `<div class="card" style="border-color:var(--gold)">
         <div class="ctitle" style="color:var(--gold)">KPI Semaine ${n} — ${w.kpiUnit}</div>
         <label>${w.kpiQ}</label>
-        <input type="number" id="kpiInput" value="${wd.kpiValue||0}" min="0" placeholder="0">
+        <input type="number" id="kpiInput" value="${wd.kpiValue||''}" min="0" placeholder="0">
       </div>`;
     } else {
       const boolVal = wd.kpiValue;
@@ -1042,13 +1136,52 @@ function renderP3Week(){
     }
   }
 
+  // Champs spécifiques selon la semaine
+  let weekSpecific = '';
+  if(!isDone){
+    if(n===4){
+      weekSpecific = `<div class="card">
+        <div class="ctitle" style="color:var(--ok)">Première vente</div>
+        <label>Montant encaissé :</label>
+        <input type="text" id="saleAmount" value="${wd.saleAmount||''}" placeholder="Ex: 5 000 FCFA, 10 000 FCFA...">
+      </div>`;
+    }
+    if(n===7){
+      weekSpecific = `<div class="card" style="border-color:var(--gold)">
+        <div class="ctitle">Suivi revenus — accès rapide</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Commence à séparer tes revenus Plan B de tes dépenses personnelles dès maintenant.</div>
+        <button class="btn btn-outline btn-sm" onclick="go('p4')">📊 Ouvrir le tableau de bord →</button>
+      </div>
+      <div class="card">
+        <div class="ctitle">Mon message de présentation</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Formule en 2-3 lignes maximum. À copier sur WhatsApp.</div>
+        <textarea id="presentationMsg" placeholder='Ex: "Je fais [X] pour [qui]. Résultat : [bénéfice]. Contacte-moi si tu es intéressé(e)."' style="min-height:75px">${wd.presentationMsg||''}</textarea>
+      </div>`;
+    }
+    if(n===8){
+      weekSpecific = `<div class="card" style="border-color:var(--gold)">
+        <div class="ctitle">Ton message de présentation — Version finale</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Version améliorée basée sur les retours reçus cette semaine. Doit tenir en 2-3 lignes.</div>
+        <textarea id="presentationMsg" placeholder="Version finale de ton message de présentation..." style="min-height:75px">${wd.presentationMsg||''}</textarea>
+        ${S.p3.weekData[7]?.presentationMsg?`<div style="margin-top:8px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Ton message de la semaine 7 :</div>
+          <div class="msg-preview">${S.p3.weekData[7].presentationMsg}</div>
+        </div>`:''}
+        <div style="font-size:12px;color:var(--muted);margin-top:8px">Format validé : <i>"J'aide [QUI] à [QUOI] — sans [OBSTACLE]. [Comment me contacter]"</i></div>
+      </div>`;
+    }
+  }
+
   // Notes input
-  let notesHtml = `<div class="card">
-    <div class="ctitle">Mes notes de la semaine</div>
-    <textarea id="weekNotes" placeholder="Ce qui s'est passé cette semaine, mes apprentissages, mes blocages..." style="min-height:80px">${wd.notes||''}</textarea>
+  const notesHtml = `<div class="card">
+    <div class="ctitle">Mes notes & réflexions</div>
+    <label>Ce qui s'est bien passé :</label>
+    <textarea id="weekNotesOK" placeholder="Qu'est-ce qui a fonctionné cette semaine ?" style="min-height:55px">${wd.notesOK||''}</textarea>
+    <label>Ce qui m'a bloqué ou surpris :</label>
+    <textarea id="weekNotes" placeholder="Blocages, apprentissages, ajustements..." style="min-height:55px">${wd.notes||''}</textarea>
   </div>`;
 
-  // If done: show coach message
+  // Si terminée : message coach
   let doneHtml = '';
   if(isDone){
     const metKpi = w.kpiType==='number' ? (wd.kpiValue||0)>=w.kpiMin : wd.kpiValue===true;
@@ -1067,32 +1200,37 @@ function renderP3Week(){
         </ul>
       </div>`;
     }
+    // Afficher les notes enregistrées
+    if(wd.notes||wd.notesOK){
+      doneHtml += `<div class="card">
+        <div class="ctitle">Tes notes — Semaine ${n}</div>
+        ${wd.notesOK?`<div style="font-size:12px;color:var(--muted);margin-bottom:2px">✅ Ce qui a marché :</div><div style="font-size:13px;margin-bottom:8px">${wd.notesOK}</div>`:''}
+        ${wd.notes?`<div style="font-size:12px;color:var(--muted);margin-bottom:2px">🔧 Blocages :</div><div style="font-size:13px">${wd.notes}</div>`:''}
+      </div>`;
+    }
+    if(wd.presentationMsg && (n===7||n===8)){
+      doneHtml += `<div class="card">
+        <div class="ctitle">Ton message de présentation</div>
+        <div class="msg-preview">${wd.presentationMsg}</div>
+      </div>`;
+    }
   }
 
-  const extraInput = w.kpiKey==='firstSale' && !isDone ? `<div class="card">
-    <label>Montant encaissé (si oui) :</label>
-    <input type="text" id="saleAmount" value="${wd.saleAmount||''}" placeholder="Ex: 5 000 FCFA, 10 000 FCFA...">
-  </div>` : '';
-
   return topbar(`Semaine ${n}`,w.phase,pct) +
-  coach(isDone ? `Semaine ${n} terminée. ${wd.done?'Bien joué.':'Tu avances.'}` : `<b>Semaine ${n} — ${w.title}</b><br><br><i>${w.obj}</i>`) +
+  coach(isDone ? `Semaine ${n} terminée — ${w.title}.` : `<b>Semaine ${n} — ${w.title}</b><br><br><i>${w.obj}</i>`) +
   `<div class="content">
     <div class="card">
-      <div class="ctitle">Objectif</div>
+      <div class="ctitle">Objectif de la semaine</div>
       <div style="font-size:14px;color:var(--gold2);font-weight:600">${w.obj}</div>
     </div>
-    <div class="card">
-      <div class="ctitle">Actions de la semaine</div>
-      ${w.actions.map(a=>`<div style="display:flex;gap:8px;margin-bottom:7px;font-size:13.5px"><span style="color:var(--gold);flex-shrink:0">→</span>${a}</div>`).join('')}
-    </div>
+    ${actionsHtml}
     ${kpiHtml}
-    ${extraInput}
-    ${notesHtml}
-    ${doneHtml}
+    ${weekSpecific}
+    ${isDone ? doneHtml : notesHtml}
   </div>` +
-  `<div class="nav">
+  `<div class="nav no-print">
     <button class="btn btn-muted btn-sm" onclick="backToHub()">← Hub</button>
-    ${!isDone?`<button class="btn btn-gold" onclick="submitWeek(${n})">Valider la semaine ${n} →</button>`:''}
+    ${!isDone?`<button class="btn btn-gold" onclick="submitWeek(${n})">Valider S${n} →</button>`:''}
     ${isDone&&n<12?`<button class="btn btn-gold" onclick="goNextWeek(${n})">Semaine ${n+1} →</button>`:''}
     ${isDone&&n===12?`<button class="btn btn-gold" onclick="go('p5')">Rapport final →</button>`:''}
   </div>`;
@@ -1108,19 +1246,28 @@ window.submitWeek = function(n){
   const w = WEEKS[n-1];
   let kpiVal;
   if(w.kpiType==='number'){
-    kpiVal = parseInt(document.getElementById('kpiInput')?.value)||0;
+    const v = document.getElementById('kpiInput')?.value;
+    kpiVal = v!==''&&v!==null&&v!==undefined ? parseInt(v) : undefined;
+    if(kpiVal===undefined){toast('Indique ton résultat KPI (même si c\'est 0)'); return;}
   } else {
     kpiVal = S.p3.weekData[n]?.kpiValue;
-    if(kpiVal===undefined){toast('Réponds au KPI (Oui ou Non)'); return;}
+    if(kpiVal===undefined){toast('Réponds au KPI — Oui ou Pas encore'); return;}
   }
-  const notes = document.getElementById('weekNotes')?.value||'';
-  const saleAmount = document.getElementById('saleAmount')?.value||'';
 
   if(!S.p3.weekData[n]) S.p3.weekData[n]={};
   S.p3.weekData[n].kpiValue = kpiVal;
-  S.p3.weekData[n].notes = notes;
+  S.p3.weekData[n].notes = document.getElementById('weekNotes')?.value||'';
+  S.p3.weekData[n].notesOK = document.getElementById('weekNotesOK')?.value||'';
   S.p3.weekData[n].done = true;
-  if(saleAmount) S.p3.weekData[n].saleAmount = saleAmount;
+
+  if(n===4){
+    const sa = document.getElementById('saleAmount')?.value||'';
+    if(sa) S.p3.weekData[n].saleAmount = sa;
+  }
+  if(n===7||n===8){
+    const pm = document.getElementById('presentationMsg')?.value||'';
+    if(pm) S.p3.weekData[n].presentationMsg = pm;
+  }
 
   // Unlock next week
   if(n >= S.p3.unlocked && n < 12){
@@ -1135,6 +1282,7 @@ window.submitWeek = function(n){
 
 window.goNextWeek = function(n){
   S.p3.week = n+1;
+  if(!S.p3.weekData[n+1]) S.p3.weekData[n+1] = {actionsDone:[]};
   save(); render();
 };
 
@@ -1148,74 +1296,129 @@ window.backToHub = function(){
 ════════════════════════════════════════ */
 function renderP4(){
   const revs = S.p4.revenues;
-  const total = revs.reduce((a,r)=>a+(parseFloat(r.rev)||0),0);
+  const totalRev = revs.reduce((a,r)=>a+(parseFloat(r.rev)||0),0);
   const totalDep = revs.reduce((a,r)=>a+(parseFloat(r.dep)||0),0);
-  const net = total - totalDep;
+  const net = totalRev - totalDep;
+  const wd = S.p3.weekData;
 
-  let tableHtml = `<div class="rev-row">
-    <div class="rev-cell hdr">Mois</div>
-    <div class="rev-cell hdr">Revenus</div>
-    <div class="rev-cell hdr">Dépenses</div>
-    <div class="rev-cell hdr">Net</div>
-  </div>`;
+  // Statistiques progression
+  const weeksCompleted = Object.values(wd).filter(w=>w.done).length;
+  const kpisMet = WEEKS.filter((w,i)=>{
+    const d=wd[w.n]; if(!d?.done) return false;
+    return w.kpiType==='number'?(d.kpiValue||0)>=w.kpiMin:d.kpiValue===true;
+  }).length;
+  const actions_total = WEEKS.slice(0,weeksCompleted).reduce((a,w)=>a+w.actions.length,0);
+  const actions_done = Object.entries(wd).reduce((a,[k,v])=>a+((v.actionsDone||[]).filter(Boolean).length),0);
+  const hasFirstSale = wd[4]?.kpiValue===true;
+  const currentWeek = S.p3.unlocked;
 
-  revs.forEach((r,i)=>{
-    const n = (parseFloat(r.rev)||0)-(parseFloat(r.dep)||0);
-    tableHtml += `<div class="rev-row">
-      <div class="rev-cell">${r.month||'—'}</div>
-      <div class="rev-cell">${r.rev||0}</div>
-      <div class="rev-cell">${r.dep||0}</div>
-      <div class="rev-cell rev-total" style="color:${n>=0?'var(--ok)':'var(--err)'}">${n.toFixed(0)}</div>
-    </div>`;
-  });
-
+  // Tableau revenus
+  let tableHtml = '';
   if(revs.length>0){
-    tableHtml += `<div class="rev-row">
+    tableHtml = `<div class="rev-row">
+      <div class="rev-cell hdr">Mois</div>
+      <div class="rev-cell hdr">Revenus</div>
+      <div class="rev-cell hdr">Dépenses</div>
+      <div class="rev-cell hdr">Net</div>
+    </div>`;
+    revs.forEach((r,i)=>{
+      const n=(parseFloat(r.rev)||0)-(parseFloat(r.dep)||0);
+      tableHtml+=`<div class="rev-row">
+        <div class="rev-cell">${r.month||'—'}</div>
+        <div class="rev-cell">${parseFloat(r.rev||0).toLocaleString()}</div>
+        <div class="rev-cell">${parseFloat(r.dep||0).toLocaleString()}</div>
+        <div class="rev-cell rev-total" style="color:${n>=0?'var(--ok)':'var(--err)'}">${n.toLocaleString()}</div>
+      </div>`;
+    });
+    tableHtml+=`<div class="rev-row">
       <div class="rev-cell hdr">TOTAL</div>
-      <div class="rev-cell rev-total">${total.toFixed(0)}</div>
-      <div class="rev-cell rev-total">${totalDep.toFixed(0)}</div>
-      <div class="rev-cell rev-total" style="color:${net>=0?'var(--ok)':'var(--err)'}">${net.toFixed(0)}</div>
+      <div class="rev-cell rev-total">${totalRev.toLocaleString()}</div>
+      <div class="rev-cell rev-total">${totalDep.toLocaleString()}</div>
+      <div class="rev-cell rev-total" style="color:${net>=0?'var(--ok)':'var(--err)'}">${net.toLocaleString()}</div>
     </div>`;
   }
 
-  return topbar('Tableau de bord','Phase 4 — Dashboard',90) +
-  coach(`Ton <b>tableau de bord financier</b>. Saisis tes revenus et dépenses chaque mois pour voir où tu en es. Un Plan B rentable, ça se mesure.`) +
+  // Message de présentation final (S8 ou S7)
+  const msgPres = wd[8]?.presentationMsg || wd[7]?.presentationMsg || '';
+
+  return topbar('Tableau de bord','Dashboard',90) +
+  coach(`Ton <b>tableau de bord Plan B</b>. Suis ta progression, tes revenus et tes actions semaine par semaine.`) +
   `<div class="content">
+
+    <div class="card">
+      <div class="ctitle">Progression globale</div>
+      <div class="stat-grid">
+        <div class="stat-box">
+          <div class="stat-num">${currentWeek}/12</div>
+          <div class="stat-label">Semaine en cours</div>
+        </div>
+        <div class="stat-box ${weeksCompleted>0?'ok':''}">
+          <div class="stat-num">${weeksCompleted}</div>
+          <div class="stat-label">Semaines terminées</div>
+        </div>
+        <div class="stat-box ${kpisMet>0?'ok':''}">
+          <div class="stat-num">${kpisMet}/${weeksCompleted||'—'}</div>
+          <div class="stat-label">KPIs atteints</div>
+        </div>
+        <div class="stat-box ${actions_done>0?'ok':''}">
+          <div class="stat-num">${actions_done}/${actions_total||'—'}</div>
+          <div class="stat-label">Actions faites</div>
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:4px">
+          <span>Progression 90 jours</span>
+          <span>${Math.round((weeksCompleted/12)*100)}%</span>
+        </div>
+        <div class="cl-score-bar"><div class="cl-score-fill" style="width:${Math.round((weeksCompleted/12)*100)}%"></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ctitle">Mon Plan B</div>
+      ${S.p1.chosenIdea?`<div class="prof-row"><span class="prof-label">Idée</span><strong class="prof-value">${S.p1.chosenIdea}</strong></div>`:''}
+      ${S.p2.audience?`<div class="prof-row"><span class="prof-label">J'aide</span><strong class="prof-value">${S.p2.audience}</strong></div>`:''}
+      ${S.p2.price?`<div class="prof-row"><span class="prof-label">Prix</span><strong class="prof-value">${S.p2.price}</strong></div>`:''}
+      <div class="prof-row"><span class="prof-label">1ère vente</span><strong class="prof-value" style="color:${hasFirstSale?'var(--ok)':'var(--muted)'}">${hasFirstSale?'✓ '+(wd[4]?.saleAmount||'Réalisée'):'Pas encore'}</strong></div>
+    </div>
+
+    ${msgPres?`<div class="card">
+      <div class="ctitle">Mon message de présentation</div>
+      <div class="msg-preview">${msgPres}</div>
+    </div>`:''}
+
+    <div class="card">
+      <div class="ctitle">Résultats financiers (FCFA)</div>
+      <div class="stat-grid" style="margin-bottom:10px">
+        <div class="stat-box ok">
+          <div class="stat-num" style="font-size:18px">${totalRev.toLocaleString()}</div>
+          <div class="stat-label">Total revenus</div>
+        </div>
+        <div class="stat-box ${net>=0?'ok':''}">
+          <div class="stat-num" style="font-size:18px;color:${net>=0?'var(--ok)':'var(--err)'}">${net.toLocaleString()}</div>
+          <div class="stat-label">Bénéfice net</div>
+        </div>
+      </div>
+      ${revs.length>0?tableHtml:`<div style="color:var(--muted);font-size:13px;text-align:center;padding:8px">Aucune entrée — ajoute tes revenus ci-dessous</div>`}
+    </div>
+
     <div class="card">
       <div class="ctitle">Ajouter une entrée mensuelle</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:8px">
-        <div>
-          <label>Mois</label>
-          <input type="text" id="revMonth" placeholder="Ex: Avril">
-        </div>
-        <div>
-          <label>Revenus</label>
-          <input type="number" id="revAmt" placeholder="0">
-        </div>
-        <div>
-          <label>Dépenses</label>
-          <input type="number" id="depAmt" placeholder="0">
-        </div>
+        <div><label>Mois</label><input type="text" id="revMonth" placeholder="Ex: Avril"></div>
+        <div><label>Revenus</label><input type="number" id="revAmt" placeholder="0"></div>
+        <div><label>Dépenses</label><input type="number" id="depAmt" placeholder="0"></div>
       </div>
       <button class="btn btn-outline btn-sm" onclick="addRevenue()">+ Ajouter</button>
     </div>
-    <div class="card">
-      <div class="ctitle">Suivi financier Plan B</div>
-      ${revs.length===0?`<div style="color:var(--muted);font-size:13px;text-align:center;padding:12px">Aucune entrée pour l'instant</div>`:tableHtml}
-    </div>
-    <div class="card" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <div style="text-align:center">
-        <div style="font-size:11px;color:var(--muted)">Total revenus</div>
-        <div style="font-size:22px;font-weight:800;color:var(--ok)">${total.toFixed(0)}</div>
-      </div>
-      <div style="text-align:center">
-        <div style="font-size:11px;color:var(--muted)">Bénéfice net</div>
-        <div style="font-size:22px;font-weight:800;color:${net>=0?'var(--ok)':'var(--err)'}">${net.toFixed(0)}</div>
-      </div>
-    </div>
-  </div>` +
-  `<div class="nav"><button class="btn btn-outline" onclick="p4Back()">← Plan 90 jours</button></div>`;
 
+    <div class="card" style="background:#0a1520">
+      <div class="ctitle">Contacts identifiés</div>
+      ${S.p2.contacts.filter(Boolean).map((c,i)=>`<div class="prof-row"><span class="prof-label">${i+1}.</span><strong class="prof-value">${c}</strong></div>`).join('')||`<div style="color:var(--muted);font-size:13px">À remplir dans Phase 2</div>`}
+    </div>
+
+  </div>` +
+  `<div class="nav no-print"><button class="btn btn-outline" onclick="p4Back()">← Plan 90 jours</button></div>`;
 }
 
 window.p4Back = function(){ go('p3'); };
@@ -1287,9 +1490,55 @@ function renderP5(){
       <div style="font-size:12px;color:var(--muted);margin-top:8px">— Coach Redouane</div>
     </div>
 
-    <button class="btn btn-gold" onclick="go('p3')">← Revenir au plan 90 jours</button>
+    <div class="no-print" style="display:flex;gap:8px">
+      <button class="btn btn-outline" style="flex:1" onclick="go('p3')">← Plan 90 jours</button>
+      <button class="btn btn-gold" style="flex:1" onclick="window.print()">⬇ Télécharger PDF</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px" class="no-print">Sur mobile : partager → Enregistrer en PDF</div>
   </div>`;
 }
+
+/* ════════════════════════════════════════
+   PROFIL
+════════════════════════════════════════ */
+function renderProfile(){
+  const p = S.profile;
+  const prev = S.screen==='profile' ? 'welcome' : S.screen; // fallback
+  return topbar('Profil','Mon profil',globalProgress()) +
+  coach(`Ton profil d'entrepreneur. Ces informations personnalisent ton expérience dans l'app.`) +
+  `<div class="content">
+    <div class="card">
+      <div class="ctitle">Mes informations</div>
+      <label>Prénom ou nom :</label>
+      <input type="text" id="profName" value="${p.name||''}" placeholder="Ex: Redouane">
+      <label>Ville / Pays :</label>
+      <input type="text" id="profCity" value="${p.city||''}" placeholder="Ex: Douala, Abidjan, Paris...">
+      <label>Date de démarrage :</label>
+      <input type="text" id="profDate" value="${p.startDate||''}" placeholder="Ex: 18 avril 2026">
+      <label>Mon Heure d'Or quotidienne :</label>
+      <input type="text" id="profHeure" value="${p.houreor||'1h'}" placeholder="Ex: 1h30, de 6h à 7h...">
+    </div>
+    ${S.p1.chosenIdea?`<div class="card">
+      <div class="ctitle">Mon Plan B</div>
+      <div class="prof-row"><span class="prof-label">Idée</span><strong class="prof-value">${S.p1.chosenIdea}</strong></div>
+      ${S.p2.audience?`<div class="prof-row"><span class="prof-label">Cible</span><strong class="prof-value">${S.p2.audience}</strong></div>`:''}
+      ${S.p2.price?`<div class="prof-row"><span class="prof-label">Prix</span><strong class="prof-value">${S.p2.price}</strong></div>`:''}
+      <div class="prof-row"><span class="prof-label">Progression</span><strong class="prof-value">${globalProgress()}%</strong></div>
+    </div>`:''}
+    <button class="btn btn-gold" onclick="saveProfile()">Sauvegarder le profil</button>
+    <button class="btn btn-outline" style="margin-top:8px" onclick="go('welcome')">← Retour à l'accueil</button>
+  </div>`;
+}
+
+window.saveProfile = function(){
+  S.profile.name = document.getElementById('profName')?.value||'';
+  S.profile.city = document.getElementById('profCity')?.value||'';
+  S.profile.startDate = document.getElementById('profDate')?.value||'';
+  S.profile.houreor = document.getElementById('profHeure')?.value||'1h';
+  save();
+  toast('Profil sauvegardé ✓');
+  setTimeout(()=>{ go(S.screen==='profile'?'welcome':S.screen); },800);
+};
 
 /* ════════════════════════════════════════
    NAVIGATION UTILS
