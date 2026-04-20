@@ -420,6 +420,7 @@ function getScreen(){
     case 'quiz-result': return renderQuizResult();
     case 'p1': return renderP1();
     case 'p2': return renderP2();
+    case 'p3-engage': return renderP3Engage();
     case 'p3': return renderP3Hub();
     case 'p3-week': return renderP3Week();
     case 'p4': return renderP4();
@@ -1049,8 +1050,8 @@ window.p2Next = function(){
   if(s===1 && !S.p2.audience){toast('Remplis les champs de ton offre'); return;}
   if(s===3){
     const total = Object.values(S.p2.checklist).filter(Boolean).length;
-    if(total < 10){toast('Score trop bas ('+total+'/25) — retravaille ton idée avant de continuer'); return;}
-    if(total < 15){toast('⚠️ Score '+total+'/25 — minimum recommandé : 15. Continue mais ajuste ton idée.'); }
+    if(total < 15){toast('Score trop bas ('+total+'/25) — minimum requis : 15/25. Revois ton idée ou affine ton offre avant de continuer.'); return;}
+    if(total < 20){toast('⚠️ Score '+total+'/25 — Plan B viable mais perfectible. Identifie les critères faibles et ajuste avant de lancer.'); }
   }
   if(s < P2_STEPS-1){ S.p2.step++; save(); render(); }
 };
@@ -1064,7 +1065,7 @@ window.p2Back = function(){
 window.validateP2 = function(){
   capP2();
   if(!S.p2.contacts[0]){toast('Nomme au moins ton 1er contact'); return;}
-  go('p3');
+  go('p3-engage');
 };
 
 function capP2(){
@@ -1075,6 +1076,62 @@ function capP2(){
   if(S.p2.step===5){ S.p2.contacts=[gets('contact0'),gets('contact1'),gets('contact2'),gets('contact3'),gets('contact4')]; }
   save();
 }
+
+/* ════════════════════════════════════════
+   PHASE 3 — ENGAGEMENT SCREEN
+════════════════════════════════════════ */
+function renderP3Engage(){
+  if(!S.p3.engage) S.p3.engage = {goal30:'',goal60:'',goal90:'',commitment:''};
+  const e = S.p3.engage;
+  const alreadyFilled = e.goal30 || e.goal60 || e.goal90;
+
+  if(alreadyFilled){
+    return topbar('Engagement 90 jours','Phase 3 — 90 Jours',60) +
+    coach(`Tu as déjà posé tes objectifs. Rappel de ton engagement avant de commencer.`) +
+    `<div class="content">
+      <div class="card">
+        <div class="ctitle">Tes objectifs 90 jours</div>
+        <div class="prof-row"><span class="prof-label">30 jours</span><strong class="prof-value">${e.goal30||'—'}</strong></div>
+        <div class="prof-row"><span class="prof-label">60 jours</span><strong class="prof-value">${e.goal60||'—'}</strong></div>
+        <div class="prof-row"><span class="prof-label">90 jours</span><strong class="prof-value">${e.goal90||'—'}</strong></div>
+        ${e.commitment?`<div style="margin-top:10px;font-size:13px;font-style:italic;color:var(--gold2)">"${e.commitment}"</div>`:''}
+      </div>
+    </div>` +
+    `<div class="nav no-print"><button class="btn btn-gold" onclick="go('p3')">Commencer le Plan 90 jours →</button></div>`;
+  }
+
+  return topbar('Engagement 90 jours','Phase 3 — 90 Jours',60) +
+  coach(`Avant de commencer ton plan d'exécution, pose tes <b>3 objectifs clés</b> et signe ton engagement.<br><br>Ce n'est pas un exercice — c'est un contrat avec toi-même. Sois précis et réaliste.`) +
+  `<div class="content">
+    <div class="card">
+      <div class="ctitle">Tes objectifs par période</div>
+      <label>Objectif 30 jours <span style="color:var(--muted);font-size:11px">(1ère vente ? montant ? nombre de contacts ?)</span></label>
+      <textarea id="eng30" placeholder="Ex: Encaisser mon premier paiement, même petit..." style="min-height:55px">${e.goal30}</textarea>
+      <label style="margin-top:10px">Objectif 60 jours <span style="color:var(--muted);font-size:11px">(stabiliser ? répéter ?)</span></label>
+      <textarea id="eng60" placeholder="Ex: Avoir 3 clients réguliers et un process clair..." style="min-height:55px">${e.goal60}</textarea>
+      <label style="margin-top:10px">Objectif 90 jours <span style="color:var(--muted);font-size:11px">(revenu cible ? vision ?)</span></label>
+      <textarea id="eng90" placeholder="Ex: Générer 50 000 FCFA/mois et préparer le cycle suivant..." style="min-height:55px">${e.goal90}</textarea>
+    </div>
+    <div class="card">
+      <div class="ctitle">Ton engagement personnel</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Complète cette phrase pour finaliser ton contrat.</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:6px">"Je m'engage à avancer pendant 90 jours, même imparfaitement, parce que…"</div>
+      <textarea id="engCommit" placeholder="Ta raison profonde..." style="min-height:55px">${e.commitment}</textarea>
+    </div>
+  </div>` +
+  `<div class="nav no-print"><button class="btn btn-gold" onclick="submitEngage()">Signer mon engagement →</button></div>`;
+}
+
+window.submitEngage = function(){
+  if(!S.p3.engage) S.p3.engage = {goal30:'',goal60:'',goal90:'',commitment:''};
+  const g30 = document.getElementById('eng30')?.value.trim()||'';
+  const g60 = document.getElementById('eng60')?.value.trim()||'';
+  const g90 = document.getElementById('eng90')?.value.trim()||'';
+  const com = document.getElementById('engCommit')?.value.trim()||'';
+  if(!g30){toast('Remplis au moins ton objectif 30 jours'); return;}
+  S.p3.engage = {goal30:g30, goal60:g60, goal90:g90, commitment:com};
+  save(); go('p3');
+};
 
 /* ════════════════════════════════════════
    PHASE 3 — PLAN 90 JOURS
@@ -1227,15 +1284,35 @@ function renderP3Week(){
       <div style="font-size:13.5px;line-height:1.65">${metKpi?w.coachOK:w.coachKO}</div>
     </div>`;
     if(!metKpi){
-      doneHtml += `<div class="secours">
-        <div class="secours-title">📋 Actions correctives :</div>
-        <ul>
-          <li>Augmente le volume de contacts</li>
-          <li>Simplifie ton offre à l'essentiel</li>
-          <li>Utilise le script WhatsApp de départ</li>
-          <li>Baisse temporairement le prix si nécessaire</li>
-        </ul>
-      </div>`;
+      if(n===4){
+        doneHtml += `<div class="secours">
+          <div class="secours-title">🔍 Diagnostic — Pas encore de vente après 30 jours :</div>
+          <ul>
+            <li>As-tu contacté au moins 10 personnes en direct ?</li>
+            <li>Ton offre est-elle claire en 1 phrase ?</li>
+            <li>Ton prix est-il adapté à ta cible ?</li>
+            <li>As-tu vraiment proposé, ou seulement publié ?</li>
+          </ul>
+          <div class="secours-title" style="margin-top:10px">📋 Actions correctives :</div>
+          <ul>
+            <li>Envoie 5 messages personnalisés supplémentaires aujourd'hui</li>
+            <li>Simplifie ton offre à l'essentiel — enlève tout ce qui est flou</li>
+            <li>Ajuste le prix temporairement (vente test à prix réduit)</li>
+            <li>Reformule ton message : <i>"J'aide [QUI] à [RÉSULTAT] — intéressé ?"</i></li>
+          </ul>
+          <div style="margin-top:8px;font-size:12.5px;color:var(--gold2)">Tu n'as pas échoué. Tu ajustes. Continue.</div>
+        </div>`;
+      } else {
+        doneHtml += `<div class="secours">
+          <div class="secours-title">📋 Actions correctives :</div>
+          <ul>
+            <li>Augmente le volume de contacts</li>
+            <li>Simplifie ton offre à l'essentiel</li>
+            <li>Utilise le script WhatsApp de départ</li>
+            <li>Baisse temporairement le prix si nécessaire</li>
+          </ul>
+        </div>`;
+      }
     }
     // Afficher les notes enregistrées
     if(wd.notes||wd.notesOK){
