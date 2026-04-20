@@ -347,6 +347,20 @@ const SECTOR_IDEAS = {
   ]
 };
 
+// BONUS 2 — Idées cross-secteur, affichées en fallback quand les idées utilisateur sont faibles
+const BONUS2_IDEAS = [
+  {nom:"Mini-commerce (acheter-revendre)",desc:"Achète un petit stock (accessoires, parfums, gadgets utiles) et revends avec marge sur WhatsApp et Facebook. Zéro bureau, petit capital de départ.",outils:"Petit capital, téléphone, WhatsApp"},
+  {nom:"Micro-formation locale",desc:"Tu maîtrises quelque chose — Excel, couture, cuisine, langue ? Enseigne-le en sessions simples, en personne ou via WhatsApp. Ton savoir devient un revenu immédiat.",outils:"Ton expertise, WhatsApp, Zoom"},
+  {nom:"Création de mini-guide PDF",desc:"Rédige un guide de 10-20 pages sur un sujet que tu maîtrises et vends-le à 2 000-10 000 FCFA. Une fois créé, tu vends en illimité sans stock.",outils:"Canva, WhatsApp, Facebook"},
+  {nom:"Assistance administrative locale",desc:"Aide les gens à remplir des formulaires, rédiger des demandes, créer des dossiers. Très recherché car beaucoup manquent de temps ou de maîtrise informatique.",outils:"Téléphone, WhatsApp, ordinateur"},
+  {nom:"Coach local (sport, langue, organisation)",desc:"Propose des sessions individuelles ou collectives dans ta compétence. Fitness dans un parc, anglais par WhatsApp, organisation personnelle — tout se vend si tu maîtrises.",outils:"Ton expertise, téléphone, espace local"},
+  {nom:"Rédaction & correction de textes",desc:"Rédige ou corrige des mails professionnels, CV, lettres administratives, rapports. Service discret, utile, bien payé. Tu commences avec ton téléphone.",outils:"Téléphone, WhatsApp, Google Docs"},
+  {nom:"Gestion WhatsApp Business pour commerçants",desc:"Gère les messages, commandes et statuts des commerçants locaux qui n'ont pas le temps. Tu deviens leur assistant digital depuis ton téléphone avec un revenu régulier.",outils:"Téléphone, WhatsApp Business"},
+  {nom:"Création de CV & profil LinkedIn",desc:"Recrée des CV avec Canva et optimise les profils LinkedIn. Zéro investissement, très demandé par les jeunes chercheurs d'emploi africains.",outils:"Canva, WhatsApp, téléphone"},
+  {nom:"Montage vidéo simple",desc:"Propose des montages pour petites entreprises (promos, témoignages, reels) avec CapCut ou InShot. Forfait mensuel possible pour un revenu régulier.",outils:"Téléphone, CapCut ou InShot"},
+  {nom:"Aide à la création de documents digitaux",desc:"PDF, formulaires, mises en page, présentations — tu réceptionnes tout par WhatsApp, tu corriges et tu renvoies. Service rapide, quasiment sans concurrence digitale.",outils:"Téléphone, Canva, WhatsApp"}
+];
+
 function getSector(t) {
   if(!t) return 'default';
   t = t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
@@ -731,6 +745,10 @@ function renderP1S6(){
   const sectorIdeas = SECTOR_IDEAS[sector] || SECTOR_IDEAS.default;
   const chosen = S.p1.chosenSuggestion;
 
+  // Fallback BONUS 2: show when sector unclear, best score weak, or few ideas entered
+  const bestScore = userIdeas.length ? userIdeas[0].total : 0;
+  const showBonus2 = sector === 'default' || bestScore < 8 || userIdeas.length < 2;
+
   const userIdeasHtml = userIdeas.length ? `
     <div class="card">
       <div class="ctitle">Tes idées — classées par score</div>
@@ -757,6 +775,18 @@ function renderP1S6(){
         </div>
       `).join('')}
     </div>
+    ${showBonus2 ? `
+    <div class="card" style="border-color:var(--muted);opacity:0.9">
+      <div class="ctitle">💡 Inspiration complémentaire</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Des idées éprouvées en Afrique francophone — à utiliser si aucune idée ne te convainc encore. Elles ne remplacent pas tes propres idées.</div>
+      ${BONUS2_IDEAS.map((idea,i)=>`
+        <div class="idea-card ${S.p1.chosenIdea===idea.nom?'sel':''}" onclick="chooseBonus2Idea(${i})">
+          <div class="idea-name">${S.p1.chosenIdea===idea.nom?'✓ ':''} ${idea.nom}</div>
+          <div class="idea-desc">${idea.desc}</div>
+          <div class="idea-tool">🔧 ${idea.outils}</div>
+        </div>
+      `).join('')}
+    </div>` : ''}
     <div class="card">
       <div class="ctitle">Ou écris une idée différente</div>
       <textarea id="customIdea" placeholder="Décris ton idée en 1-2 phrases claires..." style="min-height:65px">${S.p1.customIdea}</textarea>
@@ -785,6 +815,13 @@ window.chooseSuggestion = function(i){
   const suggestions = SECTOR_IDEAS[sector] || SECTOR_IDEAS.default;
   S.p1.chosenSuggestion = i;
   S.p1.chosenIdea = suggestions[i].nom;
+  S.p1.customIdea = '';
+  save(); render();
+};
+
+window.chooseBonus2Idea = function(i){
+  S.p1.chosenIdea = BONUS2_IDEAS[i].nom;
+  S.p1.chosenSuggestion = -1;
   S.p1.customIdea = '';
   save(); render();
 };
