@@ -136,7 +136,8 @@ section{padding:90px 24px;max-width:1060px;margin:0 auto}
 .p-desc{font-size:13px;color:var(--muted);margin-bottom:22px;line-height:1.5}
 .p-price{font-family:'Cormorant Garamond',serif;font-size:52px;font-weight:700;color:var(--gold);line-height:1;margin-bottom:4px}
 .p-price-note{font-size:12px;color:var(--muted);margin-bottom:26px}
-.p-list{list-style:none;margin-bottom:auto;padding-bottom:28px}
+.p-list{list-style:none;margin-bottom:auto;padding-bottom:24px}
+@media(max-width:860px){.p-card{padding:28px 20px}.p-list li{font-size:12.5px}.p-price{font-size:42px}}
 .p-list li{padding:8px 0;font-size:13px;color:var(--muted);border-bottom:1px solid rgba(255,255,255,.04);display:flex;align-items:flex-start;gap:9px;line-height:1.45}
 .p-list li::before{content:'✓';color:var(--gold);font-weight:700;flex-shrink:0;margin-top:1px}
 .p-list li.featured-item{color:var(--fg);font-weight:500}
@@ -213,7 +214,7 @@ footer{padding:40px 24px;border-top:1px solid var(--border);display:flex;align-i
   <div class="nav-logo">Plan B <span>Rentable</span></div>
   <div style="display:flex;align-items:center;gap:10px">
     <a href="https://wa.me/221710491314" target="_blank" rel="noopener" title="WhatsApp" style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.3);color:#25D366;font-size:16px;text-decoration:none;transition:background .2s" onmouseover="this.style.background='rgba(37,211,102,.25)'" onmouseout="this.style.background='rgba(37,211,102,.12)'">💬</a>
-    <a href="#offres" class="btn-nav">Obtenir le pack →</a>
+    <a href="#offres" class="btn-nav">Voir les offres →</a>
   </div>
 </nav>
 
@@ -470,9 +471,7 @@ footer{padding:40px 24px;border-top:1px solid var(--border);display:flex;align-i
       <div class="section-label">Les offres</div>
       <h2 class="section-title">Choisis ton niveau<br><em>d'accompagnement</em></h2>
       <p class="section-sub" style="max-width:500px;margin:0 auto">Toutes les offres incluent le pack complet de 6 documents. La différence : l'accès à l'application de suivi.</p>
-      <div style="margin-top:24px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:14px 20px;font-size:13.5px;color:var(--muted);line-height:1.7;max-width:560px;margin-left:auto;margin-right:auto">
-        Choisis un pack → clique WhatsApp → je te dis comment payer → je t'envoie ton code.
-      </div>
+      <div style="margin-top:16px;font-size:13px;color:var(--muted)">Choisis un pack → WhatsApp → paiement → code.</div>
     </div>
     <div class="pricing-grid">
 
@@ -491,6 +490,7 @@ footer{padding:40px 24px;border-top:1px solid var(--border);display:flex;align-i
           <li class="featured-item">Bonus 4 — Scripts & protocoles</li>
         </ul>
         <a href="https://wa.me/221710491314?text=Salut%2C%20je%20veux%20Pack%20Ebook%204%20900%20FCFA.%20Comment%20je%20paie%20%3F" class="btn-offer btn-offer-outline" target="_blank" rel="noopener">💬 Commander via WhatsApp →</a>
+        <div style="text-align:center;margin-top:8px;font-size:11.5px;color:var(--muted)">Paiement → code envoyé sur WhatsApp</div>
       </div>
 
       <!-- OFFRE 2 -->
@@ -511,6 +511,7 @@ footer{padding:40px 24px;border-top:1px solid var(--border);display:flex;align-i
           <li class="featured-item">Rapport final exportable en PDF</li>
         </ul>
         <a href="https://wa.me/221710491314?text=Salut%2C%20je%20veux%20Pack%20%2B%20App%2030%20jours%209%20900%20FCFA.%20Comment%20je%20paie%20%3F" class="btn-offer btn-offer-primary" target="_blank" rel="noopener">💬 Commander via WhatsApp →</a>
+        <div style="text-align:center;margin-top:8px;font-size:11.5px;color:var(--muted)">Paiement → code envoyé sur WhatsApp</div>
       </div>
 
       <!-- OFFRE 3 -->
@@ -528,8 +529,9 @@ footer{padding:40px 24px;border-top:1px solid var(--border);display:flex;align-i
           <li class="featured-item">Accès prioritaire aux futures fonctionnalités</li>
           <li class="featured-item">Groupe privé Fondateurs</li>
         </ul>
-        <div class="p-limit">⚡ Places restantes : limitées à 50 fondateurs</div>
+        <div class="p-limit">Places fondateur limitées (50)</div>
         <a href="https://wa.me/221710491314?text=Salut%2C%20je%20veux%20Offre%20Fondateur%20V1%2014%20900%20FCFA.%20Comment%20je%20paie%20%3F" class="btn-offer btn-offer-outline" target="_blank" rel="noopener">💬 Rejoindre les Fondateurs →</a>
+        <div style="text-align:center;margin-top:8px;font-size:11.5px;color:var(--muted)">Paiement → code envoyé sur WhatsApp</div>
       </div>
 
     </div>
@@ -552,6 +554,10 @@ footer{padding:40px 24px;border-top:1px solid var(--border);display:flex;align-i
       <blockquote>"Ce guide, je l'ai écrit pour moi-même il y a trois ans. Pour la version de moi qui avait peur, qui doutait, qui ne savait pas par où commencer. Aujourd'hui je le partage pour que tu n'aies pas à chercher aussi longtemps que moi."</blockquote>
       <p class="coach-bio">Coach Redouane est entrepreneur, coach PNL certifié et trader. Il dirige un groupe de 7 activités en Afrique et en Europe. Il accompagne les salariés africains qui veulent construire leur indépendance financière sans tout sacrifier.</p>
       <cite>— Coach Redouane · Fondateur du groupe CoachRedo</cite>
+      <div style="display:flex;gap:12px;margin-top:20px;flex-wrap:wrap">
+        <a href="#offres" class="btn-primary" style="font-size:13px;padding:11px 24px">Voir les offres →</a>
+        <a href="https://wa.me/221710491314" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:7px;font-size:13px;padding:11px 22px;border-radius:8px;border:1px solid rgba(37,211,102,.35);color:#25D366;text-decoration:none;font-weight:600;transition:background .2s" onmouseover="this.style.background='rgba(37,211,102,.08)'" onmouseout="this.style.background='transparent'">💬 WhatsApp direct</a>
+      </div>
     </div>
   </div>
 </div>
