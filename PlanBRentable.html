@@ -393,6 +393,37 @@ let S = JSON.parse(JSON.stringify(EMPTY_STATE));
 function save(){try{localStorage.setItem('planb_v2',JSON.stringify(S));}catch(e){}}
 function load(){try{const d=localStorage.getItem('planb_v2');if(d){const p=JSON.parse(d);S=Object.assign(JSON.parse(JSON.stringify(EMPTY_STATE)),p);}}catch(e){}}
 
+/* ════════════════════════════════════════
+   ACCESS CONTROL — indépendant de l'état S
+════════════════════════════════════════ */
+const ACCESS_KEY = 'planb_access';
+const VALID_CODES = {
+  'PLANB30':      {type:'30j',     label:'Accès 30 jours'},
+  'FONDATEUR2025':{type:'lifetime',label:'Accès Fondateur V1 — à vie'}
+};
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function loadAccess(){
+  try{ return JSON.parse(localStorage.getItem(ACCESS_KEY)||'null'); }
+  catch(e){ return null; }
+}
+function saveAccess(a){
+  try{ localStorage.setItem(ACCESS_KEY,JSON.stringify(a)); }catch(e){}
+}
+function checkAccess(){
+  const a = loadAccess();
+  if(!a) return 'none';
+  if(a.type === 'lifetime') return 'ok';
+  if(Date.now() - a.activatedAt > 30 * DAY_MS) return 'expired';
+  return 'ok';
+}
+function daysLeft(){
+  const a = loadAccess();
+  if(!a || a.type==='lifetime') return null;
+  const remaining = Math.ceil((30 * DAY_MS - (Date.now() - a.activatedAt)) / DAY_MS);
+  return Math.max(0, remaining);
+}
+
 function globalProgress(){
   // 0-100 based on phase
   const phases = {welcome:0,quiz:5,'quiz-result':S.quiz.passed?10:5,p1:20,p2:40,p3:60,p4:90,p5:100};
@@ -414,6 +445,9 @@ function render(keepScroll){
 }
 
 function getScreen(){
+  const access = checkAccess();
+  if(access === 'none')    return renderAccessGate();
+  if(access === 'expired') return renderAccessExpired();
   switch(S.screen){
     case 'welcome': return renderWelcome();
     case 'quiz': return renderQuiz();
@@ -432,10 +466,13 @@ function getScreen(){
 
 function topbar(label, phaseName, pct){
   const pname = S.profile && S.profile.name ? S.profile.name : (phaseName||'');
+  const dl = daysLeft();
+  const accessBadge = dl !== null ? `<span style="font-size:10px;background:#2a1f00;color:var(--gold);padding:2px 7px;border-radius:20px;margin-right:4px">${dl}j restants</span>` : '';
   return `<div class="topbar">
     <div class="topbar-row">
       <span class="topbar-title">Plan B Rentable</span>
-      <div style="display:flex;align-items:center;gap:6px">
+      <div style="display:flex;align-items:center;gap:4px">
+        ${accessBadge}
         <span class="topbar-phase">${pname}</span>
         <button class="icon-btn no-print" onclick="go('profile')" title="Mon profil">👤</button>
       </div>
@@ -456,6 +493,74 @@ function nav(backFn, nextFn, nextLabel, nextDisabled, backLabel){
   const nx = nextFn ? `<button class="btn btn-gold" onclick="${nextFn}()" ${nextDisabled?'disabled':''}>${nextLabel||'Continuer →'}</button>` : '';
   return `<div class="nav">${bk}${nx}</div>`;
 }
+
+/* ════════════════════════════════════════
+   ACCESS GATE & EXPIRED
+════════════════════════════════════════ */
+function renderAccessGate(){
+  return `
+  <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:var(--bg)">
+    <div style="width:100%;max-width:400px">
+      <div style="text-align:center;margin-bottom:32px">
+        <div style="width:56px;height:56px;border-radius:50%;background:var(--gold);color:#000;font-weight:800;font-size:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">CR</div>
+        <div style="font-size:22px;font-weight:800;color:var(--gold)">Plan B Rentable</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:4px">Application réservée aux membres</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px">
+        <div style="font-size:15px;font-weight:700;margin-bottom:6px">Entrez votre code d'accès</div>
+        <div style="font-size:12.5px;color:var(--muted);margin-bottom:16px">Vous avez reçu ce code par WhatsApp après votre achat.</div>
+        <input id="accessInput" type="text" placeholder="Ex: PLANB30 ou FONDATEUR2025"
+          style="width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);color:var(--fg);font-size:15px;font-weight:600;letter-spacing:1px;text-transform:uppercase;box-sizing:border-box"
+          oninput="this.value=this.value.toUpperCase()"
+          onkeydown="if(event.key==='Enter')submitCode()">
+        <button class="btn btn-gold" style="width:100%;margin-top:12px" onclick="submitCode()">Accéder à l'application →</button>
+        <div id="accessError" style="display:none;margin-top:10px;font-size:12.5px;color:var(--err);text-align:center"></div>
+      </div>
+      <div style="text-align:center;margin-top:20px;font-size:12px;color:var(--muted)">
+        Pas encore de code ? <a href="https://coachredo.com/planb" style="color:var(--gold);text-decoration:none">Obtenir le pack Plan B →</a>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderAccessExpired(){
+  return `
+  <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:var(--bg)">
+    <div style="width:100%;max-width:400px">
+      <div style="text-align:center;margin-bottom:32px">
+        <div style="width:56px;height:56px;border-radius:50%;background:var(--gold);color:#000;font-weight:800;font-size:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">CR</div>
+        <div style="font-size:22px;font-weight:800;color:var(--gold)">Plan B Rentable</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;text-align:center">
+        <div style="font-size:32px;margin-bottom:12px">⏳</div>
+        <div style="font-size:16px;font-weight:700;margin-bottom:8px">Votre accès 30 jours est expiré</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px">Vous avez terminé votre période d'accès gratuite.<br>Pour continuer votre parcours, passez à l'accès Fondateur.</div>
+        <a href="https://coachredo.com/planb" style="display:block;background:var(--gold);color:#000;font-weight:700;padding:13px;border-radius:10px;text-decoration:none;font-size:14px">Obtenir l'accès Fondateur →</a>
+        <div style="margin-top:16px;font-size:12px;color:var(--muted)">Vous avez déjà un nouveau code ? <span style="color:var(--gold);cursor:pointer" onclick="resetAccessCode()">Entrez-le ici</span></div>
+      </div>
+      <div style="text-align:center;margin-top:16px;font-size:12px;color:var(--muted)">
+        Besoin d'aide ? Contactez-nous sur WhatsApp
+      </div>
+    </div>
+  </div>`;
+}
+
+window.submitCode = function(){
+  const val = (document.getElementById('accessInput')?.value||'').trim().toUpperCase();
+  const cfg = VALID_CODES[val];
+  if(!cfg){
+    const el = document.getElementById('accessError');
+    if(el){ el.textContent = 'Code invalide. Vérifiez votre message WhatsApp.'; el.style.display='block'; }
+    return;
+  }
+  saveAccess({code:val, type:cfg.type, label:cfg.label, activatedAt:Date.now()});
+  render();
+};
+
+window.resetAccessCode = function(){
+  localStorage.removeItem(ACCESS_KEY);
+  render();
+};
 
 /* ════════════════════════════════════════
    WELCOME
