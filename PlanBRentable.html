@@ -413,8 +413,14 @@ let _session = null;
 let _profile  = null;
 
 async function fetchProfile(uid){
-  const { data } = await _supa.from('profiles').select('*').eq('id', uid).single();
-  return data;
+  try {
+    const { data, error } = await _supa.from('profiles').select('*').eq('id', uid).single();
+    if(error) console.error('[fetchProfile]', error);
+    return data || null;
+  } catch(e){
+    console.error('[fetchProfile] exception:', e);
+    return null;
+  }
 }
 
 function daysLeft(){
@@ -423,14 +429,23 @@ function daysLeft(){
   return Math.max(0, remaining);
 }
 
+// onAuthStateChange est la seule source de render() au boot.
+// En Supabase v2, il fire toujours avec INITIAL_SESSION (session null ou existante).
 _supa.auth.onAuthStateChange(async (event, session) => {
-  _session = session;
-  if(session){
-    _profile = await fetchProfile(session.user.id);
-  } else {
-    _profile = null;
+  try {
+    _session = session;
+    if(session){
+      _profile = await fetchProfile(session.user.id);
+    } else {
+      _profile = null;
+    }
+  } catch(e){
+    console.error('[onAuthStateChange]', e);
+    _session  = null;
+    _profile  = null;
+  } finally {
+    render();
   }
-  render();
 });
 
 function globalProgress(){
@@ -1990,14 +2005,28 @@ function toast(msg){
    INIT
 ════════════════════════════════════════ */
 load();
-// Récupère la session existante puis affiche l'écran correct
-_supa.auth.getSession().then(async ({ data: { session } }) => {
-  _session = session;
-  if(session){
-    _profile = await fetchProfile(session.user.id);
-  }
-  render();
-});
+// render() est déclenché par onAuthStateChange (event INITIAL_SESSION).
+// Pas besoin de getSession() séparé — évite la double render + race condition.
+
+// Filet de sécurité : si render() n'est pas appelé dans 7s (CDN bloqué, réseau mort)
+// → afficher un écran d'erreur plutôt que le spinner éternel
+let _rendered = false;
+const _origRender = render;
+render = function(keepScroll){
+  _rendered = true;
+  _origRender(keepScroll);
+};
+setTimeout(()=>{
+  if(_rendered) return;
+  const app = document.getElementById('app');
+  if(app) app.innerHTML = `
+    <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:#0d1b2a;text-align:center">
+      <div style="font-size:36px;margin-bottom:16px">⚠️</div>
+      <div style="font-size:17px;font-weight:700;color:#c9a84c;margin-bottom:8px">Erreur de chargement</div>
+      <div style="font-size:13px;color:#7a8fa6;line-height:1.6;margin-bottom:24px">Impossible de se connecter au serveur.<br>Vérifiez votre connexion internet.</div>
+      <button onclick="location.reload()" style="padding:13px 28px;background:#c9a84c;color:#000;border:none;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer">Recharger la page →</button>
+    </div>`;
+}, 7000);
 </script>
 </body>
 </html>
