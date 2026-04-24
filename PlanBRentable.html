@@ -409,8 +409,9 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const _supa = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-let _session = null;
+let _session  = null;
 let _profile  = null;
+let _rendered = false;
 
 async function fetchProfile(uid){
   try {
@@ -462,6 +463,7 @@ function globalProgress(){
    RENDER ENGINE
 ════════════════════════════════════════ */
 function render(keepScroll){
+  _rendered = true;
   const y = keepScroll ? window.scrollY : 0;
   const app = document.getElementById('app');
   app.innerHTML = getScreen();
@@ -2005,17 +2007,10 @@ function toast(msg){
    INIT
 ════════════════════════════════════════ */
 load();
-// render() est déclenché par onAuthStateChange (event INITIAL_SESSION).
-// Pas besoin de getSession() séparé — évite la double render + race condition.
+// render() est déclenché uniquement par onAuthStateChange (event INITIAL_SESSION).
+// _rendered est mis à true dans render() elle-même — pas de wrapping fragile.
 
-// Filet de sécurité : si render() n'est pas appelé dans 7s (CDN bloqué, réseau mort)
-// → afficher un écran d'erreur plutôt que le spinner éternel
-let _rendered = false;
-const _origRender = render;
-render = function(keepScroll){
-  _rendered = true;
-  _origRender(keepScroll);
-};
+// Filet de sécurité : CDN bloqué ou Supabase down → écran d'erreur après 8s
 setTimeout(()=>{
   if(_rendered) return;
   const app = document.getElementById('app');
@@ -2023,10 +2018,10 @@ setTimeout(()=>{
     <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:#0d1b2a;text-align:center">
       <div style="font-size:36px;margin-bottom:16px">⚠️</div>
       <div style="font-size:17px;font-weight:700;color:#c9a84c;margin-bottom:8px">Erreur de chargement</div>
-      <div style="font-size:13px;color:#7a8fa6;line-height:1.6;margin-bottom:24px">Impossible de se connecter au serveur.<br>Vérifiez votre connexion internet.</div>
+      <div style="font-size:13px;color:#7a8fa6;line-height:1.6;margin-bottom:24px">Impossible de se connecter au serveur.<br>Vérifiez votre connexion internet et rechargez.</div>
       <button onclick="location.reload()" style="padding:13px 28px;background:#c9a84c;color:#000;border:none;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer">Recharger la page →</button>
     </div>`;
-}, 7000);
+}, 8000);
 </script>
 </body>
 </html>
