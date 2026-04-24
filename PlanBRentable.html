@@ -442,6 +442,9 @@ function render(keepScroll){
   const app = document.getElementById('app');
   app.innerHTML = getScreen();
   window.scrollTo(0, y);
+  // Autofocus access input if gate is shown
+  const ai = document.getElementById('accessInput');
+  if(ai) setTimeout(()=>{ try{ ai.focus(); }catch(e){} }, 80);
 }
 
 function getScreen(){
@@ -500,24 +503,42 @@ function nav(backFn, nextFn, nextLabel, nextDisabled, backLabel){
 function renderAccessGate(){
   return `
   <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:var(--bg)">
-    <div style="width:100%;max-width:400px">
-      <div style="text-align:center;margin-bottom:32px">
-        <div style="width:56px;height:56px;border-radius:50%;background:var(--gold);color:#000;font-weight:800;font-size:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">CR</div>
-        <div style="font-size:22px;font-weight:800;color:var(--gold)">Plan B Rentable</div>
-        <div style="font-size:13px;color:var(--muted);margin-top:4px">Application réservée aux membres</div>
+    <div style="width:100%;max-width:380px">
+
+      <!-- Logo + titre -->
+      <div style="text-align:center;margin-bottom:40px">
+        <div style="width:66px;height:66px;border-radius:50%;background:linear-gradient(135deg,var(--gold) 0%,#a87c2a 100%);color:#000;font-weight:800;font-size:22px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 4px 24px rgba(201,168,76,0.35)">CR</div>
+        <div style="font-size:25px;font-weight:800;color:var(--gold);font-family:'Cormorant Garamond',serif;letter-spacing:0.5px">Plan B Rentable</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:6px;letter-spacing:0.3px">Application réservée aux membres</div>
       </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px">
-        <div style="font-size:15px;font-weight:700;margin-bottom:6px">Entrez votre code d'accès</div>
-        <div style="font-size:12.5px;color:var(--muted);margin-bottom:16px">Vous avez reçu ce code par WhatsApp après votre achat.</div>
-        <input id="accessInput" type="text" placeholder="Ex: PLANB30 ou FONDATEUR2025"
-          style="width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);color:var(--fg);font-size:15px;font-weight:600;letter-spacing:1px;text-transform:uppercase;box-sizing:border-box"
-          oninput="this.value=this.value.toUpperCase()"
-          onkeydown="if(event.key==='Enter')submitCode()">
-        <button class="btn btn-gold" style="width:100%;margin-top:12px" onclick="submitCode()">Accéder à l'application →</button>
-        <div id="accessError" style="display:none;margin-top:10px;font-size:12.5px;color:var(--err);text-align:center"></div>
+
+      <!-- Card -->
+      <div style="background:var(--card);border:1px solid rgba(201,168,76,0.22);border-radius:18px;padding:30px 26px;box-shadow:0 8px 40px rgba(0,0,0,0.35)">
+        <div style="font-size:17px;font-weight:700;margin-bottom:5px;color:var(--fg)">Accès membre</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:22px;line-height:1.55">Vous avez reçu votre code par WhatsApp après votre achat.</div>
+
+        <!-- Input avec icône cadenas -->
+        <div style="position:relative;margin-bottom:14px">
+          <svg style="position:absolute;left:14px;top:50%;transform:translateY(-50%);width:17px;height:17px;opacity:0.55;pointer-events:none" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          <input id="accessInput" type="text"
+            placeholder="Code d'accès"
+            style="width:100%;padding:15px 15px 15px 44px;border-radius:12px;border:2px solid rgba(201,168,76,0.4);background:rgba(255,255,255,0.04);color:var(--fg);font-size:16px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;box-sizing:border-box;outline:none;transition:border-color 0.2s,box-shadow 0.2s,background 0.2s;caret-color:var(--gold)"
+            oninput="this.value=this.value.toUpperCase();this.style.borderColor='var(--gold)';this.style.boxShadow='0 0 0 3px rgba(201,168,76,0.14)';this.style.background='rgba(201,168,76,0.05)'"
+            onfocus="this.style.borderColor='var(--gold)';this.style.boxShadow='0 0 0 3px rgba(201,168,76,0.14)';this.style.background='rgba(201,168,76,0.05)'"
+            onblur="if(!this.value){this.style.borderColor='rgba(201,168,76,0.4)';this.style.boxShadow='none';this.style.background='rgba(255,255,255,0.04)'}"
+            onkeydown="if(event.key==='Enter')submitCode()">
+        </div>
+
+        <button class="btn btn-gold" style="width:100%;padding:14px;font-size:15px;font-weight:700;border-radius:12px;letter-spacing:0.3px" onclick="submitCode()">
+          Accéder à l'application →
+        </button>
+        <div id="accessError" style="display:none;margin-top:12px;font-size:12.5px;color:var(--err);text-align:center;font-weight:500"></div>
       </div>
-      <div style="text-align:center;margin-top:20px;font-size:12px;color:var(--muted)">
-        Pas encore de code ? <a href="https://coachredo.com/planb" style="color:var(--gold);text-decoration:none">Obtenir le pack Plan B →</a>
+
+      <div style="text-align:center;margin-top:22px;font-size:12px;color:var(--muted)">
+        Pas encore de code ?&nbsp;<a href="https://coachredo.com/planb" style="color:var(--gold);text-decoration:none;font-weight:600">Obtenir le pack Plan B →</a>
       </div>
     </div>
   </div>`;
