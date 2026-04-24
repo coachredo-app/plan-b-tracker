@@ -406,20 +406,28 @@ function load(){try{const d=localStorage.getItem('planb_v2');if(d){const p=JSON.
 ════════════════════════════════════════ */
 const SUPABASE_URL = 'https://ggeohumiyxqhknnftydi.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdnZW9odW1peXhxaGtubmZ0eWRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNTY0NjcsImV4cCI6MjA5MjYzMjQ2N30.4HqbJxm8GMz8OnqHwdoa8sXNfxY7e9EmQxngdogC750';
-const _supa = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+let _supa     = null;
 let _session  = null;
 let _profile  = null;
 let _rendered = false;
 
+// Initialisation Supabase — protégée si CDN ne charge pas
+try {
+  _supa = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+} catch(e){
+  console.error('[supabase init failed]', e);
+}
+
 async function fetchProfile(uid){
+  if(!_supa) return null;
   try {
     const { data, error } = await _supa.from('profiles').select('*').eq('id', uid).single();
     if(error) console.error('[fetchProfile]', error);
     return data || null;
   } catch(e){
-    console.error('[fetchProfile] exception:', e);
+    console.error('[fetchProfile]', e);
     return null;
   }
 }
@@ -430,24 +438,36 @@ function daysLeft(){
   return Math.max(0, remaining);
 }
 
-// onAuthStateChange est la seule source de render() au boot.
-// En Supabase v2, il fire toujours avec INITIAL_SESSION (session null ou existante).
-_supa.auth.onAuthStateChange(async (event, session) => {
+// Boot initial — getSession() est explicite et fiable pour le premier rendu.
+// onAuthStateChange gère uniquement les changements post-boot.
+async function _boot(){
+  if(!_supa){ render(); return; }
   try {
+    const { data: { session } } = await _supa.auth.getSession();
     _session = session;
-    if(session){
-      _profile = await fetchProfile(session.user.id);
-    } else {
-      _profile = null;
-    }
+    if(session) _profile = await fetchProfile(session.user.id);
   } catch(e){
-    console.error('[onAuthStateChange]', e);
-    _session  = null;
-    _profile  = null;
-  } finally {
-    render();
+    console.error('[boot]', e);
+    _session = null; _profile = null;
   }
-});
+  render();
+}
+
+// Changements auth post-boot (login, logout, refresh token)
+// INITIAL_SESSION est ignoré : géré par _boot()
+if(_supa){
+  _supa.auth.onAuthStateChange(async (event, session) => {
+    if(event === 'INITIAL_SESSION') return;
+    try {
+      _session = session;
+      _profile = session ? await fetchProfile(session.user.id) : null;
+    } catch(e){
+      console.error('[onAuthStateChange]', e);
+      _session = null; _profile = null;
+    }
+    render();
+  });
+}
 
 function globalProgress(){
   // 0-100 based on phase
@@ -660,6 +680,7 @@ function renderAccessExpired(){
    AUTH HANDLERS
 ════════════════════════════════════════ */
 window.loginUser = async function(){
+  if(!_supa){ _showErr('loginError','Service indisponible. Rechargez la page.'); return; }
   const btn = document.getElementById('loginBtn');
   if(btn){ btn.disabled=true; btn.textContent='Connexion…'; }
   const email    = (document.getElementById('loginEmail')?.value||'').trim();
@@ -679,6 +700,7 @@ window.loginUser = async function(){
 };
 
 window.signupUser = async function(){
+  if(!_supa){ _showErr('signupError','Service indisponible. Rechargez la page.'); return; }
   const btn = document.getElementById('signupBtn');
   if(btn){ btn.disabled=true; btn.textContent='Création…'; }
   const name     = (document.getElementById('signupName')?.value||'').trim();
@@ -779,7 +801,7 @@ window.submitCode = async function(){
 };
 
 window.logoutUser = async function(){
-  await _supa.auth.signOut();
+  if(_supa) await _supa.auth.signOut();
   S = JSON.parse(JSON.stringify(EMPTY_STATE));
   save();
   // onAuthStateChange déclenche render()
@@ -2007,21 +2029,7 @@ function toast(msg){
    INIT
 ════════════════════════════════════════ */
 load();
-// render() est déclenché uniquement par onAuthStateChange (event INITIAL_SESSION).
-// _rendered est mis à true dans render() elle-même — pas de wrapping fragile.
-
-// Filet de sécurité : CDN bloqué ou Supabase down → écran d'erreur après 8s
-setTimeout(()=>{
-  if(_rendered) return;
-  const app = document.getElementById('app');
-  if(app) app.innerHTML = `
-    <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:#0d1b2a;text-align:center">
-      <div style="font-size:36px;margin-bottom:16px">⚠️</div>
-      <div style="font-size:17px;font-weight:700;color:#c9a84c;margin-bottom:8px">Erreur de chargement</div>
-      <div style="font-size:13px;color:#7a8fa6;line-height:1.6;margin-bottom:24px">Impossible de se connecter au serveur.<br>Vérifiez votre connexion internet et rechargez.</div>
-      <button onclick="location.reload()" style="padding:13px 28px;background:#c9a84c;color:#000;border:none;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer">Recharger la page →</button>
-    </div>`;
-}, 8000);
+_boot(); // appel explicite — render() garanti via getSession()
 </script>
 </body>
 </html>
