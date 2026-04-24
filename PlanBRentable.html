@@ -694,38 +694,71 @@ window.signupUser = async function(){
 window.submitCode = async function(){
   const btn = document.getElementById('codeBtn');
   if(btn){ btn.disabled=true; btn.textContent='Vérification…'; }
-  const val = (document.getElementById('accessInput')?.value||'').trim().toUpperCase();
-  if(!val){
-    _showErr('accessError','Entrez votre code d\'accès.');
-    if(btn){ btn.disabled=false; btn.textContent='Débloquer mon accès →'; } return;
+
+  try {
+    const val = (document.getElementById('accessInput')?.value||'').trim().toUpperCase();
+    if(!val){
+      _showErr('accessError','Entrez votre code d\'accès.');
+      return;
+    }
+
+    // 1 — Vérifier que le code existe et n'est pas encore utilisé
+    const { data: code, error: selectErr } = await _supa
+      .from('access_codes')
+      .select('id,access_type')
+      .eq('code', val)
+      .is('used_by', null)
+      .maybeSingle();
+
+    if(selectErr){
+      console.error('[submitCode] SELECT error:', selectErr);
+      _showErr('accessError','Erreur réseau. Réessayez dans quelques secondes.');
+      return;
+    }
+    if(!code){
+      _showErr('accessError','Code invalide ou déjà utilisé. Vérifiez votre message WhatsApp.');
+      return;
+    }
+
+    const now      = new Date().toISOString();
+    const expiresAt = code.access_type === 'planb_30_days'
+      ? new Date(Date.now() + 30 * DAY_MS).toISOString() : null;
+
+    // 2 — Réclamer le code (UPDATE simple, sans filtre IS NULL sur RETURNING)
+    const { error: claimErr } = await _supa
+      .from('access_codes')
+      .update({ used_by: _session.user.id, used_at: now })
+      .eq('id', code.id);
+
+    if(claimErr){
+      console.error('[submitCode] UPDATE access_codes error:', claimErr);
+      _showErr('accessError','Activation bloquée. Contactez-nous sur WhatsApp.');
+      return;
+    }
+
+    // 3 — Mettre à jour le profil utilisateur
+    const { error: profileErr } = await _supa
+      .from('profiles')
+      .update({ access_type: code.access_type, activated_at: now, expires_at: expiresAt })
+      .eq('id', _session.user.id);
+
+    if(profileErr){
+      console.error('[submitCode] UPDATE profiles error:', profileErr);
+      _showErr('accessError','Profil non mis à jour. Contactez-nous sur WhatsApp.');
+      return;
+    }
+
+    // 4 — Rafraîchir le profil et rediriger vers l'app
+    _profile = await fetchProfile(_session.user.id);
+    render();
+
+  } catch(e){
+    console.error('[submitCode] Exception inattendue:', e);
+    _showErr('accessError','Erreur inattendue. Rechargez la page et réessayez.');
+  } finally {
+    // Toujours réactiver le bouton, même en cas d'exception
+    if(btn){ btn.disabled=false; btn.textContent='Débloquer mon accès →'; }
   }
-  // Chercher code non utilisé
-  const { data: code, error } = await _supa
-    .from('access_codes').select('id,access_type,used_by')
-    .eq('code', val).is('used_by', null).maybeSingle();
-  if(error || !code){
-    _showErr('accessError','Code invalide ou déjà utilisé. Vérifiez votre message WhatsApp.');
-    if(btn){ btn.disabled=false; btn.textContent='Débloquer mon accès →'; } return;
-  }
-  const now = new Date().toISOString();
-  const expiresAt = code.access_type === 'planb_30_days'
-    ? new Date(Date.now() + 30 * DAY_MS).toISOString() : null;
-  // Réclamer le code — atomique : used_by IS NULL est re-vérifié côté DB
-  // .select('id') permet de détecter si 0 lignes ont été mises à jour (code déjà pris)
-  const { data: claimed, error: claimErr } = await _supa.from('access_codes')
-    .update({ used_by: _session.user.id, used_at: now })
-    .eq('id', code.id).is('used_by', null)
-    .select('id');
-  if(claimErr || !claimed || claimed.length === 0){
-    _showErr('accessError','Ce code vient d\'être utilisé. Contactez-nous sur WhatsApp.');
-    if(btn){ btn.disabled=false; btn.textContent='Débloquer mon accès →'; } return;
-  }
-  await _supa.from('profiles').update({
-    access_type: code.access_type, activated_at: now, expires_at: expiresAt
-  }).eq('id', _session.user.id);
-  _profile = await fetchProfile(_session.user.id);
-  if(btn){ btn.disabled=false; btn.textContent='Débloquer mon accès →'; }
-  render();
 };
 
 window.logoutUser = async function(){
