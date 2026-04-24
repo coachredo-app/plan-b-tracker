@@ -228,6 +228,7 @@ textarea{min-height:75px;line-height:1.5}
   .rep-row strong{color:#000}
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
 <div id="app"></div>
@@ -400,35 +401,36 @@ function save(){try{localStorage.setItem('planb_v2',JSON.stringify(S));}catch(e)
 function load(){try{const d=localStorage.getItem('planb_v2');if(d){const p=JSON.parse(d);S=Object.assign(JSON.parse(JSON.stringify(EMPTY_STATE)),p);}}catch(e){}}
 
 /* ════════════════════════════════════════
-   ACCESS CONTROL — indépendant de l'état S
+   SUPABASE AUTH
 ════════════════════════════════════════ */
-const ACCESS_KEY = 'planb_access';
-const VALID_CODES = {
-  'PLANB30':      {type:'30j',     label:'Accès 30 jours'},
-  'FONDATEUR2025':{type:'lifetime',label:'Accès Fondateur V1 — à vie'}
-};
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const _supa = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-function loadAccess(){
-  try{ return JSON.parse(localStorage.getItem(ACCESS_KEY)||'null'); }
-  catch(e){ return null; }
+let _session = null;
+let _profile  = null;
+
+async function fetchProfile(uid){
+  const { data } = await _supa.from('profiles').select('*').eq('id', uid).single();
+  return data;
 }
-function saveAccess(a){
-  try{ localStorage.setItem(ACCESS_KEY,JSON.stringify(a)); }catch(e){}
-}
-function checkAccess(){
-  const a = loadAccess();
-  if(!a) return 'none';
-  if(a.type === 'lifetime') return 'ok';
-  if(Date.now() - a.activatedAt > 30 * DAY_MS) return 'expired';
-  return 'ok';
-}
+
 function daysLeft(){
-  const a = loadAccess();
-  if(!a || a.type==='lifetime') return null;
-  const remaining = Math.ceil((30 * DAY_MS - (Date.now() - a.activatedAt)) / DAY_MS);
+  if(!_profile || !_profile.expires_at) return null;
+  const remaining = Math.ceil((new Date(_profile.expires_at) - new Date()) / DAY_MS);
   return Math.max(0, remaining);
 }
+
+_supa.auth.onAuthStateChange(async (event, session) => {
+  _session = session;
+  if(session){
+    _profile = await fetchProfile(session.user.id);
+  } else {
+    _profile = null;
+  }
+  render();
+});
 
 function globalProgress(){
   // 0-100 based on phase
@@ -448,28 +450,41 @@ function render(keepScroll){
   const app = document.getElementById('app');
   app.innerHTML = getScreen();
   window.scrollTo(0, y);
-  // Autofocus access input if gate is shown
   const ai = document.getElementById('accessInput');
   if(ai) setTimeout(()=>{ try{ ai.focus(); }catch(e){} }, 80);
+  const li = document.getElementById('loginEmail');
+  if(li) setTimeout(()=>{ try{ li.focus(); }catch(e){} }, 80);
 }
 
 function getScreen(){
-  const access = checkAccess();
-  if(access === 'none')    return renderAccessGate();
-  if(access === 'expired') return renderAccessExpired();
+  // Non connecté
+  if(!_session){
+    return S.screen === 'signup' ? renderSignup() : renderLogin();
+  }
+  // Connecté — accès non activé
+  if(!_profile || _profile.access_type === 'no_access'){
+    return renderAccessGate();
+  }
+  // Accès 30j — vérifier expiration
+  if(_profile.access_type === 'planb_30_days'){
+    if(_profile.expires_at && new Date(_profile.expires_at) < new Date()){
+      return renderAccessExpired();
+    }
+  }
+  // Accès OK — routing normal
   switch(S.screen){
-    case 'welcome': return renderWelcome();
-    case 'quiz': return renderQuiz();
+    case 'welcome':     return renderWelcome();
+    case 'quiz':        return renderQuiz();
     case 'quiz-result': return renderQuizResult();
-    case 'p1': return renderP1();
-    case 'p2': return renderP2();
-    case 'p3-engage': return renderP3Engage();
-    case 'p3': return renderP3Hub();
-    case 'p3-week': return renderP3Week();
-    case 'p4': return renderP4();
-    case 'p5': return renderP5();
-    case 'profile': return renderProfile();
-    default: return renderWelcome();
+    case 'p1':          return renderP1();
+    case 'p2':          return renderP2();
+    case 'p3-engage':   return renderP3Engage();
+    case 'p3':          return renderP3Hub();
+    case 'p3-week':     return renderP3Week();
+    case 'p4':          return renderP4();
+    case 'p5':          return renderP5();
+    case 'profile':     return renderProfile();
+    default:            return renderWelcome();
   }
 }
 
@@ -484,6 +499,7 @@ function topbar(label, phaseName, pct){
         ${accessBadge}
         <span class="topbar-phase">${pname}</span>
         <button class="icon-btn no-print" onclick="go('profile')" title="Mon profil">👤</button>
+        <button class="icon-btn no-print" onclick="logoutUser()" title="Déconnexion" style="font-size:12px;opacity:0.55">⏏</button>
       </div>
     </div>
     <div class="pbar"><div class="pfill" style="width:${pct||0}%"></div></div>
@@ -504,47 +520,101 @@ function nav(backFn, nextFn, nextLabel, nextDisabled, backLabel){
 }
 
 /* ════════════════════════════════════════
-   ACCESS GATE & EXPIRED
+   AUTH SCREENS — LOGIN / SIGNUP
+════════════════════════════════════════ */
+function _authLogo(){
+  return `
+  <div style="text-align:center;margin-bottom:38px">
+    <div style="width:66px;height:66px;border-radius:50%;background:linear-gradient(135deg,var(--gold) 0%,#a87c2a 100%);color:#000;font-weight:800;font-size:22px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 4px 24px rgba(201,168,76,0.35)">CR</div>
+    <div style="font-size:25px;font-weight:800;color:var(--gold);font-family:'Cormorant Garamond',serif;letter-spacing:0.5px">Plan B Rentable</div>
+    <div style="font-size:13px;color:var(--muted);margin-top:6px">Réservé aux membres du Pack Plan B</div>
+  </div>`;
+}
+function _authInput(id,type,placeholder,onenter){
+  return `<input id="${id}" type="${type}" placeholder="${placeholder}"
+    style="width:100%;padding:13px 14px;border-radius:12px;border:2px solid rgba(201,168,76,0.35);background:rgba(255,255,255,0.04);color:var(--text);font-size:14px;box-sizing:border-box;outline:none;transition:border-color .22s,box-shadow .22s;margin-bottom:11px"
+    onfocus="this.style.borderColor='var(--gold)';this.style.boxShadow='0 0 0 4px rgba(201,168,76,0.13)'"
+    onblur="this.style.borderColor='rgba(201,168,76,0.35)';this.style.boxShadow='none'"
+    onkeydown="if(event.key==='Enter'&&'${onenter}')${onenter}">`;
+}
+
+function renderLogin(){
+  return `
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--navy)">
+    <div style="width:100%;max-width:380px">
+      ${_authLogo()}
+      <div class="gate-card" style="background:var(--card);border:1px solid rgba(201,168,76,0.22);border-radius:18px;padding:28px 26px;box-shadow:0 8px 40px rgba(0,0,0,0.35)">
+        <div style="font-size:17px;font-weight:700;margin-bottom:4px;color:var(--text)">Connexion</div>
+        <div style="font-size:12px;color:var(--muted);opacity:0.75;margin-bottom:20px">Connectez-vous à votre compte membre.</div>
+        ${_authInput('loginEmail','email','Adresse email',"document.getElementById('loginPassword').focus()")}
+        ${_authInput('loginPassword','password','Mot de passe','loginUser()')}
+        <button id="loginBtn" class="btn btn-gold gate-btn" style="width:100%;padding:14px;font-size:15px;font-weight:700;border-radius:12px;margin-top:4px" onclick="loginUser()">Se connecter →</button>
+        <div id="loginError" style="display:none;margin-top:11px;font-size:12.5px;color:var(--err);text-align:center;font-weight:500"></div>
+        <div style="text-align:center;margin-top:18px;font-size:12.5px;color:var(--muted)">
+          Pas encore de compte ?&nbsp;<span style="color:var(--gold);cursor:pointer;font-weight:600" onclick="go('signup')">Créer mon compte</span>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:20px;font-size:12px;color:var(--muted)">
+        Pas encore de pack ?&nbsp;<a href="https://www.coachredo.com" style="color:var(--gold);text-decoration:none;font-weight:600">Obtenir le pack Plan B →</a>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderSignup(){
+  return `
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--navy)">
+    <div style="width:100%;max-width:380px">
+      ${_authLogo()}
+      <div class="gate-card" style="background:var(--card);border:1px solid rgba(201,168,76,0.22);border-radius:18px;padding:28px 26px;box-shadow:0 8px 40px rgba(0,0,0,0.35)">
+        <div style="font-size:17px;font-weight:700;margin-bottom:4px;color:var(--text)">Créer mon compte</div>
+        <div style="font-size:12px;color:var(--muted);opacity:0.75;margin-bottom:20px">Un compte = un accès personnel et sécurisé.</div>
+        ${_authInput('signupName','text','Prénom et nom',"document.getElementById('signupEmail').focus()")}
+        ${_authInput('signupEmail','email','Adresse email',"document.getElementById('signupPassword').focus()")}
+        ${_authInput('signupPassword','password','Mot de passe (8+ caractères)',"document.getElementById('signupWhatsapp').focus()")}
+        ${_authInput('signupWhatsapp','tel','WhatsApp (ex: 221XXXXXXXXX)','signupUser()')}
+        <button id="signupBtn" class="btn btn-gold gate-btn" style="width:100%;padding:14px;font-size:15px;font-weight:700;border-radius:12px;margin-top:4px" onclick="signupUser()">Créer mon compte →</button>
+        <div id="signupError" style="display:none;margin-top:11px;font-size:12.5px;color:var(--err);text-align:center;font-weight:500"></div>
+        <div id="signupSuccess" style="display:none;margin-top:11px;font-size:12.5px;color:var(--ok);text-align:center;font-weight:600"></div>
+        <div style="text-align:center;margin-top:18px;font-size:12.5px;color:var(--muted)">
+          Déjà un compte ?&nbsp;<span style="color:var(--gold);cursor:pointer;font-weight:600" onclick="go('welcome')">Se connecter</span>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ════════════════════════════════════════
+   ACCESS GATE (connecté, pas encore de code)
 ════════════════════════════════════════ */
 function renderAccessGate(){
+  const email = _session?.user?.email || '';
   return `
-  <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:var(--bg)">
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--navy)">
     <div style="width:100%;max-width:380px">
-
-      <!-- Logo + titre -->
-      <div style="text-align:center;margin-bottom:40px">
-        <div style="width:66px;height:66px;border-radius:50%;background:linear-gradient(135deg,var(--gold) 0%,#a87c2a 100%);color:#000;font-weight:800;font-size:22px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 4px 24px rgba(201,168,76,0.35)">CR</div>
-        <div style="font-size:25px;font-weight:800;color:var(--gold);font-family:'Cormorant Garamond',serif;letter-spacing:0.5px">Plan B Rentable</div>
-        <div style="font-size:13px;color:var(--muted);margin-top:6px;letter-spacing:0.3px">Réservé aux membres du Pack Plan B</div>
-      </div>
-
-      <!-- Card -->
+      ${_authLogo()}
       <div class="gate-card" style="background:var(--card);border:1px solid rgba(201,168,76,0.22);border-radius:18px;padding:30px 26px;box-shadow:0 8px 40px rgba(0,0,0,0.35)">
-        <div style="font-size:17px;font-weight:700;margin-bottom:5px;color:var(--fg)">Accès membre</div>
-        <div style="font-size:12px;color:var(--muted);opacity:0.75;margin-bottom:22px;line-height:1.55">Vous avez reçu votre code par WhatsApp après votre achat.</div>
-
-        <!-- Input avec icône cadenas -->
+        <div style="font-size:17px;font-weight:700;margin-bottom:4px;color:var(--text)">Activer mon accès</div>
+        <div style="font-size:12px;color:var(--muted);opacity:0.75;margin-bottom:20px;line-height:1.55">Connecté en tant que <strong style="color:var(--text)">${email}</strong>.<br>Entrez le code reçu par WhatsApp après votre achat.</div>
         <div style="position:relative;margin-bottom:14px">
           <svg style="position:absolute;left:14px;top:50%;transform:translateY(-50%);width:17px;height:17px;opacity:0.55;pointer-events:none;transition:opacity .2s" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
           </svg>
-          <input id="accessInput" type="text"
-            placeholder="Saisissez votre code"
-            style="width:100%;padding:15px 15px 15px 44px;border-radius:12px;border:2px solid rgba(201,168,76,0.35);background:rgba(255,255,255,0.04);color:var(--fg);font-size:14px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;box-sizing:border-box;outline:none;transition:border-color .22s,box-shadow .22s,background .22s;caret-color:var(--gold)"
+          <input id="accessInput" type="text" placeholder="Saisissez votre code"
+            style="width:100%;padding:15px 15px 15px 44px;border-radius:12px;border:2px solid rgba(201,168,76,0.35);background:rgba(255,255,255,0.04);color:var(--text);font-size:14px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;box-sizing:border-box;outline:none;transition:border-color .22s,box-shadow .22s,background .22s;caret-color:var(--gold)"
             oninput="this.value=this.value.toUpperCase();this.style.borderColor='var(--gold)';this.style.boxShadow='0 0 0 4px rgba(201,168,76,0.13)';this.style.background='rgba(201,168,76,0.05)'"
             onfocus="this.style.borderColor='var(--gold)';this.style.boxShadow='0 0 0 4px rgba(201,168,76,0.13)';this.style.background='rgba(201,168,76,0.05)';this.previousElementSibling.style.opacity='1'"
             onblur="if(!this.value){this.style.borderColor='rgba(201,168,76,0.35)';this.style.boxShadow='none';this.style.background='rgba(255,255,255,0.04)'};this.previousElementSibling.style.opacity='0.55'"
             onkeydown="if(event.key==='Enter')submitCode()">
         </div>
-
-        <button class="btn btn-gold gate-btn" style="width:100%;padding:14px;font-size:15px;font-weight:700;border-radius:12px;letter-spacing:0.3px" onclick="submitCode()">
-          Débloquer mon accès →
-        </button>
+        <button id="codeBtn" class="btn btn-gold gate-btn" style="width:100%;padding:14px;font-size:15px;font-weight:700;border-radius:12px;letter-spacing:0.3px" onclick="submitCode()">Débloquer mon accès →</button>
         <div id="accessError" style="display:none;margin-top:12px;font-size:12.5px;color:var(--err);text-align:center;font-weight:500"></div>
+        <div style="text-align:center;margin-top:16px;font-size:12px;color:var(--muted)">
+          Pas votre compte ?&nbsp;<span style="color:var(--gold);cursor:pointer;font-weight:600" onclick="logoutUser()">Se déconnecter</span>
+        </div>
       </div>
-
-      <div style="text-align:center;margin-top:22px;font-size:12px;color:var(--muted)">
-        Pas encore de code ?&nbsp;<a href="https://www.coachredo.com" style="color:var(--gold);text-decoration:none;font-weight:600;transition:opacity .18s,letter-spacing .18s" onmouseover="this.style.opacity='0.75';this.style.letterSpacing='0.3px'" onmouseout="this.style.opacity='1';this.style.letterSpacing='0'">Obtenir le pack Plan B →</a>
+      <div style="text-align:center;margin-top:20px;font-size:12px;color:var(--muted)">
+        Pas encore de code ?&nbsp;<a href="https://www.coachredo.com" style="color:var(--gold);text-decoration:none;font-weight:600">Obtenir le pack Plan B →</a>
       </div>
     </div>
   </div>`;
@@ -552,42 +622,120 @@ function renderAccessGate(){
 
 function renderAccessExpired(){
   return `
-  <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:var(--bg)">
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--navy)">
     <div style="width:100%;max-width:400px">
-      <div style="text-align:center;margin-bottom:32px">
-        <div style="width:56px;height:56px;border-radius:50%;background:var(--gold);color:#000;font-weight:800;font-size:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">CR</div>
-        <div style="font-size:22px;font-weight:800;color:var(--gold)">Plan B Rentable</div>
-      </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;text-align:center">
-        <div style="font-size:32px;margin-bottom:12px">⏳</div>
+      ${_authLogo()}
+      <div style="background:var(--card);border:1px solid rgba(201,168,76,0.22);border-radius:18px;padding:28px 24px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.35)">
+        <div style="font-size:36px;margin-bottom:14px">⏳</div>
         <div style="font-size:16px;font-weight:700;margin-bottom:8px">Votre accès 30 jours est expiré</div>
-        <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px">Vous avez terminé votre période d'accès gratuite.<br>Pour continuer votre parcours, passez à l'accès Fondateur.</div>
-        <a href="https://www.coachredo.com" style="display:block;background:var(--gold);color:#000;font-weight:700;padding:13px;border-radius:10px;text-decoration:none;font-size:14px">Obtenir l'accès Fondateur →</a>
-        <div style="margin-top:16px;font-size:12px;color:var(--muted)">Vous avez déjà un nouveau code ? <span style="color:var(--gold);cursor:pointer" onclick="resetAccessCode()">Entrez-le ici</span></div>
-      </div>
-      <div style="text-align:center;margin-top:16px;font-size:12px;color:var(--muted)">
-        Besoin d'aide ? Contactez-nous sur WhatsApp
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px">Pour continuer votre parcours, passez à l'accès Fondateur à vie.</div>
+        <a href="https://www.coachredo.com" class="gate-btn" style="display:block;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;font-weight:700;padding:14px;border-radius:12px;text-decoration:none;font-size:14px">Obtenir l'accès Fondateur →</a>
+        <div style="margin-top:18px;font-size:12px;color:var(--muted)">
+          <span style="color:var(--gold);cursor:pointer;font-weight:600" onclick="logoutUser()">Se connecter avec un autre compte</span>
+        </div>
       </div>
     </div>
   </div>`;
 }
 
-window.submitCode = function(){
-  const val = (document.getElementById('accessInput')?.value||'').trim().toUpperCase();
-  const cfg = VALID_CODES[val];
-  if(!cfg){
-    const el = document.getElementById('accessError');
-    if(el){ el.textContent = 'Code invalide. Vérifiez votre message WhatsApp.'; el.style.display='block'; }
-    return;
+/* ════════════════════════════════════════
+   AUTH HANDLERS
+════════════════════════════════════════ */
+window.loginUser = async function(){
+  const btn = document.getElementById('loginBtn');
+  if(btn){ btn.disabled=true; btn.textContent='Connexion…'; }
+  const email    = (document.getElementById('loginEmail')?.value||'').trim();
+  const password = document.getElementById('loginPassword')?.value||'';
+  if(!email||!password){
+    _showErr('loginError','Remplissez les deux champs.');
+    if(btn){ btn.disabled=false; btn.textContent='Se connecter →'; } return;
   }
-  saveAccess({code:val, type:cfg.type, label:cfg.label, activatedAt:Date.now()});
+  const { error } = await _supa.auth.signInWithPassword({ email, password });
+  if(error){
+    const msg = (error.message||'').toLowerCase().includes('invalid')
+      ? 'Email ou mot de passe incorrect.' : error.message;
+    _showErr('loginError', msg);
+    if(btn){ btn.disabled=false; btn.textContent='Se connecter →'; }
+  }
+  // Succès → onAuthStateChange déclenche render()
+};
+
+window.signupUser = async function(){
+  const btn = document.getElementById('signupBtn');
+  if(btn){ btn.disabled=true; btn.textContent='Création…'; }
+  const name     = (document.getElementById('signupName')?.value||'').trim();
+  const email    = (document.getElementById('signupEmail')?.value||'').trim();
+  const password = document.getElementById('signupPassword')?.value||'';
+  const whatsapp = (document.getElementById('signupWhatsapp')?.value||'').trim();
+  if(!name||!email||!password){
+    _showErr('signupError','Prénom, email et mot de passe sont obligatoires.');
+    if(btn){ btn.disabled=false; btn.textContent='Créer mon compte →'; } return;
+  }
+  if(password.length < 8){
+    _showErr('signupError','Mot de passe : 8 caractères minimum.');
+    if(btn){ btn.disabled=false; btn.textContent='Créer mon compte →'; } return;
+  }
+  const { error } = await _supa.auth.signUp({
+    email, password, options:{ data:{ name, whatsapp } }
+  });
+  if(error){
+    const msg = (error.message||'').toLowerCase().includes('already')
+      ? 'Un compte existe déjà avec cet email.' : error.message;
+    _showErr('signupError', msg);
+    if(btn){ btn.disabled=false; btn.textContent='Créer mon compte →'; }
+  } else {
+    const ok = document.getElementById('signupSuccess');
+    if(ok){ ok.textContent='✓ Compte créé ! Vérifiez votre email pour confirmer.'; ok.style.display='block'; }
+    if(btn){ btn.disabled=false; btn.textContent='Créer mon compte →'; }
+  }
+};
+
+window.submitCode = async function(){
+  const btn = document.getElementById('codeBtn');
+  if(btn){ btn.disabled=true; btn.textContent='Vérification…'; }
+  const val = (document.getElementById('accessInput')?.value||'').trim().toUpperCase();
+  if(!val){
+    _showErr('accessError','Entrez votre code d\'accès.');
+    if(btn){ btn.disabled=false; btn.textContent='Débloquer mon accès →'; } return;
+  }
+  // Chercher code non utilisé
+  const { data: code, error } = await _supa
+    .from('access_codes').select('id,access_type,used_by')
+    .eq('code', val).is('used_by', null).maybeSingle();
+  if(error || !code){
+    _showErr('accessError','Code invalide ou déjà utilisé. Vérifiez votre message WhatsApp.');
+    if(btn){ btn.disabled=false; btn.textContent='Débloquer mon accès →'; } return;
+  }
+  const now = new Date().toISOString();
+  const expiresAt = code.access_type === 'planb_30_days'
+    ? new Date(Date.now() + 30 * DAY_MS).toISOString() : null;
+  // Réclamer le code (re-vérifie used_by=null = atomique)
+  const { error: claimErr } = await _supa.from('access_codes')
+    .update({ used_by: _session.user.id, used_at: now })
+    .eq('id', code.id).is('used_by', null);
+  if(claimErr){
+    _showErr('accessError','Ce code vient d\'être utilisé. Contactez-nous sur WhatsApp.');
+    if(btn){ btn.disabled=false; btn.textContent='Débloquer mon accès →'; } return;
+  }
+  await _supa.from('profiles').update({
+    access_type: code.access_type, activated_at: now, expires_at: expiresAt
+  }).eq('id', _session.user.id);
+  _profile = await fetchProfile(_session.user.id);
+  if(btn){ btn.disabled=false; btn.textContent='Débloquer mon accès →'; }
   render();
 };
 
-window.resetAccessCode = function(){
-  localStorage.removeItem(ACCESS_KEY);
-  render();
+window.logoutUser = async function(){
+  await _supa.auth.signOut();
+  S = JSON.parse(JSON.stringify(EMPTY_STATE));
+  save();
+  // onAuthStateChange déclenche render()
 };
+
+function _showErr(id, msg){
+  const el = document.getElementById(id);
+  if(el){ el.textContent=msg; el.style.display='block'; }
+}
 
 /* ════════════════════════════════════════
    WELCOME
@@ -1806,7 +1954,14 @@ function toast(msg){
    INIT
 ════════════════════════════════════════ */
 load();
-render();
+// Récupère la session existante puis affiche l'écran correct
+_supa.auth.getSession().then(async ({ data: { session } }) => {
+  _session = session;
+  if(session){
+    _profile = await fetchProfile(session.user.id);
+  }
+  render();
+});
 </script>
 </body>
 </html>
