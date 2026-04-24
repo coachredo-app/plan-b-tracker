@@ -206,6 +206,24 @@ footer{padding:40px 24px;border-top:1px solid var(--border);display:flex;align-i
   .footer-links{flex-wrap:wrap;justify-content:center}
 }
 </style>
+
+<!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', 'PIXEL_ID');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=PIXEL_ID&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
 </head>
 <body>
 
@@ -213,7 +231,7 @@ footer{padding:40px 24px;border-top:1px solid var(--border);display:flex;align-i
 <nav id="navbar">
   <div class="nav-logo">Plan B <span>Rentable</span></div>
   <div style="display:flex;align-items:center;gap:10px">
-    <a href="https://wa.me/221710491314?text=Salut%2C%20j%27h%C3%A9site%20entre%20les%20packs%20Plan%20B%20Rentable.%20Tu%20me%20conseilles%20lequel%20%3F" target="_blank" rel="noopener" title="WhatsApp" style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.3);color:#25D366;font-size:16px;text-decoration:none;transition:background .2s" onmouseover="this.style.background='rgba(37,211,102,.25)'" onmouseout="this.style.background='rgba(37,211,102,.12)'">💬</a>
+    <a href="https://wa.me/221710491314?text=Salut%2C%20j%27h%C3%A9site%20entre%20les%20packs%20Plan%20B%20Rentable.%20Tu%20me%20conseilles%20lequel%20%3F" target="_blank" rel="noopener" title="WhatsApp" style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.3);color:#25D366;font-size:16px;text-decoration:none;transition:background .2s" onmouseover="this.style.background='rgba(37,211,102,.25)'" onmouseout="this.style.background='rgba(37,211,102,.12)'" onclick="if(window.fbq)fbq('trackCustom','WhatsAppClick',{pack:'hesite'})">💬</a>
     <a href="#offres" class="btn-nav">Voir les offres →</a>
   </div>
 </nav>
@@ -226,7 +244,7 @@ footer{padding:40px 24px;border-top:1px solid var(--border);display:flex;align-i
   <p class="hero-sub">La méthode complète pour créer ton activité parallèle en Afrique francophone — <strong>sans quitter ton emploi</strong>, sans gros capital, sans perdre du temps.</p>
   <div class="hero-cta-wrap">
     <a href="#offres" class="btn-primary" style="font-size:17px;padding:17px 44px">Voir les 3 offres →</a>
-    <a href="https://wa.me/221710491314?text=Salut%2C%20j%27h%C3%A9site%20entre%20les%20packs%20Plan%20B%20Rentable.%20Tu%20me%20conseilles%20lequel%20%3F" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;color:#25D366;font-size:14px;font-weight:600;text-decoration:none;padding:6px 0">💬 WhatsApp direct</a>
+    <a href="https://wa.me/221710491314?text=Salut%2C%20j%27h%C3%A9site%20entre%20les%20packs%20Plan%20B%20Rentable.%20Tu%20me%20conseilles%20lequel%20%3F" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;color:#25D366;font-size:14px;font-weight:600;text-decoration:none;padding:6px 0" onclick="if(window.fbq)fbq('trackCustom','WhatsAppClick',{pack:'hesite'})">💬 WhatsApp direct</a>
     <div class="hero-note">Tu choisis ton pack → je te réponds sur WhatsApp → je t'envoie ton accès (code).</div>
   </div>
   <div class="hero-social">
@@ -490,7 +508,7 @@ footer{padding:40px 24px;border-top:1px solid var(--border);display:flex;align-i
           <li class="featured-item">Bonus 3 — Plan 90 jours version cash</li>
           <li class="featured-item">Bonus 4 — Scripts & protocoles</li>
         </ul>
-        <a href="https://wa.me/221710491314?text=Salut%2C%20je%20veux%20Pack%20Ebook%204%20900%20FCFA.%20Comment%20je%20paie%20%3F" class="btn-offer btn-offer-outline" target="_blank" rel="noopener">💬 Commander via WhatsApp →</a>
+        <a href="https://wa.me/221710491314?text=Salut%2C%20je%20veux%20Pack%20Ebook%204%20900%20FCFA.%20Comment%20je%20paie%20%3F" class="btn-offer btn-offer-outline" target="_blank" rel="noopener" onclick="if(window.fbq)fbq('trackCustom','WhatsAppClick',{pack:'ebook'})">💬 Commander via WhatsApp →</a>
         <div style="text-align:center;margin-top:8px;font-size:11.5px;color:var(--muted)">Paiement : Wave · Orange Money</div>
       </div>
 
@@ -511,7 +529,7 @@ footer{padding:40px 24px;border-top:1px solid var(--border);display:flex;align-i
           <li class="featured-item">Tableau de bord & suivi des revenus</li>
           <li class="featured-item">Rapport final exportable en PDF</li>
         </ul>
-        <a href="https://wa.me/221710491314?text=Salut%2C%20je%20veux%20Pack%20%2B%20App%2030%20jours%209%20900%20FCFA.%20Comment%20je%20paie%20%3F" class="btn-offer btn-offer-primary" target="_blank" rel="noopener">💬 Commander via WhatsApp →</a>
+        <a href="https://wa.me/221710491314?text=Salut%2C%20je%20veux%20Pack%20%2B%20App%2030%20jours%209%20900%20FCFA.%20Comment%20je%20paie%20%3F" class="btn-offer btn-offer-primary" target="_blank" rel="noopener" onclick="if(window.fbq)fbq('trackCustom','WhatsAppClick',{pack:'app30'})">💬 Commander via WhatsApp →</a>
         <div style="text-align:center;margin-top:8px;font-size:11.5px;color:var(--muted)">Paiement : Wave · Orange Money</div>
       </div>
 
@@ -531,13 +549,13 @@ footer{padding:40px 24px;border-top:1px solid var(--border);display:flex;align-i
           <li class="featured-item">Groupe privé Fondateurs</li>
         </ul>
         <div class="p-limit">Places fondateur limitées (50)</div>
-        <a href="https://wa.me/221710491314?text=Salut%2C%20je%20veux%20Offre%20Fondateur%20V1%2014%20900%20FCFA.%20Comment%20je%20paie%20%3F" class="btn-offer btn-offer-outline" target="_blank" rel="noopener">💬 Rejoindre les Fondateurs →</a>
+        <a href="https://wa.me/221710491314?text=Salut%2C%20je%20veux%20Offre%20Fondateur%20V1%2014%20900%20FCFA.%20Comment%20je%20paie%20%3F" class="btn-offer btn-offer-outline" target="_blank" rel="noopener" onclick="if(window.fbq)fbq('trackCustom','WhatsAppClick',{pack:'fondateur'})">💬 Rejoindre les Fondateurs →</a>
         <div style="text-align:center;margin-top:8px;font-size:11.5px;color:var(--muted)">Paiement : Wave · Orange Money</div>
       </div>
 
     </div>
     <div style="text-align:center;margin-top:28px">
-      <a href="https://wa.me/221710491314?text=Salut%2C%20j%27h%C3%A9site%20entre%20les%20packs.%20Tu%20me%20conseilles%20lequel%20%3F" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:13px;text-decoration:none;border:1px solid var(--border);padding:8px 18px;border-radius:100px;transition:all .2s" onmouseover="this.style.borderColor='#25D366';this.style.color='#25D366'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">💬 Je ne sais pas choisir → WhatsApp</a>
+      <a href="https://wa.me/221710491314?text=Salut%2C%20j%27h%C3%A9site%20entre%20les%20packs.%20Tu%20me%20conseilles%20lequel%20%3F" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:13px;text-decoration:none;border:1px solid var(--border);padding:8px 18px;border-radius:100px;transition:all .2s" onmouseover="this.style.borderColor='#25D366';this.style.color='#25D366'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'" onclick="if(window.fbq)fbq('trackCustom','WhatsAppClick',{pack:'hesite'})">💬 Je ne sais pas choisir → WhatsApp</a>
       <div style="font-size:11.5px;color:var(--muted);margin-top:6px">Paiement : Wave · Orange Money</div>
     </div>
     <div class="pricing-note">
@@ -558,7 +576,7 @@ footer{padding:40px 24px;border-top:1px solid var(--border);display:flex;align-i
       <cite>— Coach Redouane · Fondateur du groupe CoachRedo</cite>
       <div style="display:flex;gap:12px;margin-top:20px;flex-wrap:wrap;justify-content:center">
         <a href="#offres" class="btn-primary" style="font-size:13px;padding:11px 24px">Voir les offres →</a>
-        <a href="https://wa.me/221710491314?text=Salut%2C%20j%27h%C3%A9site%20entre%20les%20packs%20Plan%20B%20Rentable.%20Tu%20me%20conseilles%20lequel%20%3F" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:7px;font-size:13px;padding:11px 22px;border-radius:8px;border:1px solid rgba(37,211,102,.35);color:#25D366;text-decoration:none;font-weight:600;transition:background .2s" onmouseover="this.style.background='rgba(37,211,102,.08)'" onmouseout="this.style.background='transparent'">💬 WhatsApp direct</a>
+        <a href="https://wa.me/221710491314?text=Salut%2C%20j%27h%C3%A9site%20entre%20les%20packs%20Plan%20B%20Rentable.%20Tu%20me%20conseilles%20lequel%20%3F" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:7px;font-size:13px;padding:11px 22px;border-radius:8px;border:1px solid rgba(37,211,102,.35);color:#25D366;text-decoration:none;font-weight:600;transition:background .2s" onmouseover="this.style.background='rgba(37,211,102,.08)'" onmouseout="this.style.background='transparent'" onclick="if(window.fbq)fbq('trackCustom','WhatsAppClick',{pack:'hesite'})">💬 WhatsApp direct</a>
       </div>
     </div>
   </div>
@@ -621,7 +639,7 @@ footer{padding:40px 24px;border-top:1px solid var(--border);display:flex;align-i
     <a href="#pack">Le pack</a>
     <a href="#offres">Offres</a>
     <a href="#faq">FAQ</a>
-    <a href="https://wa.me/221710491314" target="_blank" rel="noopener">WhatsApp</a>
+    <a href="https://wa.me/221710491314" target="_blank" rel="noopener" onclick="if(window.fbq)fbq('trackCustom','WhatsAppClick',{pack:'hesite'})">WhatsApp</a>
   </div>
   <div class="footer-copy">© 2026 CoachRedo. Tous droits réservés.</div>
 </footer>
