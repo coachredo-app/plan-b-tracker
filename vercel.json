@@ -5,6 +5,11 @@
       "has": [{ "type": "host", "value": "planb.coachredo.app" }],
       "destination": "/PlanBRentable.html",
       "permanent": false
+    },
+    {
+      "source": "/planb",
+      "destination": "/",
+      "permanent": false
     }
   ]
 }
