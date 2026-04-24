@@ -231,7 +231,8 @@ textarea{min-height:75px;line-height:1.5}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
-<div id="app"></div>
+<div id="app"><div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0d1b2a"><div style="width:44px;height:44px;border-radius:50%;border:3px solid #1e3350;border-top-color:#c9a84c;animation:spin .8s linear infinite"></div></div></div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
 
 <script>
 'use strict';
@@ -709,11 +710,13 @@ window.submitCode = async function(){
   const now = new Date().toISOString();
   const expiresAt = code.access_type === 'planb_30_days'
     ? new Date(Date.now() + 30 * DAY_MS).toISOString() : null;
-  // Réclamer le code (re-vérifie used_by=null = atomique)
-  const { error: claimErr } = await _supa.from('access_codes')
+  // Réclamer le code — atomique : used_by IS NULL est re-vérifié côté DB
+  // .select('id') permet de détecter si 0 lignes ont été mises à jour (code déjà pris)
+  const { data: claimed, error: claimErr } = await _supa.from('access_codes')
     .update({ used_by: _session.user.id, used_at: now })
-    .eq('id', code.id).is('used_by', null);
-  if(claimErr){
+    .eq('id', code.id).is('used_by', null)
+    .select('id');
+  if(claimErr || !claimed || claimed.length === 0){
     _showErr('accessError','Ce code vient d\'être utilisé. Contactez-nous sur WhatsApp.');
     if(btn){ btn.disabled=false; btn.textContent='Débloquer mon accès →'; } return;
   }
