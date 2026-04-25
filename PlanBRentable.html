@@ -692,7 +692,7 @@ window.loginUser = async function(){
   }
   try {
     const authCall = _supa.auth.signInWithPassword({ email, password });
-    const timeout  = new Promise((_,rej) => setTimeout(() => rej(new Error('timeout')), 10000));
+    const timeout  = new Promise((_,rej) => setTimeout(() => rej(new Error('timeout')), 15000));
     const { error } = await Promise.race([authCall, timeout]);
     if(error){
       const msg = (error.message||'').toLowerCase().includes('invalid')
@@ -726,17 +726,24 @@ window.signupUser = async function(){
     _showErr('signupError','Mot de passe : 8 caractères minimum.');
     if(btn){ btn.disabled=false; btn.textContent='Créer mon compte →'; } return;
   }
-  const { error } = await _supa.auth.signUp({
-    email, password, options:{ data:{ name, whatsapp } }
-  });
-  if(error){
-    const msg = (error.message||'').toLowerCase().includes('already')
-      ? 'Un compte existe déjà avec cet email.' : error.message;
+  try {
+    const authCall = _supa.auth.signUp({ email, password, options:{ data:{ name, whatsapp } } });
+    const timeout  = new Promise((_,rej) => setTimeout(() => rej(new Error('timeout')), 15000));
+    const { error } = await Promise.race([authCall, timeout]);
+    if(error){
+      const msg = (error.message||'').toLowerCase().includes('already')
+        ? 'Un compte existe déjà avec cet email.' : error.message;
+      _showErr('signupError', msg);
+    } else {
+      const ok = document.getElementById('signupSuccess');
+      if(ok){ ok.textContent='✓ Compte créé ! Connectez-vous maintenant.'; ok.style.display='block'; }
+    }
+  } catch(e){
+    const msg = e?.message === 'timeout'
+      ? 'Connexion lente. Vérifiez votre connexion internet et réessayez.'
+      : 'Erreur inattendue. Rechargez la page.';
     _showErr('signupError', msg);
-    if(btn){ btn.disabled=false; btn.textContent='Créer mon compte →'; }
-  } else {
-    const ok = document.getElementById('signupSuccess');
-    if(ok){ ok.textContent='✓ Compte créé ! Vérifiez votre email pour confirmer.'; ok.style.display='block'; }
+  } finally {
     if(btn){ btn.disabled=false; btn.textContent='Créer mon compte →'; }
   }
 };
@@ -753,7 +760,7 @@ window.submitCode = async function(){
 
     // Appel RPC security definer — contourne RLS, atomique (timeout 10s)
     const rpcCall = _supa.rpc('claim_access_code', { p_code: val, p_user_id: _session.user.id });
-    const timeout = new Promise((_,rej) => setTimeout(() => rej(new Error('timeout')), 10000));
+    const timeout = new Promise((_,rej) => setTimeout(() => rej(new Error('timeout')), 15000));
     const { data, error } = await Promise.race([rpcCall, timeout]);
 
     console.log('[submitCode] RPC result:', data, error);
