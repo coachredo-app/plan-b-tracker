@@ -758,15 +758,23 @@ window.submitCode = async function(){
     const val = (document.getElementById('accessInput')?.value||'').trim().toUpperCase();
     if(!val){ _showErr('accessError','Entrez votre code d\'accès.'); return; }
 
-    // Appel RPC security definer — contourne RLS, atomique (timeout 10s)
-    const rpcCall = _supa.rpc('claim_access_code', { p_code: val, p_user_id: _session.user.id });
-    const timeout = new Promise((_,rej) => setTimeout(() => rej(new Error('timeout')), 15000));
-    const { data, error } = await Promise.race([rpcCall, timeout]);
+    // Appel API Vercel — rapide, contourne RLS, pas de timeout Supabase
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
+    let resp, data;
+    try {
+      resp = await fetch('/api/activate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: val, token: _session.access_token }),
+        signal: controller.signal
+      });
+      data = await resp.json();
+    } finally { clearTimeout(timer); }
 
-    console.log('[submitCode] RPC result:', data, error);
+    console.log('[submitCode] result:', data);
 
-    if(error){
-      console.error('[submitCode] RPC error:', error);
+    if(!resp.ok && resp.status !== 200){
       _showErr('accessError','Erreur serveur. Contactez-nous sur WhatsApp.');
       return;
     }
