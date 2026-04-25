@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#0d1b2a">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="description" content="Plan B Rentable — Trouve et lance ton activité parallèle en 90 jours">
@@ -2029,7 +2030,8 @@ function toast(msg){
    INIT
 ════════════════════════════════════════ */
 load();
-_boot(); // appel explicite — render() garanti via getSession()
+render();   // Rendu immédiat → login screen visible sans attendre Supabase
+_boot();    // Vérifie session en arrière-plan → re-render si session trouvée
 </script>
 </body>
 </html>
