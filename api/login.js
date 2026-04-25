@@ -18,26 +18,40 @@ export default async function handler(req) {
     return new Response(JSON.stringify({ ok: false, error: 'missing_params' }), { status: 400 });
   }
 
-  const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+  // 1. Authentifier l'utilisateur
+  const authRes = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
     method: 'POST',
-    headers: {
-      'apikey': SERVICE_KEY,
-      'Content-Type': 'application/json'
-    },
+    headers: { 'apikey': SERVICE_KEY, 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password })
   });
 
-  const data = await res.json();
+  const authData = await authRes.json();
 
-  if (!res.ok || data.error) {
+  if (!authRes.ok || authData.error) {
     return new Response(
-      JSON.stringify({ ok: false, error: data.error_description || data.error || 'auth_failed' }),
+      JSON.stringify({ ok: false, error: authData.error_description || authData.error || 'auth_failed' }),
       { status: 200 }
     );
   }
 
+  const userId = authData.user?.id;
+
+  // 2. Récupérer le profil côté serveur (rapide, pas de latence client)
+  let profile = null;
+  if (userId) {
+    const profRes = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&limit=1`, {
+      headers: {
+        'apikey': SERVICE_KEY,
+        'Authorization': `Bearer ${SERVICE_KEY}`,
+        'Accept': 'application/json'
+      }
+    });
+    const profData = await profRes.json();
+    profile = Array.isArray(profData) && profData.length > 0 ? profData[0] : null;
+  }
+
   return new Response(
-    JSON.stringify({ ok: true, session: data }),
+    JSON.stringify({ ok: true, session: authData, profile }),
     { status: 200, headers: { 'Content-Type': 'application/json' } }
   );
 }
