@@ -421,15 +421,27 @@ try {
   console.error('[supabase init failed]', e);
 }
 
+function _profileCacheKey(uid){ return 'planb_profile_' + uid; }
+function _saveProfileCache(uid, profile){
+  try { localStorage.setItem(_profileCacheKey(uid), JSON.stringify(profile)); } catch(e){}
+}
+function _loadProfileCache(uid){
+  try { return JSON.parse(localStorage.getItem(_profileCacheKey(uid)) || 'null'); } catch(e){ return null; }
+}
+function _clearProfileCache(uid){
+  try { localStorage.removeItem(_profileCacheKey(uid)); } catch(e){}
+}
+
 async function fetchProfile(uid){
-  if(!_supa) return null;
+  if(!_supa) return _loadProfileCache(uid);
   try {
     const { data, error } = await _supa.from('profiles').select('*').eq('id', uid).single();
-    if(error) console.error('[fetchProfile]', error);
-    return data || null;
+    if(error){ console.error('[fetchProfile]', error); return _loadProfileCache(uid); }
+    if(data) _saveProfileCache(uid, data);
+    return data || _loadProfileCache(uid);
   } catch(e){
     console.error('[fetchProfile]', e);
-    return null;
+    return _loadProfileCache(uid);
   }
 }
 
@@ -786,8 +798,9 @@ window.submitCode = async function(){
       return;
     }
 
-    // Succès — rafraîchir le profil et rediriger
-    _profile = await fetchProfile(_session.user.id);
+    // Succès — profil construit depuis la réponse, sauvegardé en cache
+    _profile = { id: _session.user.id, access_type: data.access_type, activated_at: new Date().toISOString(), expires_at: data.expires_at || null };
+    _saveProfileCache(_session.user.id, _profile);
     render();
 
   } catch(e){
@@ -803,7 +816,9 @@ window.submitCode = async function(){
 };
 
 window.logoutUser = async function(){
+  if(_session?.user?.id) _clearProfileCache(_session.user.id);
   if(_supa) await _supa.auth.signOut();
+  _profile = null;
   S = JSON.parse(JSON.stringify(EMPTY_STATE));
   save();
   // onAuthStateChange déclenche render()
