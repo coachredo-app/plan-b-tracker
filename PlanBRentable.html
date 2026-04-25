@@ -845,11 +845,12 @@ window.submitCode = async function(){
 
 window.logoutUser = async function(){
   if(_session?.user?.id) _clearProfileCache(_session.user.id);
-  if(_supa) await _supa.auth.signOut();
+  _session = null;
   _profile = null;
   S = JSON.parse(JSON.stringify(EMPTY_STATE));
   save();
-  // onAuthStateChange déclenche render()
+  render(); // Déconnexion immédiate sans attendre Supabase
+  if(_supa) _supa.auth.signOut().catch(()=>{}); // En arrière-plan
 };
 
 function _showErr(id, msg){
