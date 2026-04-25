@@ -703,17 +703,31 @@ window.loginUser = async function(){
     if(btn){ btn.disabled=false; btn.textContent='Se connecter →'; } return;
   }
   try {
-    const authCall = _supa.auth.signInWithPassword({ email, password });
-    const timeout  = new Promise((_,rej) => setTimeout(() => rej(new Error('timeout')), 15000));
-    const { error } = await Promise.race([authCall, timeout]);
-    if(error){
-      const msg = (error.message||'').toLowerCase().includes('invalid')
-        ? 'Email ou mot de passe incorrect.' : error.message;
-      _showErr('loginError', msg);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
+    let resp, data;
+    try {
+      resp = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+        signal: controller.signal
+      });
+      data = await resp.json();
+    } finally { clearTimeout(timer); }
+
+    if(!data?.ok){
+      const msg = (data?.error||'').toLowerCase().includes('invalid')
+        ? 'Email ou mot de passe incorrect.' : (data?.error || 'Erreur de connexion.');
+      _showErr('loginError', msg); return;
     }
-    // Succès → onAuthStateChange déclenche render()
+    // Injecter la session dans le client Supabase
+    if(_supa && data.session){
+      await _supa.auth.setSession({ access_token: data.session.access_token, refresh_token: data.session.refresh_token });
+    }
+    // onAuthStateChange déclenche render()
   } catch(e){
-    const msg = e?.message === 'timeout'
+    const msg = e?.name === 'AbortError'
       ? 'Connexion lente. Vérifiez votre connexion internet.'
       : 'Erreur inattendue. Rechargez la page.';
     _showErr('loginError', msg);
@@ -739,19 +753,33 @@ window.signupUser = async function(){
     if(btn){ btn.disabled=false; btn.textContent='Créer mon compte →'; } return;
   }
   try {
-    const authCall = _supa.auth.signUp({ email, password, options:{ data:{ name, whatsapp } } });
-    const timeout  = new Promise((_,rej) => setTimeout(() => rej(new Error('timeout')), 15000));
-    const { error } = await Promise.race([authCall, timeout]);
-    if(error){
-      const msg = (error.message||'').toLowerCase().includes('already')
-        ? 'Un compte existe déjà avec cet email.' : error.message;
-      _showErr('signupError', msg);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
+    let resp, data;
+    try {
+      resp = await fetch('/api/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, name, whatsapp }),
+        signal: controller.signal
+      });
+      data = await resp.json();
+    } finally { clearTimeout(timer); }
+
+    if(!data?.ok){
+      const msg = (data?.error||'').toLowerCase().includes('already')
+        ? 'Un compte existe déjà avec cet email.' : (data?.error || 'Erreur inscription.');
+      _showErr('signupError', msg); return;
+    }
+    // Injecter la session si disponible
+    if(_supa && data.session?.access_token){
+      await _supa.auth.setSession({ access_token: data.session.access_token, refresh_token: data.session.refresh_token });
     } else {
       const ok = document.getElementById('signupSuccess');
       if(ok){ ok.textContent='✓ Compte créé ! Connectez-vous maintenant.'; ok.style.display='block'; }
     }
   } catch(e){
-    const msg = e?.message === 'timeout'
+    const msg = e?.name === 'AbortError'
       ? 'Connexion lente. Vérifiez votre connexion internet et réessayez.'
       : 'Erreur inattendue. Rechargez la page.';
     _showErr('signupError', msg);
