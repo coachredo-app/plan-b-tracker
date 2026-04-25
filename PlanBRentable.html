@@ -717,8 +717,10 @@ window.loginUser = async function(){
     } finally { clearTimeout(timer); }
 
     if(!data?.ok){
-      const msg = (data?.error||'').toLowerCase().includes('invalid')
-        ? 'Email ou mot de passe incorrect.' : (data?.error || 'Erreur de connexion.');
+      const err = (data?.error||'').toLowerCase();
+      const msg = (err.includes('invalid') || err.includes('auth_failed') || err.includes('credentials'))
+        ? 'Email ou mot de passe incorrect.'
+        : 'Erreur de connexion. Réessayez.';
       _showErr('loginError', msg); return;
     }
     // Appliquer session et profil directement — aucun appel Supabase depuis le client
