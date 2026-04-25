@@ -741,11 +741,10 @@ window.submitCode = async function(){
     const val = (document.getElementById('accessInput')?.value||'').trim().toUpperCase();
     if(!val){ _showErr('accessError','Entrez votre code d\'accès.'); return; }
 
-    // Appel RPC security definer — contourne RLS, atomique
-    const { data, error } = await _supa.rpc('claim_access_code', {
-      p_code: val,
-      p_user_id: _session.user.id
-    });
+    // Appel RPC security definer — contourne RLS, atomique (timeout 10s)
+    const rpcCall = _supa.rpc('claim_access_code', { p_code: val, p_user_id: _session.user.id });
+    const timeout = new Promise((_,rej) => setTimeout(() => rej(new Error('timeout')), 10000));
+    const { data, error } = await Promise.race([rpcCall, timeout]);
 
     console.log('[submitCode] RPC result:', data, error);
 
@@ -767,8 +766,11 @@ window.submitCode = async function(){
     render();
 
   } catch(e){
-    console.error('[submitCode] Exception inattendue:', e);
-    _showErr('accessError','Erreur inattendue. Rechargez la page et réessayez.');
+    console.error('[submitCode] Exception:', e);
+    const msg = e?.message === 'timeout'
+      ? 'Délai dépassé. Vérifiez votre connexion et réessayez.'
+      : 'Erreur inattendue. Rechargez la page et réessayez.';
+    _showErr('accessError', msg);
   } finally {
     // Toujours réactiver le bouton, même en cas d'exception
     if(btn){ btn.disabled=false; btn.textContent='Débloquer mon accès →'; }
