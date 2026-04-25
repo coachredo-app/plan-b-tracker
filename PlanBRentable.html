@@ -690,14 +690,24 @@ window.loginUser = async function(){
     _showErr('loginError','Remplissez les deux champs.');
     if(btn){ btn.disabled=false; btn.textContent='Se connecter →'; } return;
   }
-  const { error } = await _supa.auth.signInWithPassword({ email, password });
-  if(error){
-    const msg = (error.message||'').toLowerCase().includes('invalid')
-      ? 'Email ou mot de passe incorrect.' : error.message;
+  try {
+    const authCall = _supa.auth.signInWithPassword({ email, password });
+    const timeout  = new Promise((_,rej) => setTimeout(() => rej(new Error('timeout')), 10000));
+    const { error } = await Promise.race([authCall, timeout]);
+    if(error){
+      const msg = (error.message||'').toLowerCase().includes('invalid')
+        ? 'Email ou mot de passe incorrect.' : error.message;
+      _showErr('loginError', msg);
+    }
+    // Succès → onAuthStateChange déclenche render()
+  } catch(e){
+    const msg = e?.message === 'timeout'
+      ? 'Connexion lente. Vérifiez votre connexion internet.'
+      : 'Erreur inattendue. Rechargez la page.';
     _showErr('loginError', msg);
+  } finally {
     if(btn){ btn.disabled=false; btn.textContent='Se connecter →'; }
   }
-  // Succès → onAuthStateChange déclenche render()
 };
 
 window.signupUser = async function(){
