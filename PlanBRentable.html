@@ -731,64 +731,63 @@ window.signupUser = async function(){
   }
 };
 
+// Wrapper timeout : si une requête Supabase ne répond pas dans 10s, on annule
+function _withTimeout(promise, ms){
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))
+  ]);
+}
+
 window.submitCode = async function(){
   const btn = document.getElementById('codeBtn');
   if(btn){ btn.disabled=true; btn.textContent='Vérification…'; }
 
   try {
+    if(!_supa || !_session){ _showErr('accessError','Session expirée. Rechargez la page.'); return; }
+
     const val = (document.getElementById('accessInput')?.value||'').trim().toUpperCase();
-    if(!val){
-      _showErr('accessError','Entrez votre code d\'accès.');
-      return;
-    }
+    if(!val){ _showErr('accessError','Entrez votre code d\'accès.'); return; }
 
-    // 1 — Vérifier que le code existe et n'est pas encore utilisé
-    const { data: code, error: selectErr } = await _supa
-      .from('access_codes')
-      .select('id,access_type')
-      .eq('code', val)
-      .is('used_by', null)
-      .maybeSingle();
+    console.log('[submitCode] step 1 — SELECT code:', val);
 
-    if(selectErr){
-      console.error('[submitCode] SELECT error:', selectErr);
-      _showErr('accessError','Erreur réseau. Réessayez dans quelques secondes.');
-      return;
-    }
-    if(!code){
-      _showErr('accessError','Code invalide ou déjà utilisé. Vérifiez votre message WhatsApp.');
-      return;
-    }
+    // 1 — Vérifier que le code existe
+    const { data: code, error: selectErr } = await _withTimeout(
+      _supa.from('access_codes').select('id,access_type').eq('code', val).maybeSingle(),
+      10000
+    );
+    console.log('[submitCode] SELECT result:', code, selectErr);
 
-    const now      = new Date().toISOString();
+    if(selectErr){ _showErr('accessError','Erreur réseau (SELECT). Réessayez.'); return; }
+    if(!code){ _showErr('accessError','Code invalide ou déjà utilisé. Vérifiez votre message WhatsApp.'); return; }
+
+    const now       = new Date().toISOString();
     const expiresAt = code.access_type === 'planb_30_days'
       ? new Date(Date.now() + 30 * DAY_MS).toISOString() : null;
 
-    // 2 — Réclamer le code (UPDATE simple, sans filtre IS NULL sur RETURNING)
-    const { error: claimErr } = await _supa
-      .from('access_codes')
-      .update({ used_by: _session.user.id, used_at: now })
-      .eq('id', code.id);
+    console.log('[submitCode] step 2 — UPDATE access_codes');
 
-    if(claimErr){
-      console.error('[submitCode] UPDATE access_codes error:', claimErr);
-      _showErr('accessError','Activation bloquée. Contactez-nous sur WhatsApp.');
-      return;
-    }
+    // 2 — Réclamer le code
+    const { error: claimErr } = await _withTimeout(
+      _supa.from('access_codes').update({ used_by: _session.user.id, used_at: now }).eq('id', code.id),
+      10000
+    );
+    console.log('[submitCode] UPDATE access_codes result:', claimErr);
 
-    // 3 — Mettre à jour le profil utilisateur
-    const { error: profileErr } = await _supa
-      .from('profiles')
-      .update({ access_type: code.access_type, activated_at: now, expires_at: expiresAt })
-      .eq('id', _session.user.id);
+    if(claimErr){ _showErr('accessError','Activation bloquée (UPDATE). Contactez-nous sur WhatsApp.'); return; }
 
-    if(profileErr){
-      console.error('[submitCode] UPDATE profiles error:', profileErr);
-      _showErr('accessError','Profil non mis à jour. Contactez-nous sur WhatsApp.');
-      return;
-    }
+    console.log('[submitCode] step 3 — UPDATE profiles');
 
-    // 4 — Rafraîchir le profil et rediriger vers l'app
+    // 3 — Mettre à jour le profil
+    const { error: profileErr } = await _withTimeout(
+      _supa.from('profiles').update({ access_type: code.access_type, activated_at: now, expires_at: expiresAt }).eq('id', _session.user.id),
+      10000
+    );
+    console.log('[submitCode] UPDATE profiles result:', profileErr);
+
+    if(profileErr){ _showErr('accessError','Profil non mis à jour. Contactez-nous sur WhatsApp.'); return; }
+
+    // 4 — Rafraîchir et rediriger
     _profile = await fetchProfile(_session.user.id);
     render();
 
