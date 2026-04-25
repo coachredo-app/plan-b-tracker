@@ -2,6 +2,7 @@ export const config = { runtime: 'edge' };
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SERVICE_KEY  = process.env.SUPABASE_SERVICE_KEY;
+const ANON_KEY     = process.env.SUPABASE_ANON_KEY;
 
 export default async function handler(req) {
   if (req.method !== 'POST') {
@@ -21,7 +22,7 @@ export default async function handler(req) {
   // 1. Authentifier l'utilisateur
   const authRes = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
     method: 'POST',
-    headers: { 'apikey': SERVICE_KEY, 'Content-Type': 'application/json' },
+    headers: { 'apikey': ANON_KEY, 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password })
   });
 
