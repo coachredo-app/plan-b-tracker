@@ -399,8 +399,48 @@ const EMPTY_STATE = {
 
 let S = JSON.parse(JSON.stringify(EMPTY_STATE));
 
-function save(){try{localStorage.setItem('planb_v2',JSON.stringify(S));}catch(e){}}
-function load(){try{const d=localStorage.getItem('planb_v2');if(d){const p=JSON.parse(d);S=Object.assign(JSON.parse(JSON.stringify(EMPTY_STATE)),p);}}catch(e){}}
+function save(){
+  try{ localStorage.setItem('planb_v2', JSON.stringify(S)); } catch(e){}
+  _syncDebounced();
+}
+function load(){
+  try{
+    const d = localStorage.getItem('planb_v2');
+    if(d){ const p = JSON.parse(d); S = Object.assign(JSON.parse(JSON.stringify(EMPTY_STATE)), p); }
+  } catch(e){}
+}
+
+// Sync cloud — debounce 3s pour ne pas spammer l'API
+let _syncTimer = null;
+function _syncDebounced(){
+  if(!_session?.access_token) return;
+  clearTimeout(_syncTimer);
+  _syncTimer = setTimeout(_syncToCloud, 3000);
+}
+async function _syncToCloud(){
+  if(!_session?.access_token) return;
+  try {
+    await fetch('/api/progress', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_session.access_token}` },
+      body: JSON.stringify({ progress: S })
+    });
+  } catch(e){}
+}
+async function _loadFromCloud(){
+  if(!_session?.access_token) return;
+  try {
+    const res = await fetch('/api/progress', {
+      headers: { 'Authorization': `Bearer ${_session.access_token}` }
+    });
+    const data = await res.json();
+    if(data?.ok && data.progress && Object.keys(data.progress).length > 0){
+      S = Object.assign(JSON.parse(JSON.stringify(EMPTY_STATE)), data.progress);
+      localStorage.setItem('planb_v2', JSON.stringify(S));
+      render(true);
+    }
+  } catch(e){}
+}
 
 /* ════════════════════════════════════════
    SUPABASE AUTH
@@ -728,6 +768,7 @@ window.loginUser = async function(){
     _profile = data.profile || null;
     if(_profile && _session.user?.id) _saveProfileCache(_session.user.id, _profile);
     render();
+    _loadFromCloud(); // Charger progression cloud en arrière-plan
     // setSession en arrière-plan pour que Supabase garde la session active
     if(_supa && data.session) _supa.auth.setSession({ access_token: data.session.access_token, refresh_token: data.session.refresh_token }).catch(()=>{});
   } catch(e){
