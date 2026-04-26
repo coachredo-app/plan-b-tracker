@@ -768,6 +768,7 @@ window.loginUser = async function(){
     _session = { user: data.session.user, access_token: data.session.access_token };
     _profile = data.profile || null;
     if(_profile && _session.user?.id) _saveProfileCache(_session.user.id, _profile);
+    try { localStorage.setItem('planb_access_token', data.session.access_token); } catch(e){}
     render();
     _loadFromCloud(); // Charger progression cloud en arrière-plan
     // setSession en arrière-plan pour que Supabase garde la session active
@@ -891,6 +892,7 @@ window.submitCode = async function(){
 
 window.logoutUser = async function(){
   if(_session?.user?.id) _clearProfileCache(_session.user.id);
+  try { localStorage.removeItem('planb_access_token'); } catch(e){}
   _session = null;
   _profile = null;
   S = JSON.parse(JSON.stringify(EMPTY_STATE));

@@ -97,10 +97,9 @@ let _token = '';
 // Auto-login si déjà connecté via l'app
 (async () => {
   try {
-    const _supa = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    const { data: { session } } = await _supa.auth.getSession();
-    if (session?.access_token) {
-      _token = session.access_token;
+    const saved = localStorage.getItem('planb_access_token');
+    if (saved) {
+      _token = saved;
       await loadData();
     }
   } catch(e) {}
