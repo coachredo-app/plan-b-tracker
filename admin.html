@@ -67,6 +67,7 @@ tr:hover td{background:rgba(255,255,255,0.03)}
     <h1>Dashboard — Plan B Rentable</h1>
     <div style="display:flex;gap:8px">
       <button class="btn-sm" onclick="loadData()">↺ Actualiser</button>
+      <a href="/PlanBRentable.html" class="btn-sm" style="text-decoration:none">← Retour à l'app</a>
       <button class="btn-sm" onclick="doLogout()">Déconnexion</button>
     </div>
   </div>
@@ -92,6 +93,18 @@ tr:hover td{background:rgba(255,255,255,0.03)}
 const SUPABASE_URL = 'https://ggeohumiyxqhknnftydi.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdnZW9odW1peXhxaGtubmZ0eWRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU0MjcwMzMsImV4cCI6MjA2MTAwMzAzM30.r_r2MXk_9nRjBnCkHG6m06LBB_wfHOdlHtZ7q3C750';
 let _token = '';
+
+// Auto-login si déjà connecté via l'app
+(async () => {
+  try {
+    const _supa = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const { data: { session } } = await _supa.auth.getSession();
+    if (session?.access_token) {
+      _token = session.access_token;
+      await loadData();
+    }
+  } catch(e) {}
+})();
 
 async function doLogin(){
   const email = document.getElementById('email').value.trim();
