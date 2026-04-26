@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin — Plan B Rentable</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#0a0d1a;color:#e8e0cc;font-family:'DM Sans',system-ui,sans-serif;min-height:100vh}
@@ -14,22 +15,19 @@ body{background:#0a0d1a;color:#e8e0cc;font-family:'DM Sans',system-ui,sans-serif
 .login-box p{font-size:13px;color:var(--muted);margin-bottom:24px}
 input{width:100%;padding:13px 14px;border-radius:10px;border:2px solid var(--border);background:rgba(255,255,255,0.04);color:#e8e0cc;font-size:14px;outline:none;margin-bottom:12px;transition:border-color .2s}
 input:focus{border-color:var(--gold)}
-button{width:100%;padding:13px;border-radius:10px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;font-weight:700;font-size:14px;border:none;cursor:pointer}
-.err{color:var(--err);font-size:12.5px;margin-top:10px}
-/* Dashboard */
+.btn{width:100%;padding:13px;border-radius:10px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;font-weight:700;font-size:14px;border:none;cursor:pointer}
+.err{color:var(--err);font-size:12.5px;margin-top:10px;display:none}
 .dash{display:none;padding:24px;max-width:1200px;margin:0 auto}
 .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px}
 .topbar h1{font-size:20px;font-weight:800;color:var(--gold)}
 .btn-sm{padding:8px 16px;border-radius:8px;background:rgba(255,255,255,0.07);border:1px solid var(--border);color:var(--muted);font-size:12px;cursor:pointer;font-weight:600}
 .btn-sm:hover{background:rgba(255,255,255,0.12);color:#e8e0cc}
-/* Stats */
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:28px}
 .stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 16px;text-align:center}
 .stat-val{font-size:32px;font-weight:800;color:var(--gold);line-height:1}
 .stat-label{font-size:11px;color:var(--muted);margin-top:6px;text-transform:uppercase;letter-spacing:0.5px}
-/* Table */
 .section-title{font-size:15px;font-weight:700;color:#e8e0cc;margin-bottom:14px}
-.table-wrap{overflow-x:auto;border-radius:14px;border:1px solid var(--border)}
+.table-wrap{overflow-x:auto;border-radius:14px;border:1px solid var(--border);margin-bottom:28px}
 table{width:100%;border-collapse:collapse}
 th{background:rgba(201,168,76,0.08);color:var(--gold);font-size:11px;text-transform:uppercase;letter-spacing:0.5px;padding:12px 14px;text-align:left;white-space:nowrap}
 td{padding:12px 14px;border-top:1px solid rgba(255,255,255,0.05);font-size:13px;vertical-align:middle}
@@ -38,180 +36,146 @@ tr:hover td{background:rgba(255,255,255,0.03)}
 .badge-gold{background:rgba(201,168,76,0.15);color:var(--gold)}
 .badge-blue{background:rgba(76,130,201,0.15);color:#6fa3e0}
 .badge-err{background:rgba(224,92,92,0.15);color:var(--err)}
-.badge-ok{background:rgba(76,175,130,0.15);color:var(--ok)}
 .pbar-wrap{display:flex;align-items:center;gap:8px}
 .pbar-bg{flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,0.08)}
 .pbar-fill{height:6px;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--gold2))}
 .pct-label{font-size:11px;color:var(--muted);min-width:30px}
-.wa-link{color:var(--gold);text-decoration:none;font-size:12px}
-.wa-link:hover{text-decoration:underline}
-/* Codes section */
-.codes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:14px}
+.wa-link{color:var(--ok);text-decoration:none;font-size:12px;font-weight:600}
+.codes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
 .code-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
-.code-val{font-size:13px;font-weight:700;font-family:monospace;color:var(--gold);letter-spacing:0.5px}
+.code-val{font-size:13px;font-weight:700;font-family:monospace;color:var(--gold)}
 .code-meta{font-size:11px;color:var(--muted);margin-top:4px}
-.code-used{opacity:0.45}
-.refresh-note{font-size:11px;color:var(--muted);text-align:center;margin-top:20px}
-@media(max-width:600px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+.code-used{opacity:0.4}
+.note{font-size:11px;color:var(--muted);text-align:center;margin-top:20px}
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
 <div class="login-wrap" id="loginWrap">
   <div class="login-box">
     <h1>Plan B — Admin</h1>
-    <p>Accès réservé à Coach Redouane</p>
-    <input type="password" id="adminKey" placeholder="Code administrateur" onkeydown="if(event.key==='Enter')doLogin()">
-    <button onclick="doLogin()">Accéder →</button>
-    <div class="err" id="loginErr" style="display:none"></div>
+    <p>Connectez-vous avec votre compte admin</p>
+    <input type="email" id="email" placeholder="Email" onkeydown="if(event.key==='Enter')document.getElementById('pass').focus()">
+    <input type="password" id="pass" placeholder="Mot de passe" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn" id="loginBtn" onclick="doLogin()">Accéder →</button>
+    <div class="err" id="loginErr">Email ou mot de passe incorrect.</div>
   </div>
 </div>
 
-<!-- DASHBOARD -->
 <div class="dash" id="dash">
   <div class="topbar">
-    <h1>Dashboard Admin — Plan B Rentable</h1>
+    <h1>Dashboard — Plan B Rentable</h1>
     <div style="display:flex;gap:8px">
       <button class="btn-sm" onclick="loadData()">↺ Actualiser</button>
       <button class="btn-sm" onclick="doLogout()">Déconnexion</button>
     </div>
   </div>
-
-  <!-- Stats -->
   <div class="stats-grid" id="statsGrid"></div>
-
-  <!-- Clients -->
-  <div style="margin-bottom:28px">
-    <div class="section-title">Clients activés</div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Nom</th>
-            <th>Email</th>
-            <th>WhatsApp</th>
-            <th>Accès</th>
-            <th>Activé le</th>
-            <th>Expire</th>
-            <th>Progression</th>
-            <th>Phase</th>
-          </tr>
-        </thead>
-        <tbody id="clientsBody"></tbody>
-      </table>
-    </div>
+  <div class="section-title">Clients activés</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Nom</th><th>Email</th><th>WhatsApp</th><th>Accès</th>
+          <th>Activé le</th><th>Expire</th><th>Progression</th><th>Phase</th>
+        </tr>
+      </thead>
+      <tbody id="clientsBody"></tbody>
+    </table>
   </div>
-
-  <!-- Codes -->
-  <div>
-    <div class="section-title">Codes d'accès</div>
-    <div class="codes-grid" id="codesGrid"></div>
-  </div>
-
-  <div class="refresh-note" id="lastUpdate"></div>
+  <div class="section-title">Codes d'accès</div>
+  <div class="codes-grid" id="codesGrid"></div>
+  <div class="note" id="lastUpdate"></div>
 </div>
 
 <script>
-let _key = '';
+const SUPABASE_URL = 'https://ggeohumiyxqhknnftydi.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdnZW9odW1peXhxaGtubmZ0eWRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU0MjcwMzMsImV4cCI6MjA2MTAwMzAzM30.r_r2MXk_9nRjBnCkHG6m06LBB_wfHOdlHtZ7q3C750';
+let _token = '';
 
-function doLogin(){
-  const k = document.getElementById('adminKey').value.trim();
-  if(!k){ return; }
-  _key = k;
-  loadData();
+async function doLogin(){
+  const email = document.getElementById('email').value.trim();
+  const pass  = document.getElementById('pass').value;
+  const btn   = document.getElementById('loginBtn');
+  const err   = document.getElementById('loginErr');
+  if(!email || !pass) return;
+  btn.textContent = 'Connexion…'; btn.disabled = true; err.style.display = 'none';
+  try {
+    const res  = await fetch('/api/login', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({email, password: pass})
+    });
+    const data = await res.json();
+    if(!data.ok){ err.style.display = 'block'; btn.textContent = 'Accéder →'; btn.disabled = false; return; }
+    if(!data.profile?.is_admin){ err.textContent = 'Accès non autorisé.'; err.style.display = 'block'; btn.textContent = 'Accéder →'; btn.disabled = false; return; }
+    _token = data.session.access_token;
+    btn.textContent = 'Accéder →'; btn.disabled = false;
+    loadData();
+  } catch(e){ err.style.display = 'block'; btn.textContent = 'Accéder →'; btn.disabled = false; }
 }
 
 function doLogout(){
-  _key = '';
+  _token = '';
   document.getElementById('dash').style.display = 'none';
   document.getElementById('loginWrap').style.display = 'flex';
-  document.getElementById('adminKey').value = '';
+  document.getElementById('pass').value = '';
 }
 
 async function loadData(){
   try {
-    const res = await fetch('/api/admin', { headers: { 'x-admin-key': _key } });
+    const res  = await fetch('/api/admin', { headers: {'Authorization': `Bearer ${_token}`} });
     const data = await res.json();
-    if(!data.ok){
-      const err = document.getElementById('loginErr');
-      if(err){ err.textContent = 'Code incorrect.'; err.style.display = 'block'; }
-      return;
-    }
+    if(!data.ok){ doLogout(); return; }
     document.getElementById('loginWrap').style.display = 'none';
     document.getElementById('dash').style.display = 'block';
     renderStats(data.stats);
     renderClients(data.clients);
     renderCodes(data.codes);
-    document.getElementById('lastUpdate').textContent = 'Dernière mise à jour : ' + new Date().toLocaleString('fr-FR');
-  } catch(e){
-    alert('Erreur de connexion. Réessayez.');
-  }
+    document.getElementById('lastUpdate').textContent = 'Mis à jour : ' + new Date().toLocaleString('fr-FR');
+  } catch(e){ alert('Erreur réseau.'); }
 }
 
 function renderStats(s){
-  const items = [
-    { val: s.total_clients, label: 'Clients actifs' },
-    { val: s.fondateur, label: 'Accès Fondateur' },
-    { val: s.trente_jours, label: 'Accès 30 jours' },
-    { val: s.expired, label: 'Expirés' },
-    { val: s.codes_used, label: 'Codes utilisés' },
-    { val: s.codes_available, label: 'Codes disponibles' },
-  ];
-  document.getElementById('statsGrid').innerHTML = items.map(i => `
-    <div class="stat-card">
-      <div class="stat-val">${i.val}</div>
-      <div class="stat-label">${i.label}</div>
-    </div>
-  `).join('');
+  document.getElementById('statsGrid').innerHTML = [
+    {val: s.total_clients, label: 'Clients actifs'},
+    {val: s.fondateur,     label: 'Accès Fondateur'},
+    {val: s.trente_jours,  label: 'Accès 30 jours'},
+    {val: s.expired,       label: 'Expirés'},
+    {val: s.codes_used,    label: 'Codes utilisés'},
+    {val: s.codes_available, label: 'Codes dispo'},
+  ].map(i=>`<div class="stat-card"><div class="stat-val">${i.val}</div><div class="stat-label">${i.label}</div></div>`).join('');
 }
 
 function renderClients(clients){
-  if(!clients.length){
-    document.getElementById('clientsBody').innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">Aucun client activé pour l\'instant.</td></tr>';
-    return;
-  }
-  document.getElementById('clientsBody').innerHTML = clients.map(c => {
-    const isExpired = c.expires_at && new Date(c.expires_at) < new Date();
-    const accessBadge = c.access_type === 'planb_30_days'
-      ? `<span class="badge ${isExpired ? 'badge-err' : 'badge-blue'}">30 jours${isExpired ? ' (expiré)' : ''}</span>`
+  if(!clients.length){ document.getElementById('clientsBody').innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">Aucun client activé.</td></tr>'; return; }
+  document.getElementById('clientsBody').innerHTML = clients.map(c=>{
+    const expired = c.expires_at && new Date(c.expires_at) < new Date();
+    const badge = c.access_type === 'planb_30_days'
+      ? `<span class="badge ${expired?'badge-err':'badge-blue'}">${expired?'Expiré':'30 jours'}</span>`
       : `<span class="badge badge-gold">Fondateur</span>`;
-    const activatedAt = c.activated_at ? new Date(c.activated_at).toLocaleDateString('fr-FR') : '—';
-    const expiresAt = c.expires_at ? new Date(c.expires_at).toLocaleDateString('fr-FR') : 'À vie';
-    const waLink = c.whatsapp !== '—'
-      ? `<a class="wa-link" href="https://wa.me/${c.whatsapp.replace(/\D/g,'')}" target="_blank">${c.whatsapp}</a>`
+    const wa = c.whatsapp !== '—'
+      ? `<a class="wa-link" href="https://wa.me/${c.whatsapp.replace(/\D/g,'')}" target="_blank">💬 ${c.whatsapp}</a>`
       : '—';
-    return `
-      <tr>
-        <td style="font-weight:600">${c.name}</td>
-        <td style="color:var(--muted)">${c.email}</td>
-        <td>${waLink}</td>
-        <td>${accessBadge}</td>
-        <td style="color:var(--muted)">${activatedAt}</td>
-        <td style="color:var(--muted)">${expiresAt}</td>
-        <td>
-          <div class="pbar-wrap">
-            <div class="pbar-bg"><div class="pbar-fill" style="width:${c.pct}%"></div></div>
-            <span class="pct-label">${c.pct}%</span>
-          </div>
-        </td>
-        <td style="color:var(--muted);font-size:12px">${c.currentPhase}</td>
-      </tr>
-    `;
+    return `<tr>
+      <td style="font-weight:600">${c.name}</td>
+      <td style="color:var(--muted);font-size:12px">${c.email}</td>
+      <td>${wa}</td>
+      <td>${badge}</td>
+      <td style="color:var(--muted)">${c.activated_at ? new Date(c.activated_at).toLocaleDateString('fr-FR') : '—'}</td>
+      <td style="color:var(--muted)">${c.expires_at ? new Date(c.expires_at).toLocaleDateString('fr-FR') : 'À vie'}</td>
+      <td><div class="pbar-wrap"><div class="pbar-bg"><div class="pbar-fill" style="width:${c.pct}%"></div></div><span class="pct-label">${c.pct}%</span></div></td>
+      <td style="color:var(--muted);font-size:12px">${c.currentPhase}</td>
+    </tr>`;
   }).join('');
 }
 
 function renderCodes(codes){
-  if(!codes.length){ document.getElementById('codesGrid').innerHTML = '<p style="color:var(--muted);font-size:13px">Aucun code.</p>'; return; }
-  document.getElementById('codesGrid').innerHTML = codes.map(c => `
-    <div class="code-card ${c.used_by ? 'code-used' : ''}">
+  document.getElementById('codesGrid').innerHTML = (Array.isArray(codes)?codes:[]).map(c=>`
+    <div class="code-card ${c.used_by?'code-used':''}">
       <div class="code-val">${c.code}</div>
-      <div class="code-meta">
-        ${c.access_type === 'planb_30_days' ? '30 jours' : 'Fondateur'} —
-        ${c.used_by ? '✓ Utilisé' : '○ Disponible'}
-      </div>
-    </div>
-  `).join('');
+      <div class="code-meta">${c.access_type==='planb_30_days'?'30 jours':'Fondateur'} — ${c.used_by?'✓ Utilisé':'○ Disponible'}</div>
+    </div>`).join('');
 }
 </script>
 </body>
