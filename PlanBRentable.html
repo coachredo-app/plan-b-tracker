@@ -568,8 +568,10 @@ function getScreen(){
   if(!_session){
     return S.screen === 'signup' ? renderSignup() : renderLogin();
   }
+  // Admin — accès direct sans code
+  if(_profile?.is_admin) { /* passe directement */ }
   // Connecté — accès non activé
-  if(!_profile || _profile.access_type === 'no_access'){
+  else if(!_profile || _profile.access_type === 'no_access'){
     return renderAccessGate();
   }
   // Accès 30j — vérifier expiration
