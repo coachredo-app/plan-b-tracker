@@ -494,6 +494,22 @@ function daysLeft(){
 // Boot initial — getSession() est explicite et fiable pour le premier rendu.
 // onAuthStateChange gère uniquement les changements post-boot.
 async function _boot(){
+  // Restaurer session depuis localStorage immédiatement (pas d'appel réseau)
+  try {
+    const saved = localStorage.getItem('planb_session');
+    if(saved){
+      const s = JSON.parse(saved);
+      if(s?.access_token && s?.user){
+        _session = s;
+        _profile = _loadProfileCache(s.user.id);
+        render();
+        _loadFromCloud();
+        return;
+      }
+    }
+  } catch(e){}
+
+  // Fallback : essayer Supabase
   if(!_supa){ render(); return; }
   try {
     const { data: { session } } = await _supa.auth.getSession();
@@ -768,7 +784,10 @@ window.loginUser = async function(){
     _session = { user: data.session.user, access_token: data.session.access_token };
     _profile = data.profile || null;
     if(_profile && _session.user?.id) _saveProfileCache(_session.user.id, _profile);
-    try { localStorage.setItem('planb_access_token', data.session.access_token); } catch(e){}
+    try {
+      localStorage.setItem('planb_access_token', data.session.access_token);
+      localStorage.setItem('planb_session', JSON.stringify({ user: data.session.user, access_token: data.session.access_token }));
+    } catch(e){}
     render();
     _loadFromCloud(); // Charger progression cloud en arrière-plan
     // setSession en arrière-plan pour que Supabase garde la session active
@@ -892,7 +911,7 @@ window.submitCode = async function(){
 
 window.logoutUser = async function(){
   if(_session?.user?.id) _clearProfileCache(_session.user.id);
-  try { localStorage.removeItem('planb_access_token'); } catch(e){}
+  try { localStorage.removeItem('planb_access_token'); localStorage.removeItem('planb_session'); } catch(e){}
   _session = null;
   _profile = null;
   S = JSON.parse(JSON.stringify(EMPTY_STATE));
