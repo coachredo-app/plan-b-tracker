@@ -33,9 +33,9 @@ export default async function handler(req) {
     return new Response(JSON.stringify({ ok: false, error: 'unauthorized' }), { status: 401 });
   }
 
-  // Clients activés
+  // Tous les profils
   const profilesRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/profiles?access_type=neq.no_access&order=activated_at.desc`,
+    `${SUPABASE_URL}/rest/v1/profiles?order=activated_at.desc`,
     { headers: { 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}`, 'Accept': 'application/json' } }
   );
   const profiles = await profilesRes.json();
@@ -62,8 +62,24 @@ export default async function handler(req) {
   const usersData = await usersRes.json();
   const users = usersData?.users || [];
 
-  const clients = (Array.isArray(profiles) ? profiles : [])
-    .filter(p => !p.is_admin)
+  const allProfiles = (Array.isArray(profiles) ? profiles : []).filter(p => !p.is_admin);
+
+  // Inscrits sans code activé
+  const pending = allProfiles
+    .filter(p => !p.access_type || p.access_type === 'no_access')
+    .map(p => {
+      const user = users.find(u => u.id === p.id);
+      return {
+        id: p.id,
+        name: user?.user_metadata?.name || '—',
+        email: user?.email || '—',
+        whatsapp: user?.user_metadata?.whatsapp || '—',
+        created_at: user?.created_at
+      };
+    });
+
+  const clients = allProfiles
+    .filter(p => p.access_type && p.access_type !== 'no_access')
     .map(p => {
       const user = users.find(u => u.id === p.id);
       const prog = (Array.isArray(progressList) ? progressList : []).find(pr => pr.id === p.id);
@@ -98,6 +114,7 @@ export default async function handler(req) {
   const codesArr = Array.isArray(codes) ? codes : [];
   const stats = {
     total_clients: clients.length,
+    pending: pending.length,
     codes_used: codesArr.filter(c => c.used_by).length,
     codes_available: codesArr.filter(c => !c.used_by).length,
     fondateur: clients.filter(c => c.access_type === 'planb_founder_v1' || c.access_type === 'planb_fondateur').length,
@@ -106,7 +123,7 @@ export default async function handler(req) {
   };
 
   return new Response(
-    JSON.stringify({ ok: true, stats, clients, codes: codesArr }),
+    JSON.stringify({ ok: true, stats, clients, pending, codes: codesArr }),
     { status: 200, headers: { 'Content-Type': 'application/json' } }
   );
 }

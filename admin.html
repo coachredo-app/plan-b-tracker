@@ -72,6 +72,13 @@ tr:hover td{background:rgba(255,255,255,0.03)}
     </div>
   </div>
   <div class="stats-grid" id="statsGrid"></div>
+  <div class="section-title">Inscrits sans code activé</div>
+  <div class="table-wrap" id="pendingWrap">
+    <table>
+      <thead><tr><th>Nom</th><th>Email</th><th>WhatsApp</th><th>Inscrit le</th></tr></thead>
+      <tbody id="pendingBody"></tbody>
+    </table>
+  </div>
   <div class="section-title">Clients activés</div>
   <div class="table-wrap">
     <table>
@@ -142,6 +149,7 @@ async function loadData(){
     document.getElementById('loginWrap').style.display = 'none';
     document.getElementById('dash').style.display = 'block';
     renderStats(data.stats);
+    renderPending(data.pending);
     renderClients(data.clients);
     renderCodes(data.codes);
     document.getElementById('lastUpdate').textContent = 'Mis à jour : ' + new Date().toLocaleString('fr-FR');
@@ -150,13 +158,30 @@ async function loadData(){
 
 function renderStats(s){
   document.getElementById('statsGrid').innerHTML = [
-    {val: s.total_clients, label: 'Clients actifs'},
-    {val: s.fondateur,     label: 'Accès Fondateur'},
-    {val: s.trente_jours,  label: 'Accès 30 jours'},
-    {val: s.expired,       label: 'Expirés'},
-    {val: s.codes_used,    label: 'Codes utilisés'},
+    {val: s.total_clients,   label: 'Clients actifs'},
+    {val: s.pending,         label: 'Sans code ⚠️'},
+    {val: s.fondateur,       label: 'Accès Fondateur'},
+    {val: s.trente_jours,    label: 'Accès 30 jours'},
+    {val: s.expired,         label: 'Expirés'},
     {val: s.codes_available, label: 'Codes dispo'},
   ].map(i=>`<div class="stat-card"><div class="stat-val">${i.val}</div><div class="stat-label">${i.label}</div></div>`).join('');
+}
+
+function renderPending(pending){
+  const wrap = document.getElementById('pendingWrap');
+  if(!pending?.length){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  document.getElementById('pendingBody').innerHTML = pending.map(p => {
+    const wa = p.whatsapp !== '—'
+      ? `<a class="wa-link" href="https://wa.me/${p.whatsapp.replace(/\D/g,'')}" target="_blank">💬 ${p.whatsapp}</a>`
+      : '—';
+    return `<tr>
+      <td style="font-weight:600">${p.name}</td>
+      <td style="color:var(--muted);font-size:12px">${p.email}</td>
+      <td>${wa}</td>
+      <td style="color:var(--muted)">${p.created_at ? new Date(p.created_at).toLocaleDateString('fr-FR') : '—'}</td>
+    </tr>`;
+  }).join('');
 }
 
 function renderClients(clients){
