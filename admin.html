@@ -72,6 +72,13 @@ tr:hover td{background:rgba(255,255,255,0.03)}
     </div>
   </div>
   <div class="stats-grid" id="statsGrid"></div>
+  <div class="section-title">Leads Quiz</div>
+  <div class="table-wrap" id="leadsWrap">
+    <table>
+      <thead><tr><th>Prénom</th><th>WhatsApp</th><th>Profil</th><th>Objectif</th><th>Budget</th><th>Date</th></tr></thead>
+      <tbody id="leadsBody"></tbody>
+    </table>
+  </div>
   <div class="section-title">Inscrits sans code activé</div>
   <div class="table-wrap" id="pendingWrap">
     <table>
@@ -149,6 +156,7 @@ async function loadData(){
     document.getElementById('loginWrap').style.display = 'none';
     document.getElementById('dash').style.display = 'block';
     renderStats(data.stats);
+    renderLeads(data.leads);
     renderPending(data.pending);
     renderClients(data.clients);
     renderCodes(data.codes);
@@ -159,12 +167,31 @@ async function loadData(){
 function renderStats(s){
   document.getElementById('statsGrid').innerHTML = [
     {val: s.total_clients,   label: 'Clients actifs'},
+    {val: s.quiz_leads,      label: 'Leads quiz'},
     {val: s.pending,         label: 'Sans code ⚠️'},
     {val: s.fondateur,       label: 'Accès Fondateur'},
     {val: s.trente_jours,    label: 'Accès 30 jours'},
     {val: s.expired,         label: 'Expirés'},
     {val: s.codes_available, label: 'Codes dispo'},
   ].map(i=>`<div class="stat-card"><div class="stat-val">${i.val}</div><div class="stat-label">${i.label}</div></div>`).join('');
+}
+
+function renderLeads(leads){
+  const wrap = document.getElementById('leadsWrap');
+  if(!leads?.length){ wrap.innerHTML='<p style="color:var(--muted);font-size:13px;padding:16px">Aucun lead pour l\'instant.</p>'; return; }
+  document.getElementById('leadsBody').innerHTML = leads.map(l => {
+    const wa = l.whatsapp
+      ? `<a class="wa-link" href="https://wa.me/${l.whatsapp.replace(/\D/g,'')}" target="_blank">💬 ${l.whatsapp}</a>`
+      : '—';
+    return `<tr>
+      <td style="font-weight:600">${l.prenom || '—'}</td>
+      <td>${wa}</td>
+      <td style="color:var(--muted)">${l.situation || '—'}</td>
+      <td style="color:var(--muted);font-size:12px">${l.objectif || '—'}</td>
+      <td><span class="badge ${l.budget==='15k+'?'badge-gold':'badge-blue'}">${l.budget || '—'}</span></td>
+      <td style="color:var(--muted)">${l.created_at ? new Date(l.created_at).toLocaleDateString('fr-FR') : '—'}</td>
+    </tr>`;
+  }).join('');
 }
 
 function renderPending(pending){

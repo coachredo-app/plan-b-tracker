@@ -40,6 +40,13 @@ export default async function handler(req) {
   );
   const profiles = await profilesRes.json();
 
+  // Leads quiz
+  const leadsRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/quiz_leads?order=created_at.desc&limit=200`,
+    { headers: { 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}`, 'Accept': 'application/json' } }
+  );
+  const leads = await leadsRes.json();
+
   // Codes
   const codesRes = await fetch(
     `${SUPABASE_URL}/rest/v1/access_codes?order=created_at.desc`,
@@ -112,8 +119,10 @@ export default async function handler(req) {
     });
 
   const codesArr = Array.isArray(codes) ? codes : [];
+  const leadsArr = Array.isArray(leads) ? leads : [];
   const stats = {
     total_clients: clients.length,
+    quiz_leads: leadsArr.length,
     pending: pending.length,
     codes_used: codesArr.filter(c => c.used_by).length,
     codes_available: codesArr.filter(c => !c.used_by).length,
@@ -123,7 +132,7 @@ export default async function handler(req) {
   };
 
   return new Response(
-    JSON.stringify({ ok: true, stats, clients, pending, codes: codesArr }),
+    JSON.stringify({ ok: true, stats, clients, pending, codes: codesArr, leads: Array.isArray(leads) ? leads : [] }),
     { status: 200, headers: { 'Content-Type': 'application/json' } }
   );
 }
