@@ -10,6 +10,11 @@
       "source": "/planb",
       "destination": "/",
       "permanent": false
+    },
+    {
+      "source": "/quiz",
+      "destination": "/quiz.html",
+      "permanent": false
     }
   ]
 }
