@@ -416,7 +416,7 @@ function applyData(data){
   if(_newLeads>0){ _blEl.textContent=_newLeads; _blEl.style.display=''; }
   else { _blEl.style.display='none'; }
 
-  const _pendingCount = data.stats?.pending||0;
+  const _pendingCount = (data.pending||[]).length;
   const _bpEl = document.getElementById('badgePending');
   if(_pendingCount>0){ _bpEl.textContent=_pendingCount; _bpEl.style.display=''; }
   else { _bpEl.style.display='none'; }

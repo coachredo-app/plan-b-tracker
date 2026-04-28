@@ -71,19 +71,21 @@ export default async function handler(req) {
 
   const allProfiles = (Array.isArray(profiles) ? profiles : []).filter(p => !p.is_admin);
 
-  // Inscrits sans code activé
+  // Inscrits sans code activé (profil sans access_type ET avec un auth user correspondant)
   const pending = allProfiles
     .filter(p => !p.access_type || p.access_type === 'no_access')
     .map(p => {
       const user = users.find(u => u.id === p.id);
+      if (!user) return null; // profil orphelin sans auth user → ignoré
       return {
         id: p.id,
-        name: user?.user_metadata?.name || '—',
-        email: user?.email || '—',
-        whatsapp: user?.user_metadata?.whatsapp || '—',
-        created_at: user?.created_at
+        name: user.user_metadata?.name || '—',
+        email: user.email || '—',
+        whatsapp: user.user_metadata?.whatsapp || '—',
+        created_at: user.created_at
       };
-    });
+    })
+    .filter(Boolean);
 
   const clients = allProfiles
     .filter(p => p.access_type && p.access_type !== 'no_access')
