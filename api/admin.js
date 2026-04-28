@@ -120,6 +120,16 @@ export default async function handler(req) {
       };
     });
 
+  // WA Leads (table optionnelle — erreur ignorée si inexistante)
+  let waLeadsArr = [];
+  try {
+    const waRes  = await fetch(`${SUPABASE_URL}/rest/v1/wa_leads?order=created_at.desc`, {
+      headers: { 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}`, 'Accept': 'application/json' }
+    });
+    const waData = await waRes.json();
+    waLeadsArr = Array.isArray(waData) ? waData : [];
+  } catch(_) {}
+
   const codesArr = Array.isArray(codes) ? codes : [];
   const leadsArr = Array.isArray(leads) ? leads : [];
   const stats = {
@@ -134,7 +144,7 @@ export default async function handler(req) {
   };
 
   return new Response(
-    JSON.stringify({ ok: true, stats, clients, pending, codes: codesArr, leads: Array.isArray(leads) ? leads : [] }),
+    JSON.stringify({ ok: true, stats, clients, pending, codes: codesArr, leads: leadsArr, waLeads: waLeadsArr }),
     { status: 200, headers: { 'Content-Type': 'application/json' } }
   );
 }

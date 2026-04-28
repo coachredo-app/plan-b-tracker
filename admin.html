@@ -96,6 +96,7 @@ tr:hover td{background:rgba(255,255,255,0.02)}
 .badge-ok{background:rgba(76,175,130,0.15);color:var(--ok)}
 .badge-err{background:rgba(224,92,92,0.15);color:var(--err)}
 .badge-muted{background:rgba(255,255,255,0.07);color:var(--muted)}
+.badge-warn{background:rgba(255,160,50,0.15);color:#ffa032}
 
 /* ── PROGRESS BAR ── */
 .pbar-wrap{display:flex;align-items:center;gap:8px}
@@ -106,6 +107,20 @@ tr:hover td{background:rgba(255,255,255,0.02)}
 /* ── WA BUTTON ── */
 .btn-wa-sm{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:8px;background:#25d36620;color:#25d366;font-size:12px;font-weight:600;text-decoration:none;transition:background .2s;border:1px solid #25d36630}
 .btn-wa-sm:hover{background:#25d36635}
+
+/* ── FILTER BAR ── */
+.filter-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.filter-btn{padding:6px 14px;border-radius:20px;border:1.5px solid var(--border2);background:transparent;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;white-space:nowrap}
+.filter-btn:hover{border-color:var(--border);color:var(--text)}
+.filter-btn.active{background:rgba(201,168,76,0.12);border-color:var(--gold);color:var(--gold)}
+.btn-add-lead{padding:8px 18px;border-radius:9px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;font-size:13px;font-weight:700;border:none;cursor:pointer;font-family:inherit;white-space:nowrap;transition:opacity .2s}
+.btn-add-lead:hover{opacity:.88}
+td.notes-cell{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:12px}
+.btn-action-sm{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;border:1px solid;transition:all .2s;white-space:nowrap}
+.btn-edit-sm{background:rgba(74,144,217,0.1);color:var(--blue);border-color:rgba(74,144,217,0.3)}
+.btn-edit-sm:hover{background:rgba(74,144,217,0.2)}
+.btn-del-sm{background:rgba(224,92,92,0.1);color:var(--err);border-color:rgba(224,92,92,0.3)}
+.btn-del-sm:hover{background:rgba(224,92,92,0.2)}
 
 /* ── COMING SOON ── */
 .coming-soon{text-align:center;padding:60px 20px;color:var(--muted)}
@@ -184,7 +199,7 @@ tr:hover td{background:rgba(255,255,255,0.02)}
 
     <div class="sb-section">Leads</div>
     <div class="sb-item" onclick="goPage('leads-quiz')"><span class="icon">🎯</span> Leads Quiz <span class="sb-badge" id="badgeLeads">0</span></div>
-    <div class="sb-item" onclick="goPage('leads-wa')"><span class="icon">💬</span> Leads WhatsApp</div>
+    <div class="sb-item" onclick="goPage('leads-wa')"><span class="icon">💬</span> Leads WhatsApp <span class="sb-badge" id="badgeWa" style="display:none">0</span></div>
 
     <div class="sb-section">Clients</div>
     <div class="sb-item" onclick="goPage('clients')"><span class="icon">✅</span> Clients actifs</div>
@@ -256,11 +271,29 @@ tr:hover td{background:rgba(255,255,255,0.02)}
 
     <!-- LEADS WA -->
     <div class="page" id="page-leads-wa">
-      <div class="coming-soon">
-        <div class="icon">💬</div>
-        <h3>Leads WhatsApp</h3>
-        <p>Cette section sera disponible prochainement.<br>Tu pourras enregistrer manuellement les contacts reçus sur WhatsApp.</p>
+      <div class="section-head">
+        <div>
+          <div class="section-title">Leads WhatsApp</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">Contacts entrants — WhatsApp, réseaux sociaux, bouche-à-oreille</div>
+        </div>
+        <button class="btn-add-lead" onclick="openWaEditModal()">+ Ajouter un lead</button>
       </div>
+
+      <div class="filter-bar" id="waFilterBar">
+        <button class="filter-btn active" onclick="filterWaLeads('tous')">Tous <span id="waCountTous"></span></button>
+        <button class="filter-btn" onclick="filterWaLeads('nouveau')">🔵 Nouveau</button>
+        <button class="filter-btn" onclick="filterWaLeads('interesse')">⭐ Intéressé</button>
+        <button class="filter-btn" onclick="filterWaLeads('relance')">🔄 Relance</button>
+        <button class="filter-btn" onclick="filterWaLeads('client')">✅ Client</button>
+        <button class="filter-btn" onclick="filterWaLeads('perdu')">❌ Perdu</button>
+      </div>
+
+      <div class="table-wrap"><div class="table-scroll">
+        <table>
+          <thead><tr><th>Nom</th><th>WhatsApp</th><th>Source</th><th>Statut</th><th>Budget</th><th>Notes</th><th>Date</th><th>Actions</th></tr></thead>
+          <tbody id="tbWaLeads"></tbody>
+        </table>
+      </div></div>
     </div>
 
     <!-- CLIENTS -->
@@ -377,10 +410,58 @@ tr:hover td{background:rgba(255,255,255,0.02)}
   </div>
 </div>
 
+<!-- MODAL — AJOUTER / MODIFIER LEAD WA -->
+<div class="modal-backdrop" id="waEditModal" onclick="if(event.target===this)closeWaEditModal()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" id="waModalTitle">Ajouter un lead</div>
+      <button class="modal-close" onclick="closeWaEditModal()">✕</button>
+    </div>
+
+    <label class="modal-label">Nom *</label>
+    <input id="waFNom" type="text" placeholder="Prénom Nom" class="modal-field">
+
+    <label class="modal-label">WhatsApp *</label>
+    <input id="waFWa" type="tel" placeholder="221XXXXXXXXX" class="modal-field">
+
+    <label class="modal-label">Source</label>
+    <select id="waFSource" class="modal-field">
+      <option>WhatsApp</option>
+      <option>Facebook</option>
+      <option>Instagram</option>
+      <option>Référence</option>
+      <option>Autre</option>
+    </select>
+
+    <label class="modal-label">Statut</label>
+    <select id="waFStatut" class="modal-field">
+      <option value="nouveau">🔵 Nouveau</option>
+      <option value="interesse">⭐ Intéressé</option>
+      <option value="relance">🔄 Relance</option>
+      <option value="client">✅ Client</option>
+      <option value="perdu">❌ Perdu</option>
+    </select>
+
+    <label class="modal-label">Budget</label>
+    <input id="waFBudget" type="text" placeholder="ex: 10 000 FCFA" class="modal-field">
+
+    <label class="modal-label">Notes</label>
+    <textarea id="waFNotes" rows="3" placeholder="Observations, contexte, suivi…" class="modal-field" style="resize:vertical;min-height:70px"></textarea>
+
+    <div class="modal-err" id="waErr"></div>
+    <button class="btn-modal-submit" id="waSubmitBtn" onclick="submitWaLead()">Enregistrer le lead</button>
+  </div>
+</div>
+
 <script>
 let _token = '';
 let _data  = {};
 let _charts = {};
+let _waLeadsCache = [];
+let _waFilter = 'tous';
+let _waEditIdx = null;
+let _cvSource = 'quiz';
+let _waConvertIdx = null;
 
 // ── AUTH ──
 async function doLogin(){
@@ -444,6 +525,9 @@ function goPage(id){
     localStorage.setItem('admin_leads_seen', new Date().toISOString());
     const b=document.getElementById('badgeLeads'); if(b) b.style.display='none';
   }
+  if(id==='leads-wa'){
+    const b=document.getElementById('badgeWa'); if(b) b.style.display='none';
+  }
   if(id==='pending') loadData();
   closeSidebar();
 }
@@ -480,9 +564,15 @@ function applyData(data){
   if(_pendingCount>0){ _bpEl.textContent=_pendingCount; _bpEl.style.display=''; }
   else { _bpEl.style.display='none'; }
 
+  const _waNew = (data.waLeads||[]).filter(l=>l.statut==='nouveau').length;
+  const _bwEl  = document.getElementById('badgeWa');
+  if(_waNew>0){ _bwEl.textContent=_waNew; _bwEl.style.display=''; }
+  else { _bwEl.style.display='none'; }
+
   renderKPIs(data.stats, data.leads);
   renderCharts(data);
   renderLeads(data.leads||[]);
+  renderWaLeads(data.waLeads||[]);
   renderClients(data.clients||[]);
   renderPending(data.pending||[]);
   renderCodes(data.codes||[]);
@@ -636,6 +726,7 @@ function renderLeads(leads){
 let _cvIdx = null;
 
 function openConvertModal(idx){
+  _cvSource = 'quiz';
   _cvIdx = idx;
   const l = _leadsCache[idx] || {};
   document.getElementById('cvLeadInfo').innerHTML = [
@@ -662,7 +753,7 @@ function openConvertModal(idx){
 
 function closeConvertModal(){
   document.getElementById('convertModal').classList.remove('open');
-  _cvIdx = null;
+  _cvIdx = null; _cvSource = 'quiz'; _waConvertIdx = null;
 }
 
 function cvToggleExpiry(){
@@ -677,7 +768,8 @@ async function submitConvert(){
   const expires    = document.getElementById('cvExpiry').value;
   const errEl      = document.getElementById('cvErr');
   const btn        = document.getElementById('cvBtn');
-  const lead       = _leadsCache[_cvIdx] || {};
+  const _rawLead = _cvSource === 'wa' ? (_waLeadsCache[_waConvertIdx]||{}) : (_leadsCache[_cvIdx]||{});
+  const lead = { prenom: _rawLead.prenom || _rawLead.nom || '', whatsapp: _rawLead.whatsapp || '', budget: _rawLead.budget || '' };
 
   if(!email){ errEl.textContent='Email requis.'; errEl.style.display='block'; return; }
 
@@ -706,6 +798,11 @@ async function submitConvert(){
       return;
     }
 
+    // Si conversion depuis WA lead : marquer statut → client
+    if(_cvSource === 'wa' && _waConvertIdx !== null){
+      const wl = _waLeadsCache[_waConvertIdx];
+      if(wl?.id) await fetch(`/api/wa-leads?id=${wl.id}`,{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':`Bearer ${_token}`},body:JSON.stringify({statut:'client'})});
+    }
     closeConvertModal();
     await loadData();
   } catch(e){
@@ -713,6 +810,146 @@ async function submitConvert(){
     errEl.style.display='block';
     btn.textContent='Convertir en client →'; btn.disabled=false;
   }
+}
+
+// ── WA LEADS ──
+const WA_STATUT = {
+  nouveau:   {label:'Nouveau',   cls:'badge-blue'},
+  interesse: {label:'Intéressé', cls:'badge-gold'},
+  relance:   {label:'Relance',   cls:'badge-warn'},
+  client:    {label:'Client',    cls:'badge-ok'},
+  perdu:     {label:'Perdu',     cls:'badge-err'},
+};
+
+function renderWaLeads(leads){
+  _waLeadsCache = leads;
+  const el = document.getElementById('waCountTous');
+  if(el) el.textContent = leads.length ? `(${leads.length})` : '';
+  _applyWaFilter();
+}
+
+function filterWaLeads(f){
+  _waFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b=>{
+    b.classList.toggle('active', b.getAttribute('onclick')===`filterWaLeads('${f}')`);
+  });
+  _applyWaFilter();
+}
+
+function _applyWaFilter(){
+  const rows = _waFilter==='tous' ? _waLeadsCache : _waLeadsCache.filter(l=>l.statut===_waFilter);
+  const tb = document.getElementById('tbWaLeads');
+  if(!tb) return;
+  if(!rows.length){
+    tb.innerHTML='<tr class="empty-row"><td colspan="8">Aucun lead dans cette catégorie.</td></tr>';
+    return;
+  }
+  tb.innerHTML = rows.map((l,ri)=>{
+    const idx = _waLeadsCache.indexOf(l);
+    const st  = WA_STATUT[l.statut] || {label:l.statut||'—',cls:'badge-muted'};
+    return `<tr>
+      <td style="font-weight:600">${l.nom||'—'}</td>
+      <td>${l.whatsapp||'—'}</td>
+      <td style="color:var(--muted);font-size:12px">${l.source||'—'}</td>
+      <td><span class="badge ${st.cls}">${st.label}</span></td>
+      <td style="color:var(--muted);font-size:12px">${l.budget||'—'}</td>
+      <td class="notes-cell" title="${(l.notes||'').replace(/"/g,'&quot;')}">${l.notes||'—'}</td>
+      <td style="color:var(--muted);font-size:12px">${l.created_at?new Date(l.created_at).toLocaleDateString('fr-FR'):'—'}</td>
+      <td style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">
+        ${waBtn(l.whatsapp)}
+        <button class="btn-action-sm btn-edit-sm" onclick="openWaEditModal(${idx})">✏ Modifier</button>
+        <button class="btn-convert-sm" onclick="openWaConvertModal(${idx})">Convertir →</button>
+        <button class="btn-action-sm btn-del-sm" onclick="deleteWaLead(${idx})">✕</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// Modal Add/Edit WA lead
+function openWaEditModal(idx=null){
+  _waEditIdx = idx;
+  const isEdit = idx !== null;
+  document.getElementById('waModalTitle').textContent = isEdit ? 'Modifier le lead' : 'Ajouter un lead';
+  const l = isEdit ? (_waLeadsCache[idx]||{}) : {};
+  document.getElementById('waFNom').value    = l.nom    || '';
+  document.getElementById('waFWa').value     = l.whatsapp || '';
+  document.getElementById('waFSource').value = l.source  || 'WhatsApp';
+  document.getElementById('waFStatut').value = l.statut  || 'nouveau';
+  document.getElementById('waFBudget').value = l.budget  || '';
+  document.getElementById('waFNotes').value  = l.notes   || '';
+  document.getElementById('waErr').style.display = 'none';
+  document.getElementById('waSubmitBtn').textContent = isEdit ? 'Enregistrer les modifications' : 'Enregistrer le lead';
+  document.getElementById('waSubmitBtn').disabled = false;
+  document.getElementById('waEditModal').classList.add('open');
+  setTimeout(()=>document.getElementById('waFNom').focus(), 80);
+}
+
+function closeWaEditModal(){
+  document.getElementById('waEditModal').classList.remove('open');
+  _waEditIdx = null;
+}
+
+async function submitWaLead(){
+  const nom     = document.getElementById('waFNom').value.trim();
+  const wa      = document.getElementById('waFWa').value.trim();
+  const source  = document.getElementById('waFSource').value;
+  const statut  = document.getElementById('waFStatut').value;
+  const budget  = document.getElementById('waFBudget').value.trim();
+  const notes   = document.getElementById('waFNotes').value.trim();
+  const errEl   = document.getElementById('waErr');
+  const btn     = document.getElementById('waSubmitBtn');
+
+  if(!nom && !wa){ errEl.textContent='Nom ou WhatsApp requis.'; errEl.style.display='block'; return; }
+
+  btn.disabled=true; btn.textContent='Enregistrement…'; errEl.style.display='none';
+
+  const isEdit  = _waEditIdx !== null;
+  const leadId  = isEdit ? _waLeadsCache[_waEditIdx]?.id : null;
+  const method  = isEdit ? 'PATCH' : 'POST';
+  const urlPath = isEdit ? `/api/wa-leads?id=${leadId}` : '/api/wa-leads';
+
+  try {
+    const res  = await fetch(urlPath,{method,headers:{'Content-Type':'application/json','Authorization':`Bearer ${_token}`},body:JSON.stringify({nom,whatsapp:wa,source,statut,budget,notes})});
+    const data = await res.json();
+    if(!data.ok){ errEl.textContent='Erreur : '+(data.error||'inconnue'); errEl.style.display='block'; btn.disabled=false; btn.textContent='Enregistrer le lead'; return; }
+    closeWaEditModal();
+    await loadData();
+  } catch(e){
+    errEl.textContent='Erreur réseau.'; errEl.style.display='block';
+    btn.disabled=false; btn.textContent='Enregistrer le lead';
+  }
+}
+
+function openWaConvertModal(idx){
+  _cvSource = 'wa';
+  _waConvertIdx = idx;
+  const l = _waLeadsCache[idx] || {};
+  document.getElementById('cvLeadInfo').innerHTML = [
+    {label:'Nom',      val:l.nom      ||'—'},
+    {label:'WhatsApp', val:l.whatsapp ||'—'},
+    {label:'Budget',   val:l.budget   ||'—'},
+    {label:'Source',   val:l.source   ||'—'},
+    {label:'Notes',    val:l.notes    ||'—'},
+  ].map(r=>`<div class="minfo"><div class="minfo-label">${r.label}</div><div class="minfo-val">${r.val}</div></div>`).join('');
+  const today = new Date().toISOString().slice(0,10);
+  const in30  = new Date(Date.now()+30*864e5).toISOString().slice(0,10);
+  document.getElementById('cvEmail').value     = '';
+  document.getElementById('cvAccess').value    = '';
+  document.getElementById('cvActivated').value = today;
+  document.getElementById('cvExpiry').value    = in30;
+  document.getElementById('cvErr').style.display = 'none';
+  document.getElementById('cvBtn').textContent = 'Convertir en client →';
+  document.getElementById('cvBtn').disabled    = false;
+  cvToggleExpiry();
+  document.getElementById('convertModal').classList.add('open');
+  setTimeout(()=>document.getElementById('cvEmail').focus(), 80);
+}
+
+async function deleteWaLead(idx){
+  const l = _waLeadsCache[idx];
+  if(!l || !confirm(`Supprimer le lead "${l.nom||l.whatsapp}" ? Cette action est irréversible.`)) return;
+  await fetch(`/api/wa-leads?id=${l.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${_token}`}});
+  await loadData();
 }
 
 function renderClients(clients){
