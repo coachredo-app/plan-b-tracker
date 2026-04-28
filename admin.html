@@ -341,13 +341,6 @@ async function doLogin(){
   } catch(e){ err.style.display='block'; btn.textContent='Accéder au dashboard →'; btn.disabled=false; }
 }
 
-function doLogout(){
-  _token='';
-  document.getElementById('mainContent').style.display='none';
-  document.getElementById('loginScreen').style.display='flex';
-  document.getElementById('loginPass').value='';
-}
-
 // Auto-login
 (async()=>{
   try {
@@ -360,9 +353,19 @@ function doLogout(){
   } catch(e){}
 })();
 
+let _refreshTimer = null;
 function showDash(){
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('mainContent').style.display='block';
+  if(_refreshTimer) clearInterval(_refreshTimer);
+  _refreshTimer = setInterval(loadData, 60000);
+}
+function doLogout(){
+  _token='';
+  if(_refreshTimer){ clearInterval(_refreshTimer); _refreshTimer=null; }
+  document.getElementById('mainContent').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('loginPass').value='';
 }
 
 // ── NAVIGATION ──
@@ -382,6 +385,7 @@ function goPage(id){
     localStorage.setItem('admin_leads_seen', new Date().toISOString());
     const b=document.getElementById('badgeLeads'); if(b) b.style.display='none';
   }
+  if(id==='pending') loadData();
   closeSidebar();
 }
 
