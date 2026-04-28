@@ -4,242 +4,599 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin — Plan B Rentable</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#0a0d1a;color:#e8e0cc;font-family:'DM Sans',system-ui,sans-serif;min-height:100vh}
-:root{--gold:#c9a84c;--gold2:#a87c2a;--card:#12172b;--border:rgba(201,168,76,0.2);--muted:#8892a4;--err:#e05c5c;--ok:#4caf82}
-.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
-.login-box{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:36px 32px;width:100%;max-width:360px;text-align:center}
-.login-box h1{font-size:22px;font-weight:800;color:var(--gold);margin-bottom:6px}
-.login-box p{font-size:13px;color:var(--muted);margin-bottom:24px}
-input{width:100%;padding:13px 14px;border-radius:10px;border:2px solid var(--border);background:rgba(255,255,255,0.04);color:#e8e0cc;font-size:14px;outline:none;margin-bottom:12px;transition:border-color .2s}
-input:focus{border-color:var(--gold)}
-.btn{width:100%;padding:13px;border-radius:10px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;font-weight:700;font-size:14px;border:none;cursor:pointer}
-.err{color:var(--err);font-size:12.5px;margin-top:10px;display:none}
-.dash{display:none;padding:24px;max-width:1200px;margin:0 auto}
-.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px}
-.topbar h1{font-size:20px;font-weight:800;color:var(--gold)}
-.btn-sm{padding:8px 16px;border-radius:8px;background:rgba(255,255,255,0.07);border:1px solid var(--border);color:var(--muted);font-size:12px;cursor:pointer;font-weight:600}
-.btn-sm:hover{background:rgba(255,255,255,0.12);color:#e8e0cc}
-.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:28px}
-.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 16px;text-align:center}
-.stat-val{font-size:32px;font-weight:800;color:var(--gold);line-height:1}
-.stat-label{font-size:11px;color:var(--muted);margin-top:6px;text-transform:uppercase;letter-spacing:0.5px}
-.section-title{font-size:15px;font-weight:700;color:#e8e0cc;margin-bottom:14px}
-.table-wrap{overflow-x:auto;border-radius:14px;border:1px solid var(--border);margin-bottom:28px}
+body{background:#070b18;color:#e8e0cc;font-family:'DM Sans',system-ui,sans-serif;min-height:100vh;display:flex}
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@600;700&display=swap');
+:root{
+  --gold:#c9a84c;--gold2:#a87c2a;
+  --navy:#070b18;--card:#0f1628;--card2:#141c30;
+  --border:rgba(201,168,76,0.18);--border2:rgba(255,255,255,0.07);
+  --muted:#6b7a9a;--text:#e8e0cc;
+  --ok:#4caf82;--err:#e05c5c;--blue:#4a90d9;
+  --sidebar:220px;
+}
+
+/* ── LOGIN ── */
+.login-screen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:100;padding:24px}
+.login-box{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:40px 32px;width:100%;max-width:380px;text-align:center}
+.login-logo{width:80px;height:80px;border-radius:50%;object-fit:cover;margin:0 auto 16px;display:block;border:2px solid var(--border)}
+.login-title{font-size:18px;font-weight:700;color:var(--gold);margin-bottom:4px}
+.login-sub{font-size:12px;color:var(--muted);margin-bottom:28px}
+.field{width:100%;padding:13px 14px;border-radius:10px;border:1.5px solid var(--border2);background:rgba(255,255,255,0.04);color:var(--text);font-size:14px;outline:none;margin-bottom:10px;transition:border-color .2s;font-family:inherit}
+.field:focus{border-color:var(--gold)}
+.btn-login{width:100%;padding:14px;border-radius:10px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;font-weight:700;font-size:14px;border:none;cursor:pointer;font-family:inherit}
+.login-err{color:var(--err);font-size:12px;margin-top:10px;display:none}
+
+/* ── LAYOUT ── */
+.sidebar{width:var(--sidebar);min-height:100vh;background:var(--card);border-right:1px solid var(--border2);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:50;transition:transform .3s}
+.main{margin-left:var(--sidebar);flex:1;min-height:100vh;padding:0}
+
+/* ── SIDEBAR ── */
+.sb-logo{padding:20px 16px;border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:10px}
+.sb-logo img{width:40px;height:40px;border-radius:50%;object-fit:cover}
+.sb-logo-text{font-size:13px;font-weight:700;color:var(--gold);line-height:1.2}
+.sb-logo-sub{font-size:10px;color:var(--muted);font-weight:400}
+.sb-nav{flex:1;padding:12px 0;overflow-y:auto}
+.sb-section{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;padding:12px 16px 6px;font-weight:600}
+.sb-item{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;transition:all .2s;border-left:3px solid transparent;color:var(--muted);font-size:13px;font-weight:500}
+.sb-item:hover{background:rgba(255,255,255,0.04);color:var(--text)}
+.sb-item.active{background:rgba(201,168,76,0.08);border-left-color:var(--gold);color:var(--gold)}
+.sb-item .icon{font-size:16px;width:20px;text-align:center}
+.sb-badge{margin-left:auto;background:var(--gold);color:#000;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px}
+.sb-footer{padding:12px 16px;border-top:1px solid var(--border2)}
+.sb-footer-btn{width:100%;padding:9px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid var(--border2);color:var(--muted);font-size:12px;cursor:pointer;font-family:inherit;transition:all .2s}
+.sb-footer-btn:hover{background:rgba(255,255,255,0.09);color:var(--text)}
+
+/* ── TOPBAR ── */
+.topbar{padding:18px 28px;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;background:var(--card);position:sticky;top:0;z-index:40}
+.page-title{font-size:18px;font-weight:700;color:var(--text)}
+.page-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.btn-refresh{padding:8px 16px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px solid var(--border2);color:var(--muted);font-size:12px;cursor:pointer;font-family:inherit;transition:all .2s}
+.btn-refresh:hover{background:rgba(255,255,255,0.1);color:var(--text)}
+.btn-app{padding:8px 16px;border-radius:8px;background:rgba(201,168,76,0.1);border:1px solid var(--border);color:var(--gold);font-size:12px;cursor:pointer;font-family:inherit;text-decoration:none;font-weight:600}
+
+/* ── CONTENT ── */
+.content{padding:28px}
+.page{display:none}
+.page.active{display:block}
+
+/* ── KPI GRID ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:28px}
+.kpi-card{background:var(--card);border:1px solid var(--border2);border-radius:14px;padding:18px 16px;transition:border-color .2s}
+.kpi-card:hover{border-color:var(--border)}
+.kpi-val{font-size:30px;font-weight:800;color:var(--gold);line-height:1}
+.kpi-label{font-size:11px;color:var(--muted);margin-top:6px;text-transform:uppercase;letter-spacing:0.5px}
+.kpi-sub{font-size:11px;color:var(--ok);margin-top:4px;font-weight:600}
+
+/* ── CHARTS ── */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:28px}
+.chart-card{background:var(--card);border:1px solid var(--border2);border-radius:14px;padding:20px}
+.chart-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:16px}
+.chart-wrap{position:relative;height:200px;display:flex;align-items:center;justify-content:center}
+
+/* ── TABLES ── */
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.section-title{font-size:15px;font-weight:700;color:var(--text)}
+.section-count{font-size:12px;color:var(--muted);background:rgba(255,255,255,0.06);padding:3px 10px;border-radius:20px}
+.table-wrap{background:var(--card);border:1px solid var(--border2);border-radius:14px;overflow:hidden;margin-bottom:24px}
+.table-scroll{overflow-x:auto}
 table{width:100%;border-collapse:collapse}
-th{background:rgba(201,168,76,0.08);color:var(--gold);font-size:11px;text-transform:uppercase;letter-spacing:0.5px;padding:12px 14px;text-align:left;white-space:nowrap}
-td{padding:12px 14px;border-top:1px solid rgba(255,255,255,0.05);font-size:13px;vertical-align:middle}
-tr:hover td{background:rgba(255,255,255,0.03)}
-.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+th{background:rgba(201,168,76,0.06);color:var(--gold);font-size:11px;text-transform:uppercase;letter-spacing:0.5px;padding:12px 16px;text-align:left;white-space:nowrap;font-weight:600}
+td{padding:12px 16px;border-top:1px solid var(--border2);font-size:13px;vertical-align:middle}
+tr:hover td{background:rgba(255,255,255,0.02)}
+.empty-row td{text-align:center;color:var(--muted);padding:32px}
+
+/* ── BADGES ── */
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
 .badge-gold{background:rgba(201,168,76,0.15);color:var(--gold)}
-.badge-blue{background:rgba(76,130,201,0.15);color:#6fa3e0}
+.badge-blue{background:rgba(74,144,217,0.15);color:var(--blue)}
+.badge-ok{background:rgba(76,175,130,0.15);color:var(--ok)}
 .badge-err{background:rgba(224,92,92,0.15);color:var(--err)}
+.badge-muted{background:rgba(255,255,255,0.07);color:var(--muted)}
+
+/* ── PROGRESS BAR ── */
 .pbar-wrap{display:flex;align-items:center;gap:8px}
-.pbar-bg{flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,0.08)}
-.pbar-fill{height:6px;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--gold2))}
-.pct-label{font-size:11px;color:var(--muted);min-width:30px}
-.wa-link{color:var(--ok);text-decoration:none;font-size:12px;font-weight:600}
-.codes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
-.code-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
-.code-val{font-size:13px;font-weight:700;font-family:monospace;color:var(--gold)}
-.code-meta{font-size:11px;color:var(--muted);margin-top:4px}
-.code-used{opacity:0.4}
-.note{font-size:11px;color:var(--muted);text-align:center;margin-top:20px}
+.pbar-bg{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,0.07);min-width:60px}
+.pbar-fill{height:5px;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--gold2))}
+.pct{font-size:11px;color:var(--muted);min-width:28px}
+
+/* ── WA BUTTON ── */
+.btn-wa-sm{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:8px;background:#25d36620;color:#25d366;font-size:12px;font-weight:600;text-decoration:none;transition:background .2s;border:1px solid #25d36630}
+.btn-wa-sm:hover{background:#25d36635}
+
+/* ── COMING SOON ── */
+.coming-soon{text-align:center;padding:60px 20px;color:var(--muted)}
+.coming-soon .icon{font-size:48px;margin-bottom:16px}
+.coming-soon h3{font-size:16px;font-weight:600;color:var(--text);margin-bottom:8px}
+.coming-soon p{font-size:13px;line-height:1.6}
+
+/* ── MOBILE ── */
+.menu-toggle{display:none;padding:8px;background:none;border:none;color:var(--text);font-size:22px;cursor:pointer}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0}
+  .menu-toggle{display:block}
+  .charts-row{grid-template-columns:1fr}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .content{padding:16px}
+}
+
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:49}
+.overlay.show{display:block}
 </style>
 </head>
 <body>
 
-<div class="login-wrap" id="loginWrap">
+<!-- LOGIN -->
+<div class="login-screen" id="loginScreen">
   <div class="login-box">
-    <h1>Plan B — Admin</h1>
-    <p>Connectez-vous avec votre compte admin</p>
-    <input type="email" id="email" placeholder="Email" onkeydown="if(event.key==='Enter')document.getElementById('pass').focus()">
-    <input type="password" id="pass" placeholder="Mot de passe" onkeydown="if(event.key==='Enter')doLogin()">
-    <button class="btn" id="loginBtn" onclick="doLogin()">Accéder →</button>
-    <div class="err" id="loginErr">Email ou mot de passe incorrect.</div>
+    <img class="login-logo" src="/coachredologo.png" alt="CoachRedo">
+    <div class="login-title">Plan B Rentable</div>
+    <div class="login-sub">Accès réservé à l'administrateur</div>
+    <input class="field" type="email" id="loginEmail" placeholder="Email" onkeydown="if(event.key==='Enter')document.getElementById('loginPass').focus()">
+    <input class="field" type="password" id="loginPass" placeholder="Mot de passe" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn-login" id="loginBtn" onclick="doLogin()">Accéder au dashboard →</button>
+    <div class="login-err" id="loginErr">Email ou mot de passe incorrect.</div>
   </div>
 </div>
 
-<div class="dash" id="dash">
-  <div class="topbar">
-    <h1>Dashboard — Plan B Rentable</h1>
-    <div style="display:flex;gap:8px">
-      <button class="btn-sm" onclick="loadData()">↺ Actualiser</button>
-      <a href="/PlanBRentable.html" class="btn-sm" style="text-decoration:none">← Retour à l'app</a>
-      <button class="btn-sm" onclick="doLogout()">Déconnexion</button>
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <div class="sb-logo">
+    <img src="/coachredologo.png" alt="CR">
+    <div>
+      <div class="sb-logo-text">Plan B Admin</div>
+      <div class="sb-logo-sub">CoachRedo</div>
     </div>
   </div>
-  <div class="stats-grid" id="statsGrid"></div>
-  <div class="section-title">Leads Quiz</div>
-  <div class="table-wrap" id="leadsWrap">
-    <table>
-      <thead><tr><th>Prénom</th><th>WhatsApp</th><th>Profil</th><th>Objectif</th><th>Budget</th><th>Date</th></tr></thead>
-      <tbody id="leadsBody"></tbody>
-    </table>
+  <nav class="sb-nav">
+    <div class="sb-section">Vue globale</div>
+    <div class="sb-item active" onclick="goPage('overview')"><span class="icon">📊</span> Dashboard</div>
+
+    <div class="sb-section">Leads</div>
+    <div class="sb-item" onclick="goPage('leads-quiz')"><span class="icon">🎯</span> Leads Quiz <span class="sb-badge" id="badgeLeads">0</span></div>
+    <div class="sb-item" onclick="goPage('leads-wa')"><span class="icon">💬</span> Leads WhatsApp</div>
+
+    <div class="sb-section">Clients</div>
+    <div class="sb-item" onclick="goPage('clients')"><span class="icon">✅</span> Clients actifs <span class="sb-badge" id="badgeClients">0</span></div>
+    <div class="sb-item" onclick="goPage('pending')"><span class="icon">⏳</span> Sans code <span class="sb-badge" id="badgePending" style="background:var(--err);color:#fff">0</span></div>
+    <div class="sb-item" onclick="goPage('codes')"><span class="icon">🔑</span> Codes d'accès</div>
+
+    <div class="sb-section">Business</div>
+    <div class="sb-item" onclick="goPage('ventes')"><span class="icon">💰</span> Ventes / Paiements</div>
+    <div class="sb-item" onclick="goPage('analytics')"><span class="icon">📈</span> Analytics</div>
+    <div class="sb-item" onclick="goPage('settings')"><span class="icon">⚙️</span> Paramètres</div>
+  </nav>
+  <div class="sb-footer">
+    <a href="/PlanBRentable.html" class="sb-footer-btn" style="display:block;text-align:center;text-decoration:none;margin-bottom:8px">← Retour à l'app</a>
+    <button class="sb-footer-btn" onclick="doLogout()">Déconnexion</button>
   </div>
-  <div class="section-title">Inscrits sans code activé</div>
-  <div class="table-wrap" id="pendingWrap">
-    <table>
-      <thead><tr><th>Nom</th><th>Email</th><th>WhatsApp</th><th>Inscrit le</th></tr></thead>
-      <tbody id="pendingBody"></tbody>
-    </table>
-  </div>
-  <div class="section-title">Clients activés</div>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Nom</th><th>Email</th><th>WhatsApp</th><th>Accès</th>
-          <th>Activé le</th><th>Expire</th><th>Progression</th><th>Phase</th>
-        </tr>
-      </thead>
-      <tbody id="clientsBody"></tbody>
-    </table>
-  </div>
-  <div class="section-title">Codes d'accès</div>
-  <div class="codes-grid" id="codesGrid"></div>
-  <div class="note" id="lastUpdate"></div>
 </div>
 
+<!-- MAIN -->
+<div class="main" id="mainContent" style="display:none">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+      <div>
+        <div class="page-title" id="pageTitle">Dashboard</div>
+        <div class="page-sub" id="pageLastUpdate"></div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn-refresh" onclick="loadData()">↺ Actualiser</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- OVERVIEW -->
+    <div class="page active" id="page-overview">
+      <div class="kpi-grid" id="kpiGrid"></div>
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-title">Répartition des accès</div>
+          <div class="chart-wrap"><canvas id="chartAcces"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Budget quiz des prospects</div>
+          <div class="chart-wrap"><canvas id="chartBudget"></canvas></div>
+        </div>
+      </div>
+      <div class="charts-row">
+        <div class="chart-card" style="grid-column:1/-1">
+          <div class="chart-title">Leads quiz — 14 derniers jours</div>
+          <div class="chart-wrap" style="height:180px"><canvas id="chartLeads"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LEADS QUIZ -->
+    <div class="page" id="page-leads-quiz">
+      <div class="section-head">
+        <div class="section-title">Leads Quiz</div>
+        <span class="section-count" id="countLeads">0 leads</span>
+      </div>
+      <div class="table-wrap"><div class="table-scroll">
+        <table>
+          <thead><tr><th>Prénom</th><th>WhatsApp</th><th>Profil</th><th>Objectif</th><th>Budget</th><th>Date</th><th>Action</th></tr></thead>
+          <tbody id="tbLeads"></tbody>
+        </table>
+      </div></div>
+    </div>
+
+    <!-- LEADS WA -->
+    <div class="page" id="page-leads-wa">
+      <div class="coming-soon">
+        <div class="icon">💬</div>
+        <h3>Leads WhatsApp</h3>
+        <p>Cette section sera disponible prochainement.<br>Tu pourras enregistrer manuellement les contacts reçus sur WhatsApp.</p>
+      </div>
+    </div>
+
+    <!-- CLIENTS -->
+    <div class="page" id="page-clients">
+      <div class="section-head">
+        <div class="section-title">Clients actifs</div>
+        <span class="section-count" id="countClients">0 clients</span>
+      </div>
+      <div class="table-wrap"><div class="table-scroll">
+        <table>
+          <thead><tr><th>Nom</th><th>Email</th><th>WhatsApp</th><th>Accès</th><th>Activé le</th><th>Expire</th><th>Progression</th><th>Phase</th></tr></thead>
+          <tbody id="tbClients"></tbody>
+        </table>
+      </div></div>
+    </div>
+
+    <!-- PENDING -->
+    <div class="page" id="page-pending">
+      <div class="section-head">
+        <div class="section-title">Inscrits sans code activé</div>
+        <span class="section-count" id="countPending">0</span>
+      </div>
+      <div class="table-wrap"><div class="table-scroll">
+        <table>
+          <thead><tr><th>Nom</th><th>Email</th><th>WhatsApp</th><th>Inscrit le</th><th>Action</th></tr></thead>
+          <tbody id="tbPending"></tbody>
+        </table>
+      </div></div>
+    </div>
+
+    <!-- CODES -->
+    <div class="page" id="page-codes">
+      <div class="section-head">
+        <div class="section-title">Codes d'accès</div>
+        <span class="section-count" id="countCodes">0 codes</span>
+      </div>
+      <div class="table-wrap"><div class="table-scroll">
+        <table>
+          <thead><tr><th>Code</th><th>Type</th><th>Statut</th><th>Utilisé par</th><th>Date utilisation</th></tr></thead>
+          <tbody id="tbCodes"></tbody>
+        </table>
+      </div></div>
+    </div>
+
+    <!-- VENTES -->
+    <div class="page" id="page-ventes">
+      <div class="coming-soon">
+        <div class="icon">💰</div>
+        <h3>Ventes / Paiements</h3>
+        <p>Cette section sera disponible après intégration d'un système de paiement.<br>Tu pourras suivre CA, offres vendues et historique des transactions.</p>
+      </div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div class="page" id="page-analytics">
+      <div class="kpi-grid" id="analyticsKpi"></div>
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-title">Répartition profils quiz</div>
+          <div class="chart-wrap"><canvas id="chartProfils"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Répartition objectifs quiz</div>
+          <div class="chart-wrap"><canvas id="chartObjectifs"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <div class="coming-soon">
+        <div class="icon">⚙️</div>
+        <h3>Paramètres</h3>
+        <p>Gestion des codes, configuration des offres et paramètres du compte.</p>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
 <script>
-const SUPABASE_URL = 'https://ggeohumiyxqhknnftydi.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdnZW9odW1peXhxaGtubmZ0eWRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU0MjcwMzMsImV4cCI6MjA2MTAwMzAzM30.r_r2MXk_9nRjBnCkHG6m06LBB_wfHOdlHtZ7q3C750';
 let _token = '';
+let _data  = {};
+let _charts = {};
 
-// Auto-login si déjà connecté via l'app
-(async () => {
-  try {
-    const saved = localStorage.getItem('planb_access_token');
-    if (saved) {
-      _token = saved;
-      await loadData();
-    }
-  } catch(e) {}
-})();
-
+// ── AUTH ──
 async function doLogin(){
-  const email = document.getElementById('email').value.trim();
-  const pass  = document.getElementById('pass').value;
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPass').value;
   const btn   = document.getElementById('loginBtn');
   const err   = document.getElementById('loginErr');
-  if(!email || !pass) return;
-  btn.textContent = 'Connexion…'; btn.disabled = true; err.style.display = 'none';
+  if(!email||!pass) return;
+  btn.textContent='Connexion…'; btn.disabled=true; err.style.display='none';
   try {
-    const res  = await fetch('/api/login', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({email, password: pass})
-    });
+    const res  = await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
     const data = await res.json();
-    if(!data.ok){ err.style.display = 'block'; btn.textContent = 'Accéder →'; btn.disabled = false; return; }
-    if(!data.profile?.is_admin){ err.textContent = 'Accès non autorisé.'; err.style.display = 'block'; btn.textContent = 'Accéder →'; btn.disabled = false; return; }
+    if(!data.ok||!data.profile?.is_admin){ err.style.display='block'; btn.textContent='Accéder au dashboard →'; btn.disabled=false; return; }
     _token = data.session.access_token;
-    btn.textContent = 'Accéder →'; btn.disabled = false;
+    showDash();
     loadData();
-  } catch(e){ err.style.display = 'block'; btn.textContent = 'Accéder →'; btn.disabled = false; }
+  } catch(e){ err.style.display='block'; btn.textContent='Accéder au dashboard →'; btn.disabled=false; }
 }
 
 function doLogout(){
-  _token = '';
-  document.getElementById('dash').style.display = 'none';
-  document.getElementById('loginWrap').style.display = 'flex';
-  document.getElementById('pass').value = '';
+  _token='';
+  document.getElementById('mainContent').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('loginPass').value='';
 }
 
+// Auto-login
+(async()=>{
+  try {
+    const saved = localStorage.getItem('planb_access_token');
+    if(saved){
+      const res = await fetch('/api/admin',{headers:{'Authorization':`Bearer ${saved}`}});
+      const d   = await res.json();
+      if(d.ok){ _token=saved; showDash(); applyData(d); return; }
+    }
+  } catch(e){}
+})();
+
+function showDash(){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('mainContent').style.display='block';
+}
+
+// ── NAVIGATION ──
+const pageTitles = {
+  'overview':'Dashboard','leads-quiz':'Leads Quiz','leads-wa':'Leads WhatsApp',
+  'clients':'Clients actifs','pending':'Inscrits sans code','codes':'Codes d\'accès',
+  'ventes':'Ventes / Paiements','analytics':'Analytics','settings':'Paramètres'
+};
+
+function goPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  document.getElementById('page-'+id)?.classList.add('active');
+  document.querySelector(`.sb-item[onclick="goPage('${id}')"]`)?.classList.add('active');
+  document.getElementById('pageTitle').textContent = pageTitles[id]||id;
+  closeSidebar();
+}
+
+function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('show'); }
+function closeSidebar(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); }
+
+// ── DATA ──
 async function loadData(){
   try {
-    const res  = await fetch('/api/admin', { headers: {'Authorization': `Bearer ${_token}`} });
+    const res  = await fetch('/api/admin',{headers:{'Authorization':`Bearer ${_token}`}});
     const data = await res.json();
     if(!data.ok){ doLogout(); return; }
-    document.getElementById('loginWrap').style.display = 'none';
-    document.getElementById('dash').style.display = 'block';
-    renderStats(data.stats);
-    renderLeads(data.leads);
-    renderPending(data.pending);
-    renderClients(data.clients);
-    renderCodes(data.codes);
-    document.getElementById('lastUpdate').textContent = 'Mis à jour : ' + new Date().toLocaleString('fr-FR');
-  } catch(e){ alert('Erreur réseau.'); }
+    applyData(data);
+  } catch(e){ console.error(e); }
 }
 
-function renderStats(s){
-  document.getElementById('statsGrid').innerHTML = [
-    {val: s.total_clients,   label: 'Clients actifs'},
-    {val: s.quiz_leads,      label: 'Leads quiz'},
-    {val: s.pending,         label: 'Sans code ⚠️'},
-    {val: s.fondateur,       label: 'Accès Fondateur'},
-    {val: s.trente_jours,    label: 'Accès 30 jours'},
-    {val: s.expired,         label: 'Expirés'},
-    {val: s.codes_available, label: 'Codes dispo'},
-  ].map(i=>`<div class="stat-card"><div class="stat-val">${i.val}</div><div class="stat-label">${i.label}</div></div>`).join('');
+function applyData(data){
+  _data = data;
+  const now = new Date().toLocaleString('fr-FR');
+  document.getElementById('pageLastUpdate').textContent = 'Mis à jour : '+now;
+
+  // Badges sidebar
+  document.getElementById('badgeLeads').textContent    = (data.leads||[]).length;
+  document.getElementById('badgeClients').textContent  = data.stats?.total_clients||0;
+  document.getElementById('badgePending').textContent  = data.stats?.pending||0;
+
+  renderKPIs(data.stats, data.leads);
+  renderCharts(data);
+  renderLeads(data.leads||[]);
+  renderClients(data.clients||[]);
+  renderPending(data.pending||[]);
+  renderCodes(data.codes||[]);
+  renderAnalytics(data);
+}
+
+// ── KPIs ──
+function renderKPIs(s, leads){
+  if(!s) return;
+  const today = new Date().toDateString();
+  const leadsToday = (leads||[]).filter(l=>new Date(l.created_at).toDateString()===today).length;
+  const conv = s.total_clients && leads?.length ? Math.round((s.total_clients/leads.length)*100) : 0;
+
+  document.getElementById('kpiGrid').innerHTML = [
+    {val:leadsToday,      label:'Leads quiz aujourd\'hui', sub:''},
+    {val:(leads||[]).length, label:'Leads quiz total',     sub:''},
+    {val:s.total_clients, label:'Clients actifs',          sub:''},
+    {val:s.codes_available,label:'Codes disponibles',      sub:''},
+    {val:s.fondateur,     label:'Accès Fondateur',         sub:''},
+    {val:s.trente_jours,  label:'Accès 30 jours',          sub:''},
+    {val:s.expired,       label:'Expirés',                 sub:''},
+    {val:conv+'%',        label:'Taux conversion lead→client', sub:''},
+  ].map(k=>`
+    <div class="kpi-card">
+      <div class="kpi-val">${k.val}</div>
+      <div class="kpi-label">${k.label}</div>
+      ${k.sub?`<div class="kpi-sub">${k.sub}</div>`:''}
+    </div>
+  `).join('');
+  document.getElementById('countLeads').textContent = (leads||[]).length+' leads';
+  document.getElementById('countClients').textContent = (s.total_clients||0)+' clients';
+}
+
+// ── CHARTS ──
+const CHART_DEFAULTS = {
+  plugins:{legend:{labels:{color:'#8892a4',font:{size:11},boxWidth:12}}},
+  animation:{duration:600}
+};
+
+function destroyChart(id){ if(_charts[id]){ _charts[id].destroy(); delete _charts[id]; } }
+
+function renderCharts(data){
+  const s = data.stats||{};
+
+  // Accès
+  destroyChart('accès');
+  _charts['accès'] = new Chart(document.getElementById('chartAcces'),{
+    type:'doughnut',
+    data:{
+      labels:['Fondateur','30 jours','Expirés'],
+      datasets:[{data:[s.fondateur||0,s.trente_jours||0,s.expired||0],backgroundColor:['#c9a84c','#4a90d9','#e05c5c'],borderWidth:0}]
+    },
+    options:{...CHART_DEFAULTS,cutout:'65%'}
+  });
+
+  // Budget quiz
+  const budgets = (data.leads||[]).reduce((acc,l)=>{acc[l.budget]=(acc[l.budget]||0)+1;return acc},{});
+  destroyChart('budget');
+  _charts['budget'] = new Chart(document.getElementById('chartBudget'),{
+    type:'doughnut',
+    data:{
+      labels:Object.keys(budgets),
+      datasets:[{data:Object.values(budgets),backgroundColor:['#e05c5c','#c9a84c','#4caf82'],borderWidth:0}]
+    },
+    options:{...CHART_DEFAULTS,cutout:'65%'}
+  });
+
+  // Leads par jour (14 jours)
+  const days=[]; const counts=[];
+  for(let i=13;i>=0;i--){
+    const d=new Date(); d.setDate(d.getDate()-i);
+    const label=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});
+    const ds=d.toDateString();
+    days.push(label);
+    counts.push((data.leads||[]).filter(l=>new Date(l.created_at).toDateString()===ds).length);
+  }
+  destroyChart('leads');
+  _charts['leads'] = new Chart(document.getElementById('chartLeads'),{
+    type:'line',
+    data:{
+      labels:days,
+      datasets:[{label:'Leads',data:counts,borderColor:'#c9a84c',backgroundColor:'rgba(201,168,76,0.08)',tension:0.4,pointBackgroundColor:'#c9a84c',pointRadius:3,fill:true}]
+    },
+    options:{...CHART_DEFAULTS,scales:{x:{ticks:{color:'#6b7a9a',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#6b7a9a',font:{size:10},stepSize:1},grid:{color:'rgba(255,255,255,0.04)'}}}}
+  });
+}
+
+// ── ANALYTICS ──
+function renderAnalytics(data){
+  const s = data.stats||{};
+  const leads = data.leads||[];
+  const today = new Date().toDateString();
+  const leadsToday = leads.filter(l=>new Date(l.created_at).toDateString()===today).length;
+  const conv = s.total_clients&&leads.length?Math.round((s.total_clients/leads.length)*100):0;
+
+  document.getElementById('analyticsKpi').innerHTML = [
+    {val:leads.length,  label:'Total leads quiz'},
+    {val:leadsToday,    label:'Leads aujourd\'hui'},
+    {val:conv+'%',      label:'Taux conversion'},
+    {val:s.total_clients||0, label:'Clients convertis'},
+  ].map(k=>`<div class="kpi-card"><div class="kpi-val">${k.val}</div><div class="kpi-label">${k.label}</div></div>`).join('');
+
+  // Profils
+  const profils = leads.reduce((a,l)=>{a[l.situation]=(a[l.situation]||0)+1;return a},{});
+  destroyChart('profils');
+  _charts['profils'] = new Chart(document.getElementById('chartProfils'),{
+    type:'doughnut',
+    data:{labels:Object.keys(profils),datasets:[{data:Object.values(profils),backgroundColor:['#c9a84c','#4a90d9','#4caf82','#e05c5c'],borderWidth:0}]},
+    options:{...CHART_DEFAULTS,cutout:'60%'}
+  });
+
+  // Objectifs
+  const objectifs = leads.reduce((a,l)=>{a[l.objectif]=(a[l.objectif]||0)+1;return a},{});
+  destroyChart('objectifs');
+  _charts['objectifs'] = new Chart(document.getElementById('chartObjectifs'),{
+    type:'doughnut',
+    data:{labels:Object.keys(objectifs),datasets:[{data:Object.values(objectifs),backgroundColor:['#c9a84c','#4a90d9','#4caf82','#e05c5c'],borderWidth:0}]},
+    options:{...CHART_DEFAULTS,cutout:'60%'}
+  });
+}
+
+// ── TABLES ──
+function waBtn(phone,text=''){
+  if(!phone||phone==='—') return '—';
+  const num = phone.replace(/\D/g,'');
+  const msg = text?`?text=${encodeURIComponent(text)}`:'';
+  return `<a class="btn-wa-sm" href="https://wa.me/${num}${msg}" target="_blank">💬 Contacter</a>`;
 }
 
 function renderLeads(leads){
-  const wrap = document.getElementById('leadsWrap');
-  if(!leads?.length){ wrap.innerHTML='<p style="color:var(--muted);font-size:13px;padding:16px">Aucun lead pour l\'instant.</p>'; return; }
-  document.getElementById('leadsBody').innerHTML = leads.map(l => {
-    const wa = l.whatsapp
-      ? `<a class="wa-link" href="https://wa.me/${l.whatsapp.replace(/\D/g,'')}" target="_blank">💬 ${l.whatsapp}</a>`
-      : '—';
-    return `<tr>
-      <td style="font-weight:600">${l.prenom || '—'}</td>
-      <td>${wa}</td>
-      <td style="color:var(--muted)">${l.situation || '—'}</td>
-      <td style="color:var(--muted);font-size:12px">${l.objectif || '—'}</td>
-      <td><span class="badge ${l.budget==='15k+'?'badge-gold':'badge-blue'}">${l.budget || '—'}</span></td>
-      <td style="color:var(--muted)">${l.created_at ? new Date(l.created_at).toLocaleDateString('fr-FR') : '—'}</td>
-    </tr>`;
-  }).join('');
-}
-
-function renderPending(pending){
-  const wrap = document.getElementById('pendingWrap');
-  if(!pending?.length){ wrap.style.display='none'; return; }
-  wrap.style.display='block';
-  document.getElementById('pendingBody').innerHTML = pending.map(p => {
-    const wa = p.whatsapp !== '—'
-      ? `<a class="wa-link" href="https://wa.me/${p.whatsapp.replace(/\D/g,'')}" target="_blank">💬 ${p.whatsapp}</a>`
-      : '—';
-    return `<tr>
-      <td style="font-weight:600">${p.name}</td>
-      <td style="color:var(--muted);font-size:12px">${p.email}</td>
-      <td>${wa}</td>
-      <td style="color:var(--muted)">${p.created_at ? new Date(p.created_at).toLocaleDateString('fr-FR') : '—'}</td>
-    </tr>`;
-  }).join('');
+  document.getElementById('countLeads').textContent = leads.length+' leads';
+  document.getElementById('tbLeads').innerHTML = !leads.length
+    ? '<tr class="empty-row"><td colspan="7">Aucun lead pour l\'instant.</td></tr>'
+    : leads.map(l=>`<tr>
+        <td style="font-weight:600">${l.prenom||'—'}</td>
+        <td>${l.whatsapp||'—'}</td>
+        <td>${l.situation||'—'}</td>
+        <td style="color:var(--muted);font-size:12px;max-width:160px">${l.objectif||'—'}</td>
+        <td><span class="badge ${l.budget==='15k+'?'badge-gold':l.budget==='5k-15k'?'badge-blue':'badge-muted'}">${l.budget||'—'}</span></td>
+        <td style="color:var(--muted)">${l.created_at?new Date(l.created_at).toLocaleDateString('fr-FR'):'—'}</td>
+        <td>${waBtn(l.whatsapp)}</td>
+      </tr>`).join('');
 }
 
 function renderClients(clients){
-  if(!clients.length){ document.getElementById('clientsBody').innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">Aucun client activé.</td></tr>'; return; }
-  document.getElementById('clientsBody').innerHTML = clients.map(c=>{
-    const expired = c.expires_at && new Date(c.expires_at) < new Date();
-    const badge = c.access_type === 'planb_30_days'
-      ? `<span class="badge ${expired?'badge-err':'badge-blue'}">${expired?'Expiré':'30 jours'}</span>`
-      : `<span class="badge badge-gold">Fondateur</span>`;
-    const wa = c.whatsapp !== '—'
-      ? `<a class="wa-link" href="https://wa.me/${c.whatsapp.replace(/\D/g,'')}" target="_blank">💬 ${c.whatsapp}</a>`
-      : '—';
-    return `<tr>
-      <td style="font-weight:600">${c.name}</td>
-      <td style="color:var(--muted);font-size:12px">${c.email}</td>
-      <td>${wa}</td>
-      <td>${badge}</td>
-      <td style="color:var(--muted)">${c.activated_at ? new Date(c.activated_at).toLocaleDateString('fr-FR') : '—'}</td>
-      <td style="color:var(--muted)">${c.expires_at ? new Date(c.expires_at).toLocaleDateString('fr-FR') : 'À vie'}</td>
-      <td><div class="pbar-wrap"><div class="pbar-bg"><div class="pbar-fill" style="width:${c.pct}%"></div></div><span class="pct-label">${c.pct}%</span></div></td>
-      <td style="color:var(--muted);font-size:12px">${c.currentPhase}</td>
-    </tr>`;
-  }).join('');
+  document.getElementById('countClients').textContent = clients.length+' clients';
+  document.getElementById('tbClients').innerHTML = !clients.length
+    ? '<tr class="empty-row"><td colspan="8">Aucun client activé.</td></tr>'
+    : clients.map(c=>{
+        const expired = c.expires_at&&new Date(c.expires_at)<new Date();
+        const badge = c.access_type==='planb_30_days'
+          ? `<span class="badge ${expired?'badge-err':'badge-blue'}">${expired?'Expiré':'30 jours'}</span>`
+          : `<span class="badge badge-gold">Fondateur</span>`;
+        return `<tr>
+          <td style="font-weight:600">${c.name}</td>
+          <td style="color:var(--muted);font-size:12px">${c.email}</td>
+          <td>${waBtn(c.whatsapp)}</td>
+          <td>${badge}</td>
+          <td style="color:var(--muted)">${c.activated_at?new Date(c.activated_at).toLocaleDateString('fr-FR'):'—'}</td>
+          <td style="color:var(--muted)">${c.expires_at?new Date(c.expires_at).toLocaleDateString('fr-FR'):'À vie'}</td>
+          <td><div class="pbar-wrap"><div class="pbar-bg"><div class="pbar-fill" style="width:${c.pct}%"></div></div><span class="pct">${c.pct}%</span></div></td>
+          <td style="color:var(--muted);font-size:12px">${c.currentPhase}</td>
+        </tr>`;
+      }).join('');
+}
+
+function renderPending(pending){
+  document.getElementById('countPending').textContent = pending.length;
+  document.getElementById('tbPending').innerHTML = !pending.length
+    ? '<tr class="empty-row"><td colspan="5">Aucun inscrit sans code.</td></tr>'
+    : pending.map(p=>`<tr>
+        <td style="font-weight:600">${p.name}</td>
+        <td style="color:var(--muted);font-size:12px">${p.email}</td>
+        <td>${p.whatsapp||'—'}</td>
+        <td style="color:var(--muted)">${p.created_at?new Date(p.created_at).toLocaleDateString('fr-FR'):'—'}</td>
+        <td>${waBtn(p.whatsapp,'Bonjour ! Voici votre code d\'accès Plan B Rentable :')}</td>
+      </tr>`).join('');
 }
 
 function renderCodes(codes){
-  document.getElementById('codesGrid').innerHTML = (Array.isArray(codes)?codes:[]).map(c=>`
-    <div class="code-card ${c.used_by?'code-used':''}">
-      <div class="code-val">${c.code}</div>
-      <div class="code-meta">${c.access_type==='planb_30_days'?'30 jours':'Fondateur'} — ${c.used_by?'✓ Utilisé':'○ Disponible'}</div>
-    </div>`).join('');
+  document.getElementById('countCodes').textContent = codes.length+' codes';
+  document.getElementById('tbCodes').innerHTML = !codes.length
+    ? '<tr class="empty-row"><td colspan="5">Aucun code.</td></tr>'
+    : codes.map(c=>`<tr>
+        <td style="font-family:monospace;font-weight:600;color:var(--gold)">${c.code}</td>
+        <td><span class="badge ${c.access_type==='planb_30_days'?'badge-blue':'badge-gold'}">${c.access_type==='planb_30_days'?'30 jours':'Fondateur'}</span></td>
+        <td><span class="badge ${c.used_by?'badge-ok':'badge-muted'}">${c.used_by?'✓ Utilisé':'○ Disponible'}</span></td>
+        <td style="color:var(--muted);font-size:12px">${c.used_by?c.used_by.substring(0,8)+'…':'—'}</td>
+        <td style="color:var(--muted)">${c.used_at?new Date(c.used_at).toLocaleDateString('fr-FR'):'—'}</td>
+      </tr>`).join('');
 }
 </script>
 </body>
