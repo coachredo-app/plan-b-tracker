@@ -127,6 +127,29 @@ tr:hover td{background:rgba(255,255,255,0.02)}
 
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:49}
 .overlay.show{display:block}
+
+/* ── MODAL CONVERSION ── */
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:200;align-items:center;justify-content:center;padding:16px}
+.modal-backdrop.open{display:flex}
+.modal-box{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:26px;width:100%;max-width:460px;max-height:92vh;overflow-y:auto}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.modal-title{font-size:16px;font-weight:700;color:var(--gold)}
+.modal-close{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;padding:2px 6px;border-radius:6px;transition:color .2s}
+.modal-close:hover{color:var(--text)}
+.modal-sep{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-weight:600;margin:18px 0 10px}
+.modal-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px}
+.minfo{background:var(--card2);border-radius:9px;padding:9px 12px;border:1px solid var(--border2)}
+.minfo-label{font-size:10px;color:var(--muted);margin-bottom:3px}
+.minfo-val{font-size:12px;color:var(--text);font-weight:500;word-break:break-all}
+.modal-label{font-size:11px;color:var(--muted);display:block;margin-bottom:5px;margin-top:12px}
+.modal-label:first-of-type{margin-top:0}
+.modal-field{width:100%;padding:11px 13px;border-radius:9px;border:1.5px solid var(--border2);background:rgba(255,255,255,0.04);color:var(--text);font-size:13px;outline:none;transition:border-color .2s;font-family:inherit}
+.modal-field:focus{border-color:var(--gold)}
+.modal-err{color:var(--err);font-size:12px;margin-top:10px;display:none}
+.btn-modal-submit{width:100%;padding:13px;border-radius:10px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;font-weight:700;font-size:14px;border:none;cursor:pointer;font-family:inherit;margin-top:14px;transition:opacity .2s}
+.btn-modal-submit:disabled{opacity:.45;cursor:not-allowed}
+.btn-convert-sm{display:inline-block;padding:5px 11px;border-radius:7px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .2s}
+.btn-convert-sm:hover{background:rgba(201,168,76,0.2)}
 </style>
 </head>
 <body>
@@ -225,7 +248,7 @@ tr:hover td{background:rgba(255,255,255,0.02)}
       </div>
       <div class="table-wrap"><div class="table-scroll">
         <table>
-          <thead><tr><th>Prénom</th><th>WhatsApp</th><th>Profil</th><th>Objectif</th><th>Budget</th><th>Date</th><th>Action</th></tr></thead>
+          <thead><tr><th>Prénom</th><th>WhatsApp</th><th>Profil</th><th>Objectif</th><th>Budget</th><th>Date</th><th>Contact</th><th>Convertir</th></tr></thead>
           <tbody id="tbLeads"></tbody>
         </table>
       </div></div>
@@ -317,6 +340,42 @@ tr:hover td{background:rgba(255,255,255,0.02)}
 
   </div><!-- /content -->
 </div><!-- /main -->
+
+<!-- MODAL — CONVERTIR EN CLIENT -->
+<div class="modal-backdrop" id="convertModal" onclick="if(event.target===this)closeConvertModal()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">Convertir en client</div>
+      <button class="modal-close" onclick="closeConvertModal()">✕</button>
+    </div>
+
+    <div class="modal-sep">Informations du lead</div>
+    <div class="modal-info-grid" id="cvLeadInfo"></div>
+
+    <div class="modal-sep" style="margin-top:22px">Informations manquantes</div>
+
+    <label class="modal-label">Email *</label>
+    <input id="cvEmail" type="email" placeholder="email@exemple.com" class="modal-field">
+
+    <label class="modal-label">Type d'accès</label>
+    <select id="cvAccess" class="modal-field" onchange="cvToggleExpiry()">
+      <option value="">Sans code pour l'instant</option>
+      <option value="planb_fondateur">Fondateur — Accès à vie (14 900 FCFA)</option>
+      <option value="planb_30_days">30 jours (9 900 FCFA)</option>
+    </select>
+
+    <label class="modal-label">Date d'activation</label>
+    <input id="cvActivated" type="date" class="modal-field">
+
+    <div id="cvExpiryWrap">
+      <label class="modal-label">Date d'expiration</label>
+      <input id="cvExpiry" type="date" class="modal-field">
+    </div>
+
+    <div class="modal-err" id="cvErr"></div>
+    <button class="btn-modal-submit" id="cvBtn" onclick="submitConvert()">Convertir en client →</button>
+  </div>
+</div>
 
 <script>
 let _token = '';
@@ -553,19 +612,107 @@ function waBtn(phone,text=''){
   return `<a class="btn-wa-sm" href="https://wa.me/${num}${msg}" target="_blank">💬 Contacter</a>`;
 }
 
+let _leadsCache = [];
+
 function renderLeads(leads){
+  _leadsCache = leads;
   document.getElementById('countLeads').textContent = leads.length+' leads';
+  const budgBadge = b => b==='10k+'?'badge-gold':b==='5k-10k'?'badge-blue':'badge-muted';
   document.getElementById('tbLeads').innerHTML = !leads.length
-    ? '<tr class="empty-row"><td colspan="7">Aucun lead pour l\'instant.</td></tr>'
-    : leads.map(l=>`<tr>
+    ? '<tr class="empty-row"><td colspan="8">Aucun lead pour l\'instant.</td></tr>'
+    : leads.map((l,i)=>`<tr>
         <td style="font-weight:600">${l.prenom||'—'}</td>
         <td>${l.whatsapp||'—'}</td>
         <td>${l.situation||'—'}</td>
-        <td style="color:var(--muted);font-size:12px;max-width:160px">${l.objectif||'—'}</td>
-        <td><span class="badge ${l.budget==='15k+'?'badge-gold':l.budget==='5k-15k'?'badge-blue':'badge-muted'}">${l.budget||'—'}</span></td>
+        <td style="color:var(--muted);font-size:12px;max-width:150px">${l.objectif||'—'}</td>
+        <td><span class="badge ${budgBadge(l.budget)}">${l.budget||'—'}</span></td>
         <td style="color:var(--muted)">${l.created_at?new Date(l.created_at).toLocaleDateString('fr-FR'):'—'}</td>
         <td>${waBtn(l.whatsapp)}</td>
+        <td><button class="btn-convert-sm" onclick="openConvertModal(${i})">Convertir →</button></td>
       </tr>`).join('');
+}
+
+// ── MODAL CONVERSION ──
+let _cvIdx = null;
+
+function openConvertModal(idx){
+  _cvIdx = idx;
+  const l = _leadsCache[idx] || {};
+  document.getElementById('cvLeadInfo').innerHTML = [
+    {label:'Prénom',   val:l.prenom    ||'—'},
+    {label:'WhatsApp', val:l.whatsapp  ||'—'},
+    {label:'Budget',   val:l.budget    ||'—'},
+    {label:'Profil',   val:l.situation ||'—'},
+    {label:'Objectif', val:l.objectif  ||'—'},
+  ].map(r=>`<div class="minfo"><div class="minfo-label">${r.label}</div><div class="minfo-val">${r.val}</div></div>`).join('');
+
+  const today = new Date().toISOString().slice(0,10);
+  const in30  = new Date(Date.now()+30*864e5).toISOString().slice(0,10);
+  document.getElementById('cvEmail').value     = '';
+  document.getElementById('cvAccess').value    = '';
+  document.getElementById('cvActivated').value = today;
+  document.getElementById('cvExpiry').value    = in30;
+  document.getElementById('cvErr').style.display = 'none';
+  document.getElementById('cvBtn').textContent = 'Convertir en client →';
+  document.getElementById('cvBtn').disabled    = false;
+  cvToggleExpiry();
+  document.getElementById('convertModal').classList.add('open');
+  setTimeout(()=>document.getElementById('cvEmail').focus(), 80);
+}
+
+function closeConvertModal(){
+  document.getElementById('convertModal').classList.remove('open');
+  _cvIdx = null;
+}
+
+function cvToggleExpiry(){
+  const is30 = document.getElementById('cvAccess').value === 'planb_30_days';
+  document.getElementById('cvExpiryWrap').style.display = is30 ? '' : 'none';
+}
+
+async function submitConvert(){
+  const email      = document.getElementById('cvEmail').value.trim();
+  const access     = document.getElementById('cvAccess').value;
+  const activated  = document.getElementById('cvActivated').value;
+  const expires    = document.getElementById('cvExpiry').value;
+  const errEl      = document.getElementById('cvErr');
+  const btn        = document.getElementById('cvBtn');
+  const lead       = _leadsCache[_cvIdx] || {};
+
+  if(!email){ errEl.textContent='Email requis.'; errEl.style.display='block'; return; }
+
+  btn.textContent='Conversion en cours…'; btn.disabled=true; errEl.style.display='none';
+
+  try {
+    const res  = await fetch('/api/admin-convert',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${_token}`},
+      body: JSON.stringify({
+        email,
+        name:       lead.prenom   || '',
+        whatsapp:   lead.whatsapp || '',
+        access_type: access || null,
+        activated_at: access ? activated : null,
+        expires_at:   access==='planb_30_days' ? expires : null
+      })
+    });
+    const data = await res.json();
+
+    if(!data.ok){
+      const msgs = { already_exists:'Cet email est déjà utilisé dans le système.', missing_email:'Email requis.', unauthorized:'Session expirée, reconnecte-toi.' };
+      errEl.textContent = msgs[data.error] || ('Erreur : '+data.error);
+      errEl.style.display='block';
+      btn.textContent='Convertir en client →'; btn.disabled=false;
+      return;
+    }
+
+    closeConvertModal();
+    await loadData();
+  } catch(e){
+    errEl.textContent='Erreur réseau, réessaie.';
+    errEl.style.display='block';
+    btn.textContent='Convertir en client →'; btn.disabled=false;
+  }
 }
 
 function renderClients(clients){
