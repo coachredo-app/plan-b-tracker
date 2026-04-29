@@ -263,7 +263,7 @@ td.notes-cell{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space
       </div>
       <div class="table-wrap"><div class="table-scroll">
         <table>
-          <thead><tr><th>Prénom</th><th>WhatsApp</th><th>Profil</th><th>Objectif</th><th>Budget</th><th>Date</th><th>Contact</th><th>Convertir</th></tr></thead>
+          <thead><tr><th>Prénom</th><th>WhatsApp</th><th>Profil</th><th>Objectif</th><th>Budget</th><th>Date</th><th>Actions</th></tr></thead>
           <tbody id="tbLeads"></tbody>
         </table>
       </div></div>
@@ -709,7 +709,7 @@ function renderLeads(leads){
   document.getElementById('countLeads').textContent = leads.length+' leads';
   const budgBadge = b => b==='10k+'?'badge-gold':b==='5k-10k'?'badge-blue':'badge-muted';
   document.getElementById('tbLeads').innerHTML = !leads.length
-    ? '<tr class="empty-row"><td colspan="8">Aucun lead pour l\'instant.</td></tr>'
+    ? '<tr class="empty-row"><td colspan="7">Aucun lead pour l\'instant.</td></tr>'
     : leads.map((l,i)=>`<tr>
         <td style="font-weight:600">${l.prenom||'—'}</td>
         <td>${l.whatsapp||'—'}</td>
@@ -717,9 +717,20 @@ function renderLeads(leads){
         <td style="color:var(--muted);font-size:12px;max-width:150px">${l.objectif||'—'}</td>
         <td><span class="badge ${budgBadge(l.budget)}">${l.budget||'—'}</span></td>
         <td style="color:var(--muted)">${l.created_at?new Date(l.created_at).toLocaleDateString('fr-FR'):'—'}</td>
-        <td>${waBtn(l.whatsapp)}</td>
-        <td><button class="btn-convert-sm" onclick="openConvertModal(${i})">Convertir →</button></td>
+        <td style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">
+          ${waBtn(l.whatsapp)}
+          <button class="btn-convert-sm" onclick="openConvertModal(${i})">Convertir →</button>
+          <button class="btn-action-sm btn-del-sm" onclick="deleteQuizLead(${i})">✕</button>
+        </td>
       </tr>`).join('');
+}
+
+async function deleteQuizLead(idx){
+  const l = _leadsCache[idx];
+  if(!l) return;
+  if(!confirm(`Supprimer le lead "${l.prenom||'—'}" (${l.whatsapp||'—'}) ?\nCette action est irréversible.`)) return;
+  await fetch(`/api/quiz-lead?id=${l.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${_token}`}});
+  await loadData();
 }
 
 // ── MODAL CONVERSION ──
