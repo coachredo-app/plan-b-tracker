@@ -163,6 +163,10 @@ td.notes-cell{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space
 .modal-err{color:var(--err);font-size:12px;margin-top:10px;display:none}
 .btn-modal-submit{width:100%;padding:13px;border-radius:10px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;font-weight:700;font-size:14px;border:none;cursor:pointer;font-family:inherit;margin-top:14px;transition:opacity .2s}
 .btn-modal-submit:disabled{opacity:.45;cursor:not-allowed}
+.btn-confirm-cancel{flex:1;padding:12px;border-radius:9px;background:rgba(255,255,255,0.06);border:1px solid var(--border2);color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s}
+.btn-confirm-cancel:hover{color:var(--text);background:rgba(255,255,255,0.1)}
+.btn-confirm-delete{flex:1;padding:12px;border-radius:9px;background:var(--err);border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .2s}
+.btn-confirm-delete:hover{opacity:.85}
 .btn-convert-sm{display:inline-block;padding:5px 11px;border-radius:7px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .2s}
 .btn-convert-sm:hover{background:rgba(201,168,76,0.2)}
 </style>
@@ -304,7 +308,7 @@ td.notes-cell{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space
       </div>
       <div class="table-wrap"><div class="table-scroll">
         <table>
-          <thead><tr><th>Nom</th><th>Email</th><th>WhatsApp</th><th>Accès</th><th>Activé le</th><th>Expire</th><th>Progression</th><th>Phase</th></tr></thead>
+          <thead><tr><th>Nom</th><th>Email</th><th>WhatsApp</th><th>Accès</th><th>Activé le</th><th>Expire</th><th>Progression</th><th>Phase</th><th>Actions</th></tr></thead>
           <tbody id="tbClients"></tbody>
         </table>
       </div></div>
@@ -318,7 +322,7 @@ td.notes-cell{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space
       </div>
       <div class="table-wrap"><div class="table-scroll">
         <table>
-          <thead><tr><th>Nom</th><th>Email</th><th>WhatsApp</th><th>Inscrit le</th><th>Action</th></tr></thead>
+          <thead><tr><th>Nom</th><th>Email</th><th>WhatsApp</th><th>Inscrit le</th><th>Action</th><th></th></tr></thead>
           <tbody id="tbPending"></tbody>
         </table>
       </div></div>
@@ -410,6 +414,19 @@ td.notes-cell{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space
   </div>
 </div>
 
+<!-- MODAL — CONFIRMATION SUPPRESSION -->
+<div class="modal-backdrop" id="confirmModal" onclick="if(event.target===this)confirmNo()">
+  <div class="modal-box" style="max-width:380px;text-align:center">
+    <div style="font-size:38px;margin-bottom:14px">⚠️</div>
+    <div class="modal-title" id="confirmTitle" style="margin-bottom:10px"></div>
+    <div id="confirmMsg" style="font-size:13px;color:var(--muted);line-height:1.65;margin-bottom:24px;white-space:pre-line"></div>
+    <div style="display:flex;gap:10px">
+      <button onclick="confirmNo()" class="btn-confirm-cancel">Annuler</button>
+      <button onclick="confirmYes()" class="btn-confirm-delete">Supprimer définitivement</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL — AJOUTER / MODIFIER LEAD WA -->
 <div class="modal-backdrop" id="waEditModal" onclick="if(event.target===this)closeWaEditModal()">
   <div class="modal-box">
@@ -462,6 +479,18 @@ let _waFilter = 'tous';
 let _waEditIdx = null;
 let _cvSource = 'quiz';
 let _waConvertIdx = null;
+let _clientsCache = [];
+let _pendingCache  = [];
+let _confirmResolve = null;
+
+function showConfirm(title, msg){
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMsg').textContent   = msg;
+  document.getElementById('confirmModal').classList.add('open');
+  return new Promise(r => { _confirmResolve = r; });
+}
+function confirmYes(){ document.getElementById('confirmModal').classList.remove('open'); _confirmResolve?.(true);  _confirmResolve=null; }
+function confirmNo() { document.getElementById('confirmModal').classList.remove('open'); _confirmResolve?.(false); _confirmResolve=null; }
 
 // ── AUTH ──
 async function doLogin(){
@@ -728,7 +757,8 @@ function renderLeads(leads){
 async function deleteQuizLead(idx){
   const l = _leadsCache[idx];
   if(!l) return;
-  if(!confirm(`Supprimer le lead "${l.prenom||'—'}" (${l.whatsapp||'—'}) ?\nCette action est irréversible.`)) return;
+  const ok = await showConfirm('Supprimer ce lead quiz ?', `${l.prenom||'—'} — ${l.whatsapp||'—'}\n\nCette action est irréversible.`);
+  if(!ok) return;
   await fetch(`/api/quiz-lead?id=${l.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${_token}`}});
   await loadData();
 }
@@ -958,16 +988,19 @@ function openWaConvertModal(idx){
 
 async function deleteWaLead(idx){
   const l = _waLeadsCache[idx];
-  if(!l || !confirm(`Supprimer le lead "${l.nom||l.whatsapp}" ? Cette action est irréversible.`)) return;
+  if(!l) return;
+  const ok = await showConfirm('Supprimer ce lead WhatsApp ?', `${l.nom||l.whatsapp||'—'}\n\nCette action est irréversible.`);
+  if(!ok) return;
   await fetch(`/api/wa-leads?id=${l.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${_token}`}});
   await loadData();
 }
 
 function renderClients(clients){
+  _clientsCache = clients;
   document.getElementById('countClients').textContent = clients.length+' clients';
   document.getElementById('tbClients').innerHTML = !clients.length
-    ? '<tr class="empty-row"><td colspan="8">Aucun client activé.</td></tr>'
-    : clients.map(c=>{
+    ? '<tr class="empty-row"><td colspan="9">Aucun client activé.</td></tr>'
+    : clients.map((c,i)=>{
         const expired = c.expires_at&&new Date(c.expires_at)<new Date();
         const badge = c.access_type==='planb_30_days'
           ? `<span class="badge ${expired?'badge-err':'badge-blue'}">${expired?'Expiré':'30 jours'}</span>`
@@ -981,21 +1014,42 @@ function renderClients(clients){
           <td style="color:var(--muted)">${c.expires_at?new Date(c.expires_at).toLocaleDateString('fr-FR'):'À vie'}</td>
           <td><div class="pbar-wrap"><div class="pbar-bg"><div class="pbar-fill" style="width:${c.pct}%"></div></div><span class="pct">${c.pct}%</span></div></td>
           <td style="color:var(--muted);font-size:12px">${c.currentPhase}</td>
+          <td><button class="btn-action-sm btn-del-sm" onclick="deleteClient(${i})">✕ Supprimer</button></td>
         </tr>`;
       }).join('');
 }
 
+async function deleteClient(idx){
+  const c = _clientsCache[idx];
+  if(!c) return;
+  const ok = await showConfirm('Supprimer ce client ?', `${c.name}\n${c.email}\n\nSon compte et toutes ses données seront supprimés définitivement.`);
+  if(!ok) return;
+  await fetch(`/api/admin-user?id=${c.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${_token}`}});
+  await loadData();
+}
+
 function renderPending(pending){
+  _pendingCache = pending;
   document.getElementById('countPending').textContent = pending.length;
   document.getElementById('tbPending').innerHTML = !pending.length
-    ? '<tr class="empty-row"><td colspan="5">Aucun inscrit sans code.</td></tr>'
-    : pending.map(p=>`<tr>
+    ? '<tr class="empty-row"><td colspan="6">Aucun inscrit sans code.</td></tr>'
+    : pending.map((p,i)=>`<tr>
         <td style="font-weight:600">${p.name}</td>
         <td style="color:var(--muted);font-size:12px">${p.email}</td>
         <td>${p.whatsapp||'—'}</td>
         <td style="color:var(--muted)">${p.created_at?new Date(p.created_at).toLocaleDateString('fr-FR'):'—'}</td>
         <td>${waBtn(p.whatsapp,'Bonjour ! Voici votre code d\'accès Plan B Rentable :')}</td>
+        <td><button class="btn-action-sm btn-del-sm" onclick="deletePending(${i})">✕ Supprimer</button></td>
       </tr>`).join('');
+}
+
+async function deletePending(idx){
+  const p = _pendingCache[idx];
+  if(!p) return;
+  const ok = await showConfirm('Supprimer cet inscrit ?', `${p.name}\n${p.email}\n\nSon compte sera supprimé définitivement.`);
+  if(!ok) return;
+  await fetch(`/api/admin-user?id=${p.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${_token}`}});
+  await loadData();
 }
 
 function renderCodes(codes){
