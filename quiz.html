@@ -274,16 +274,21 @@ function showResult(){
       <div style="background:rgba(201,168,76,0.06);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px">
         <div style="font-size:13px;font-weight:600;color:#e8e0cc;margin-bottom:4px">📲 Reçois ton offre adaptée</div>
         <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Laisse ton prénom et ton WhatsApp — Coach Redouane te répond personnellement.</div>
-        <input id="leadPrenom" type="text" placeholder="Ton prénom" autocomplete="given-name"
+        <input id="leadPrenom" type="text" placeholder="Ton prénom *" autocomplete="given-name"
           style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid var(--border);background:rgba(255,255,255,0.04);color:#e8e0cc;font-size:14px;outline:none;margin-bottom:8px;transition:border-color .2s"
-          onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
-        <input id="leadWa" type="tel" placeholder="WhatsApp (ex: 221XXXXXXXXX)" autocomplete="tel"
+          onfocus="this.style.borderColor='var(--gold)';document.getElementById('leadErr').style.display='none'"
+          onblur="this.style.borderColor='var(--border)'">
+        <input id="leadWa" type="tel" placeholder="WhatsApp * (ex: 221XXXXXXXXX)" autocomplete="tel"
           style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid var(--border);background:rgba(255,255,255,0.04);color:#e8e0cc;font-size:14px;outline:none;transition:border-color .2s"
-          onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+          onfocus="this.style.borderColor='var(--gold)';document.getElementById('leadErr').style.display='none'"
+          onblur="this.style.borderColor='var(--border)'">
+        <div id="leadErr" style="display:none;margin-top:8px;padding:10px 13px;border-radius:9px;background:rgba(224,92,92,0.12);border:1px solid rgba(224,92,92,0.35);color:#ef9a9a;font-size:12.5px;line-height:1.5">
+          Merci de remplir ton prénom et ton WhatsApp pour recevoir ton offre adaptée.
+        </div>
       </div>
 
       <a class="btn-wa" href="https://wa.me/${WA}?text=${waMsg}" target="_blank"
-         onclick="saveLead('${offerKey}');if(typeof fbq!=='undefined')fbq('trackCustom','WhatsAppClick',{pack:'quiz_qualified',offer:'${offerKey}'})">
+         onclick="return handleWaClick('${offerKey}')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.555 4.116 1.524 5.847L.057 23.882l6.191-1.624A11.944 11.944 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.001-1.368l-.359-.213-3.724.976.994-3.636-.234-.374A9.818 9.818 0 1112 21.818z"/></svg>
         Recevoir mon offre sur WhatsApp →
       </a>
@@ -322,11 +327,23 @@ function showDisqualify(){
   `);
 }
 
-// SAVE LEAD — non bloquant, fonctionne même si les champs sont vides
-function saveLead(offer){
-  const prenom   = document.getElementById('leadPrenom')?.value.trim() || '';
-  const whatsapp = document.getElementById('leadWa')?.value.trim() || '';
-  if(!prenom && !whatsapp) return; // rien à sauvegarder
+// VALIDATION + SAVE — appelé au clic sur le bouton WA
+function handleWaClick(offer){
+  const prenomEl = document.getElementById('leadPrenom');
+  const waEl     = document.getElementById('leadWa');
+  const errEl    = document.getElementById('leadErr');
+  const prenom   = prenomEl?.value.trim() || '';
+  const whatsapp = waEl?.value.trim()     || '';
+
+  if(!prenom || !whatsapp){
+    errEl.style.display = 'block';
+    if(!prenom) prenomEl.style.borderColor = '#e05c5c';
+    if(!whatsapp) waEl.style.borderColor   = '#e05c5c';
+    prenomEl.scrollIntoView({behavior:'smooth', block:'center'});
+    return false; // bloque l'ouverture de WhatsApp
+  }
+
+  // Champs valides — enregistrement silencieux en arrière-plan
   fetch('/api/quiz-lead', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
@@ -336,9 +353,12 @@ function saveLead(offer){
       objectif:  answers.objectif,
       budget:    answers.budget
     })
-  }).catch(()=>{}); // silencieux — ne bloque jamais le bouton WA
-  if(typeof fbq !== 'undefined' && prenom)
-    fbq('trackCustom','LeadCaptured',{offer, budget: answers.budget});
+  }).catch(()=>{});
+  if(typeof fbq !== 'undefined'){
+    fbq('trackCustom','LeadCaptured', {offer, budget: answers.budget});
+    fbq('trackCustom','WhatsAppClick',{pack:'quiz_qualified', offer});
+  }
+  return true; // laisse le lien ouvrir WhatsApp
 }
 
 // START
