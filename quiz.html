@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Quiz — Quel est ton Plan B ? | CoachRedo</title>
-<meta name="description" content="Réponds à 3 questions pour découvrir si le Pack Plan B Rentable est fait pour toi.">
+<meta name="description" content="Réponds à 4 questions pour découvrir ton Plan B adapté à ta situation.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
@@ -25,28 +25,22 @@ body{background:#0a0d1a;color:#e8e0cc;font-family:'DM Sans',system-ui,sans-serif
   --muted:#8892a4;--ok:#4caf82;--err:#e05c5c;
 }
 
-/* LAYOUT */
 .wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 20px;max-width:480px;margin:0 auto;width:100%}
 
-/* LOGO */
 .logo{text-align:center;margin-bottom:28px}
-.logo-circle{width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;font-weight:800;font-size:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
 .logo-name{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:var(--gold)}
 
-/* PROGRESS */
 .progress-wrap{width:100%;margin-bottom:24px}
 .progress-label{font-size:11px;color:var(--muted);text-align:right;margin-bottom:6px;letter-spacing:0.5px;text-transform:uppercase}
 .progress-bg{height:5px;border-radius:3px;background:rgba(255,255,255,0.08);overflow:hidden}
 .progress-fill{height:5px;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--gold2));transition:width .4s ease}
 
-/* CARD */
 .card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:28px 24px;width:100%;animation:fadeIn .35s ease}
 @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 
 .question{font-size:19px;font-weight:700;color:#e8e0cc;margin-bottom:20px;line-height:1.4}
 .sub{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.55}
 
-/* OPTIONS */
 .options{display:flex;flex-direction:column;gap:10px}
 .option{display:flex;align-items:center;gap:13px;padding:14px 16px;border-radius:12px;border:2px solid rgba(201,168,76,0.2);background:rgba(255,255,255,0.03);cursor:pointer;transition:all .2s;text-align:left;width:100%}
 .option:hover,.option.selected{border-color:var(--gold);background:rgba(201,168,76,0.08)}
@@ -54,7 +48,6 @@ body{background:#0a0d1a;color:#e8e0cc;font-family:'DM Sans',system-ui,sans-serif
 .opt-icon{width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;transition:all .2s}
 .opt-text{font-size:14px;font-weight:500;color:#e8e0cc;line-height:1.35}
 
-/* BOUTONS */
 .btn-next{width:100%;margin-top:20px;padding:15px;border-radius:12px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;font-weight:700;font-size:15px;border:none;cursor:pointer;opacity:0.4;pointer-events:none;transition:opacity .2s}
 .btn-next.active{opacity:1;pointer-events:all}
 .btn-wa{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px;border-radius:12px;background:#25d366;color:#fff;font-weight:700;font-size:15px;text-decoration:none;margin-top:14px;transition:background .2s}
@@ -63,33 +56,47 @@ body{background:#0a0d1a;color:#e8e0cc;font-family:'DM Sans',system-ui,sans-serif
 .btn-community:hover{background:rgba(255,255,255,0.1)}
 
 /* RESULT */
-.result-icon{font-size:48px;text-align:center;margin-bottom:16px}
 .result-title{font-size:20px;font-weight:800;color:var(--gold);text-align:center;margin-bottom:8px;font-family:'Cormorant Garamond',serif}
-.result-sub{font-size:13px;color:var(--muted);text-align:center;line-height:1.6;margin-bottom:20px}
-.profile-badge{display:flex;align-items:center;gap:10px;background:rgba(201,168,76,0.08);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:14px}
+.profile-badge{display:flex;align-items:center;gap:10px;background:rgba(201,168,76,0.08);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:12px}
 .profile-badge .label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px}
 .profile-badge .value{font-size:13px;font-weight:600;color:#e8e0cc;margin-top:2px}
-.offer-box{background:rgba(201,168,76,0.06);border:2px solid var(--gold);border-radius:14px;padding:16px;margin-bottom:16px}
+.summary-box{font-size:13px;color:#e8e0cc;line-height:1.65;padding:14px;background:rgba(255,255,255,0.04);border-radius:12px;border-left:3px solid var(--gold);margin-bottom:16px}
+.offer-box{background:rgba(201,168,76,0.06);border:2px solid var(--gold);border-radius:14px;padding:16px;margin-bottom:14px}
 .offer-box .offer-label{font-size:11px;color:var(--gold);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;margin-bottom:6px}
-.offer-box .offer-name{font-size:16px;font-weight:700;color:#e8e0cc;margin-bottom:4px}
-.offer-box .offer-desc{font-size:12px;color:var(--muted);line-height:1.5}
-.disclaimer{font-size:12px;color:var(--muted);text-align:center;line-height:1.6;margin-bottom:16px;padding:12px;background:rgba(255,255,255,0.03);border-radius:10px;border-left:3px solid var(--gold)}
+.offer-box .offer-name{font-size:16px;font-weight:700;color:#e8e0cc;margin-bottom:6px}
+.offer-box .offer-desc{font-size:12px;color:var(--muted);line-height:1.55}
+.disclaimer{font-size:12px;color:var(--muted);text-align:center;line-height:1.6;margin-bottom:16px;padding:12px;background:rgba(255,255,255,0.03);border-radius:10px;border-left:3px solid rgba(201,168,76,0.4)}
 
-/* TESTIMONIAL PLACEHOLDER */
-.testi-placeholder{border:1px dashed rgba(201,168,76,0.25);border-radius:14px;padding:20px;text-align:center;margin-top:16px}
-.testi-placeholder p{font-size:12px;color:var(--muted)}
+/* SOCIAL PROOF */
+.sp-block{margin-bottom:16px}
+.sp-title{font-size:11px;color:var(--muted);text-align:center;text-transform:uppercase;letter-spacing:0.7px;font-weight:600;margin-bottom:12px}
+.sp-video{cursor:pointer;border-radius:14px;overflow:hidden;border:1px solid var(--border);position:relative;background:#080b18}
+.sp-video img{width:100%;display:block;opacity:0.88}
+.sp-video-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.3)}
+.sp-play{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,0.92);display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px;padding-left:4px}
+.sp-video-label{font-size:12px;color:#fff;font-weight:600}
+.sp-video-sub{font-size:11px;color:rgba(255,255,255,0.7);margin-top:2px}
+.sp-shots{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.sp-shots img{width:100%;border-radius:10px;border:1px solid var(--border);display:block}
 
-/* DISQUALIFY */
-.disq-icon{font-size:44px;text-align:center;margin-bottom:14px}
-.disq-title{font-size:18px;font-weight:700;text-align:center;margin-bottom:10px}
-.disq-text{font-size:13px;color:var(--muted);text-align:center;line-height:1.7;margin-bottom:20px}
+/* VIDEO MODAL */
+.video-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:999;align-items:center;justify-content:center;padding:20px}
+.video-modal.open{display:flex}
+.video-inner{width:100%;max-width:480px}
+.video-ratio{position:relative;padding-bottom:56.25%;height:0;border-radius:12px;overflow:hidden;background:#000}
+.video-ratio iframe{position:absolute;inset:0;width:100%;height:100%;border:none}
+.btn-close-video{display:block;width:100%;margin-top:14px;padding:12px;border-radius:10px;background:rgba(255,255,255,0.1);border:none;color:#fff;font-size:14px;cursor:pointer;font-family:inherit}
 
 /* INTRO */
 .intro-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(201,168,76,0.1);border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:12px;color:var(--gold);font-weight:600;margin-bottom:20px}
 .intro-title{font-size:26px;font-weight:800;color:#e8e0cc;line-height:1.3;margin-bottom:10px;font-family:'Cormorant Garamond',serif}
 .intro-title em{color:var(--gold);font-style:normal}
 .intro-sub{font-size:14px;color:var(--muted);line-height:1.65;margin-bottom:24px}
-.intro-timer{font-size:12px;color:var(--muted);text-align:center;margin-top:14px}
+
+/* DISQUALIFY */
+.disq-icon{font-size:44px;text-align:center;margin-bottom:14px}
+.disq-title{font-size:18px;font-weight:700;text-align:center;margin-bottom:10px}
+.disq-text{font-size:13px;color:var(--muted);text-align:center;line-height:1.7;margin-bottom:20px}
 
 @media(max-width:380px){
   .question{font-size:17px}
@@ -100,51 +107,125 @@ body{background:#0a0d1a;color:#e8e0cc;font-family:'DM Sans',system-ui,sans-serif
 <body>
 <div class="wrap" id="app"></div>
 
+<!-- Modal vidéo — hors du flux render() -->
+<div class="video-modal" id="videoModal" onclick="if(event.target===this)closeVideo()">
+  <div class="video-inner">
+    <div class="video-ratio">
+      <iframe id="videoFrame" allowfullscreen></iframe>
+    </div>
+    <button class="btn-close-video" onclick="closeVideo()">✕ Fermer</button>
+  </div>
+</div>
+
 <script>
-const WA = '221710491314';
+const WA        = '221710491314';
 const COMMUNITY = 'https://chat.whatsapp.com/GJmLvcv9xIMJbXoxdDb70I';
 
+// ── Assets preuve sociale ── remplis quand disponibles
+const VIDEO_YT    = '';                  // ID YouTube ex: 'abc123xyz'
+const VIDEO_THUMB = '/testi-thumb.jpg';  // miniature locale (PNG/JPG)
+const VIDEO_NAME  = '';                  // ex: 'Fatou D., Dakar'
+const WA_SHOT_1   = '/wa-testi-1.jpg';  // capture WA anonymisée 1
+const WA_SHOT_2   = '/wa-testi-2.jpg';  // capture WA anonymisée 2
+
 const QUESTIONS = [
-  {
-    id: 'situation',
-    text: 'Quelle est ta situation aujourd\'hui ?',
-    options: [
-      { icon: '💼', text: 'Je suis salarié / fonctionnaire', value: 'Salarié' },
-      { icon: '🎓', text: 'Je suis étudiant', value: 'Étudiant' },
-      { icon: '🏪', text: 'J\'ai déjà un business mais je veux plus', value: 'Entrepreneur' },
-      { icon: '🔍', text: 'Je cherche une activité principale', value: 'En recherche' },
-    ]
-  },
   {
     id: 'objectif',
     text: 'Ce que tu veux vraiment, c\'est quoi ?',
     options: [
-      { icon: '💡', text: 'Trouver une idée rentable adaptée à ma situation', value: 'Trouver une idée rentable' },
-      { icon: '📈', text: 'Lancer rapidement sans gros capital', value: 'Lancer rapidement' },
+      { icon: '💡', text: 'Trouver une idée rentable adaptée à ma situation',  value: 'Trouver une idée rentable' },
+      { icon: '📈', text: 'Lancer rapidement sans gros capital',               value: 'Lancer rapidement' },
       { icon: '💰', text: 'Avoir un revenu complémentaire stable chaque mois', value: 'Revenu complémentaire stable' },
-      { icon: '🚀', text: 'Construire un vrai business à long terme', value: 'Business à long terme' },
+      { icon: '🚀', text: 'Construire un vrai business à long terme',          value: 'Business à long terme' },
+    ]
+  },
+  {
+    id: 'situation',
+    text: 'Quelle est ta situation aujourd\'hui ?',
+    options: [
+      { icon: '💼', text: 'Salarié / fonctionnaire',              value: 'Salarié' },
+      { icon: '🎓', text: 'Étudiant',                             value: 'Étudiant' },
+      { icon: '🏪', text: 'J\'ai déjà un business mais je veux plus', value: 'Entrepreneur' },
+      { icon: '🔍', text: 'Je cherche une activité principale',   value: 'En recherche' },
+    ]
+  },
+  {
+    id: 'blocage',
+    text: 'Quel est ton principal blocage en ce moment ?',
+    options: [
+      { icon: '🤔', text: 'Je n\'ai pas encore d\'idée claire',            value: 'pas_idee' },
+      { icon: '👥', text: 'Je ne sais pas comment trouver des clients',     value: 'pas_clients' },
+      { icon: '💸', text: 'Mon budget est très limité',                     value: 'petit_budget' },
+      { icon: '😰', text: 'J\'ai peur de me lancer / de rater',            value: 'peur' },
+      { icon: '🔄', text: 'J\'ai déjà essayé mais sans résultat',          value: 'deja_essaye' },
     ]
   },
   {
     id: 'budget',
-    text: 'Quel budget peux-tu investir pour commencer ton Plan B ?',
+    text: 'Quel budget peux-tu investir pour commencer ?',
     sub: 'Cela me permet de te recommander l\'offre la plus adaptée à ta situation.',
     options: [
-      { icon: '💡', text: 'Moins de 5 000 FCFA', value: '<5k', offer: 'guide' },
-      { icon: '✅', text: 'Entre 5 000 et 10 000 FCFA', value: '5k-10k', offer: 'starter' },
-      { icon: '🌟', text: 'Plus de 10 000 FCFA', value: '10k+', offer: 'fondateur' },
+      { icon: '💡', text: 'Moins de 5 000 FCFA',          value: '<5k',    offer: 'guide' },
+      { icon: '✅', text: 'Entre 5 000 et 10 000 FCFA',   value: '5k-10k', offer: 'starter' },
+      { icon: '🌟', text: 'Plus de 10 000 FCFA',          value: '10k+',   offer: 'fondateur' },
     ]
   }
 ];
 
-let answers = {};
-let currentQ = -1; // -1 = intro
+const BLOCAGE_LABEL = {
+  pas_idee:     "tu n'as pas encore d'idée claire",
+  pas_clients:  "tu ne sais pas encore comment trouver tes premiers clients",
+  petit_budget: "ton budget est limité et tu veux éviter de risquer pour rien",
+  peur:         "tu hésites encore à te lancer par peur de rater",
+  deja_essaye:  "tu as déjà tenté quelque chose qui n'a pas marché",
+};
+
+const OBJECTIF_LABEL = {
+  'Trouver une idée rentable':    'trouver une idée rentable adaptée à ta situation',
+  'Lancer rapidement':            'lancer rapidement sans attendre',
+  'Revenu complémentaire stable': 'avoir un revenu complémentaire stable',
+  'Business à long terme':        'construire un vrai business durable',
+};
+
+const OFFER_DESC = {
+  guide: {
+    pas_idee:     'Il t\'aide à identifier l\'activité adaptée à ta situation, pas à pas, en 90 jours.',
+    pas_clients:  'Il inclut les stratégies concrètes pour trouver tes premiers clients sans budget pub.',
+    petit_budget: 'Conçu pour lancer avec le minimum. La méthode ne nécessite pas de gros capital.',
+    peur:         'Il te donne une structure claire, étape par étape, pour avancer sans te perdre.',
+    deja_essaye:  'La méthode corrige les erreurs classiques. Ce n\'est pas une formation de plus — c\'est une structure.',
+  },
+  starter: {
+    pas_idee:     'Guide + app de suivi pour trouver ton idée ET la lancer, sans te disperser.',
+    pas_clients:  'Guide + app pour rester concentré sur l\'acquisition client et ne pas te perdre en chemin.',
+    petit_budget: 'Le pack complet pour structurer ton lancement, même avec un petit budget.',
+    peur:         'Le suivi via l\'app te permet de voir ta progression et de rester motivé chaque semaine.',
+    deja_essaye:  'L\'app de suivi t\'évite de te disperser comme avant. Tu avances dans l\'ordre, étape par étape.',
+  },
+  fondateur: {
+    pas_idee:     'Accès à vie + accompagnement direct pour trouver ton idée et la lancer jusqu\'au bout.',
+    pas_clients:  'Accompagnement prioritaire pour attirer des clients rapidement dès le premier mois.',
+    petit_budget: 'Un investissement unique, aucun frais récurrent. L\'accès à vie vaut bien plus que son prix.',
+    peur:         'Avec l\'accompagnement direct, tu n\'es jamais seul pour franchir les étapes difficiles.',
+    deja_essaye:  'Accompagnement direct pour identifier pourquoi ça n\'a pas marché et repartir sur de bonnes bases.',
+  },
+};
+
+const OFFER_NAME = {
+  guide:     'Pack Guide Plan B — 4 900 FCFA',
+  starter:   'Pack Plan B + App 30 jours — 9 900 FCFA',
+  fondateur: 'Pack Fondateur — Accès à vie — 14 900 FCFA',
+};
+
+let answers   = {};
+let currentQ  = -1;
+let _leadId   = null; // ID du lead créé à showResult()
 
 function render(html){ document.getElementById('app').innerHTML = html; }
 
 function logo(){
   return `<div class="logo">
-    <img src="/coachredologo.png" style="width:54px;height:54px;border-radius:50%;object-fit:cover;border:2px solid rgba(201,168,76,0.35);display:block;margin:0 auto 10px">
+    <img src="/coachredologo.png" style="width:54px;height:54px;border-radius:50%;object-fit:cover;border:2px solid rgba(201,168,76,0.35);display:block;margin:0 auto 10px" onerror="this.style.display='none'">
     <div class="logo-name">Plan B Rentable</div>
   </div>`;
 }
@@ -157,24 +238,25 @@ function progressBar(step){
   </div>`;
 }
 
-// INTRO
+// ── INTRO
 function showIntro(){
   currentQ = -1;
+  _leadId  = null;
   render(`
     ${logo()}
     <div class="card">
       <div style="text-align:center">
-        <span class="intro-badge">⏱ 30 secondes</span>
+        <span class="intro-badge">⏱ 1 minute</span>
       </div>
       <h1 class="intro-title" style="text-align:center">Tu veux un <em>revenu en plus</em> —<br>mais par où commencer ?</h1>
-      <p class="intro-sub" style="text-align:center">Réponds à 3 questions rapides.<br>Je t'envoie le plan adapté à ta situation.</p>
+      <p class="intro-sub" style="text-align:center">Réponds à 4 questions rapides.<br>Je te donne le plan adapté à ta situation.</p>
       <button class="btn-next active" onclick="showQuestion(0)" style="margin-top:0">Commencer le quiz →</button>
-      <p class="intro-timer" style="margin-top:14px">📦 Pack Plan B Rentable — Méthode 90 jours</p>
+      <p style="font-size:12px;color:var(--muted);text-align:center;margin-top:14px">📦 Pack Plan B Rentable — Méthode 90 jours</p>
     </div>
   `);
 }
 
-// QUESTION
+// ── QUESTION
 function showQuestion(idx){
   currentQ = idx;
   const q = QUESTIONS[idx];
@@ -186,14 +268,15 @@ function showQuestion(idx){
       <div class="question">${q.text}</div>
       ${q.sub ? `<div class="sub">${q.sub}</div>` : ''}
       <div class="options">
-        ${q.options.map((o,i) => `
-          <button class="option ${selected === o.value ? 'selected' : ''}" onclick="selectOption('${q.id}','${o.value}',${idx})">
+        ${q.options.map(o => `
+          <button class="option ${selected === o.value ? 'selected' : ''}"
+            onclick="selectOption('${q.id}','${o.value}',${idx})">
             <div class="opt-icon">${o.icon}</div>
             <div class="opt-text">${o.text}</div>
           </button>
         `).join('')}
       </div>
-      <button class="btn-next ${selected ? 'active' : ''}" id="btnNext" onclick="nextStep(${idx})">
+      <button class="btn-next ${selected ? 'active' : ''}" onclick="nextStep(${idx})">
         ${idx < QUESTIONS.length - 1 ? 'Question suivante →' : 'Voir mon résultat →'}
       </button>
     </div>
@@ -202,8 +285,7 @@ function showQuestion(idx){
 
 function selectOption(qid, value, idx){
   answers[qid] = value;
-  // Track dans Meta Pixel
-  if(typeof fbq !== 'undefined') fbq('trackCustom', 'QuizAnswer', {question: qid, answer: value});
+  if(typeof fbq !== 'undefined') fbq('trackCustom','QuizAnswer',{question:qid, answer:value});
   showQuestion(idx);
 }
 
@@ -217,87 +299,165 @@ function nextStep(idx){
   }
 }
 
-// RÉSULTAT
+// ── RÉSULTAT
 function showResult(){
-  if(typeof fbq !== 'undefined') fbq('trackCustom', 'QuizCompleted', {
+  if(typeof fbq !== 'undefined') fbq('trackCustom','QuizCompleted',{
     situation: answers.situation,
-    objectif: answers.objectif,
-    budget: answers.budget
+    objectif:  answers.objectif,
+    blocage:   answers.blocage,
+    budget:    answers.budget
   });
 
-  const budgetOpt = QUESTIONS[2].options.find(o => o.value === answers.budget);
-  const offerKey  = budgetOpt?.offer || 'guide';
-
-  const OFFERS = {
-    guide:     { name: 'Pack Guide Plan B — 4 900 FCFA',           desc: 'Le guide complet pour identifier et lancer ton activité parallèle en 90 jours.' },
-    starter:   { name: 'Pack Plan B + App 30 jours — 9 900 FCFA',  desc: 'Le guide + l\'application de suivi + les bonus. Idéal pour démarrer de façon structurée.' },
-    fondateur: { name: 'Pack Fondateur — Accès à vie — 14 900 FCFA', desc: 'Le pack complet avec accès permanent, tous les bonus et accompagnement prioritaire.' },
-  };
-  const offerName = OFFERS[offerKey].name;
-  const offerDesc = OFFERS[offerKey].desc;
+  const budgetOpt    = QUESTIONS[3].options.find(o => o.value === answers.budget);
+  const offerKey     = budgetOpt?.offer || 'guide';
+  const blocage      = answers.blocage || 'pas_idee';
+  const objLabel     = OBJECTIF_LABEL[answers.objectif] || answers.objectif;
+  const blocLabel    = BLOCAGE_LABEL[blocage] || blocage;
+  const summary      = `Tu veux ${objLabel}, mais ${blocLabel}. Le Plan B Rentable est fait exactement pour ça.`;
+  const offerName    = OFFER_NAME[offerKey];
+  const offerDesc    = OFFER_DESC[offerKey]?.[blocage] || '';
 
   const waMsg = encodeURIComponent(
-    `Bonjour Coach Redouane, j'ai fait le quiz Plan B.\n` +
+    `Bonjour Coach Redouane, j'ai terminé le quiz Plan B.\n` +
     `Profil : ${answers.situation}\n` +
     `Objectif : ${answers.objectif}\n` +
+    `Blocage : ${BLOCAGE_LABEL[blocage]}\n` +
     `Budget : ${answers.budget}\n` +
     `Je veux recevoir l'offre adaptée.`
   );
 
+  // Enregistrement quiz_completed — silencieux, en arrière-plan
+  fetch('/api/quiz-lead', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      situation: answers.situation,
+      objectif:  answers.objectif,
+      blocage:   answers.blocage,
+      budget:    answers.budget,
+      recommended_offer: offerKey,
+    })
+  }).then(r => r.json()).then(d => { if(d.id) _leadId = d.id; }).catch(()=>{});
+
   render(`
     ${logo()}
     <div class="card">
-      <div class="result-icon">✅</div>
+      <div style="font-size:42px;text-align:center;margin-bottom:14px">✅</div>
       <div class="result-title">Bonne nouvelle — tu es au bon endroit.</div>
-      <div class="result-sub">Le Pack Plan B Rentable est fait pour quelqu'un comme toi.</div>
 
-      <div class="profile-badge">
+      <div class="profile-badge" style="margin-top:16px">
         <div style="font-size:22px">👤</div>
         <div>
-          <div class="label">Ton profil</div>
-          <div class="value">${answers.situation} — ${answers.objectif}</div>
+          <div class="label">Ton profil Plan B</div>
+          <div class="value">${answers.situation} · ${answers.objectif}</div>
         </div>
       </div>
 
+      <div class="summary-box">${summary}</div>
+
       <div class="offer-box">
-        <div class="offer-label">Offre recommandée pour toi</div>
+        <div class="offer-label">✦ Offre recommandée pour ton profil</div>
         <div class="offer-name">${offerName}</div>
         <div class="offer-desc">${offerDesc}</div>
       </div>
 
       <div class="disclaimer">
         ⚠️ <strong>Ce n'est pas un prêt. Ce n'est pas un emploi.</strong><br>
-        C'est une méthode concrète pour apprendre à lancer ton propre petit business en 90 jours.
+        C'est une méthode concrète pour lancer ton propre business en 90 jours.
       </div>
 
-      <!-- COLLECTE LEAD -->
-      <div style="background:rgba(201,168,76,0.06);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px">
-        <div style="font-size:13px;font-weight:600;color:#e8e0cc;margin-bottom:4px">📲 Reçois ton offre adaptée</div>
-        <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Dis-moi juste ton prénom — Coach Redouane te répond personnellement sur WhatsApp.</div>
+      ${socialProofBlock()}
+
+      <!-- Lead capture -->
+      <div style="margin-bottom:14px">
         <input id="leadPrenom" type="text" placeholder="Ton prénom (optionnel)" autocomplete="given-name"
           style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid var(--border);background:rgba(255,255,255,0.04);color:#e8e0cc;font-size:14px;outline:none;transition:border-color .2s"
           onfocus="this.style.borderColor='var(--gold)'"
           onblur="this.style.borderColor='var(--border)'">
+        <div style="font-size:11px;color:var(--muted);margin-top:6px;text-align:center">Coach Redouane te répond personnellement sur WhatsApp.</div>
       </div>
 
       <a class="btn-wa" href="https://wa.me/${WA}?text=${waMsg}" target="_blank"
          onclick="return handleWaClick('${offerKey}')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.555 4.116 1.524 5.847L.057 23.882l6.191-1.624A11.944 11.944 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.001-1.368l-.359-.213-3.724.976.994-3.636-.234-.374A9.818 9.818 0 1112 21.818z"/></svg>
-        Recevoir mon offre sur WhatsApp →
+        Recevoir mon plan sur WhatsApp →
       </a>
-
-      <!-- TÉMOIGNAGE — à activer quand tu as la vidéo -->
-      <div class="testi-placeholder" style="display:none" id="testiBlock">
-        <p>📹 Témoignage vidéo client — à ajouter ici</p>
-      </div>
-
     </div>
   `);
 }
 
-// DISQUALIFICATION DOUCE
+// ── Bloc preuve sociale (assets optionnels — se masque si absent)
+function socialProofBlock(){
+  const hasVideo = VIDEO_YT !== '';
+  const videoHtml = hasVideo ? `
+    <div class="sp-video" onclick="openVideo()">
+      <img src="${VIDEO_THUMB}" alt="Témoignage vidéo" onerror="this.style.display='none'">
+      <div class="sp-video-overlay">
+        <div class="sp-play">▶</div>
+        <div class="sp-video-label">Voir son témoignage</div>
+        ${VIDEO_NAME ? `<div class="sp-video-sub">${VIDEO_NAME} · 2 min</div>` : ''}
+      </div>
+    </div>` : '';
+
+  return `
+    <div class="sp-block">
+      <div class="sp-title">Ils ont déjà commencé avec Plan B Rentable</div>
+      ${videoHtml}
+      <div class="sp-shots">
+        <img src="${WA_SHOT_1}" alt="" onerror="this.style.display='none'">
+        <img src="${WA_SHOT_2}" alt="" onerror="this.style.display='none'">
+      </div>
+    </div>`;
+}
+
+// ── Vidéo modal
+function openVideo(){
+  if(!VIDEO_YT) return;
+  document.getElementById('videoFrame').src = `https://www.youtube.com/embed/${VIDEO_YT}?autoplay=1`;
+  document.getElementById('videoModal').classList.add('open');
+}
+function closeVideo(){
+  document.getElementById('videoFrame').src = '';
+  document.getElementById('videoModal').classList.remove('open');
+}
+
+// ── Clic WA — marque wa_clicked + passe le prénom
+function handleWaClick(offer){
+  const prenom = document.getElementById('leadPrenom')?.value.trim() || '';
+
+  const payload = { prenom: prenom || null };
+  if(_leadId){
+    fetch(`/api/quiz-lead?id=${_leadId}`, {
+      method: 'PATCH',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    }).catch(()=>{});
+  } else {
+    // fallback si le POST initial n'a pas encore répondu
+    fetch('/api/quiz-lead', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        prenom: prenom || null,
+        situation: answers.situation,
+        objectif:  answers.objectif,
+        blocage:   answers.blocage,
+        budget:    answers.budget,
+        recommended_offer: offer,
+        wa_clicked: true
+      })
+    }).catch(()=>{});
+  }
+
+  if(typeof fbq !== 'undefined'){
+    fbq('trackCustom','WhatsAppClick',{offer, budget: answers.budget});
+  }
+  return true;
+}
+
+// ── DISQUALIFICATION DOUCE (non utilisée pour l'instant — toutes options payantes)
 function showDisqualify(){
-  if(typeof fbq !== 'undefined') fbq('trackCustom', 'QuizDisqualified', {budget: answers.budget});
+  if(typeof fbq !== 'undefined') fbq('trackCustom','QuizDisqualified',{budget: answers.budget});
   render(`
     ${logo()}
     <div class="card">
@@ -305,8 +465,8 @@ function showDisqualify(){
       <div class="disq-title">Pas de problème, ça viendra !</div>
       <div class="disq-text">
         Tu n'es peut-être pas prêt à investir maintenant — et ce n'est pas grave.<br><br>
-        Tu peux déjà rejoindre <strong style="color:var(--gold)">gratuitement la communauté CoachRedo</strong> pour recevoir des conseils, idées business et contenus utiles chaque semaine.<br><br>
-        Quand tu seras prêt à passer à l'action, tu pourras revenir prendre le Pack.
+        Tu peux déjà rejoindre <strong style="color:var(--gold)">gratuitement la communauté CoachRedo</strong> pour recevoir des conseils et idées chaque semaine.<br><br>
+        Quand tu seras prêt à passer à l'action, tu pourras revenir.
       </div>
       <a class="btn-wa" href="${COMMUNITY}" target="_blank"
          onclick="if(typeof fbq!=='undefined')fbq('trackCustom','CommunityClick',{})">
@@ -318,29 +478,6 @@ function showDisqualify(){
       </a>
     </div>
   `);
-}
-
-// SAVE + OPEN WA — prénom optionnel, aucun blocage
-function handleWaClick(offer){
-  const prenom = document.getElementById('leadPrenom')?.value.trim() || '';
-
-  // Enregistrement silencieux en arrière-plan (toujours, peu importe le prénom)
-  fetch('/api/quiz-lead', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({
-      prenom: prenom || null,
-      whatsapp: null,
-      situation: answers.situation,
-      objectif:  answers.objectif,
-      budget:    answers.budget
-    })
-  }).catch(()=>{});
-
-  if(typeof fbq !== 'undefined'){
-    fbq('trackCustom','WhatsAppClick',{pack:'quiz_qualified', offer, budget: answers.budget});
-  }
-  return true; // ouvre toujours WhatsApp
 }
 
 // START

@@ -267,7 +267,7 @@ td.notes-cell{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space
       </div>
       <div class="table-wrap"><div class="table-scroll">
         <table>
-          <thead><tr><th>Prénom</th><th>WhatsApp</th><th>Profil</th><th>Objectif</th><th>Budget</th><th>Date</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Prénom</th><th>Profil</th><th>Blocage</th><th>Budget</th><th>WA</th><th>Date</th><th>Actions</th></tr></thead>
           <tbody id="tbLeads"></tbody>
         </table>
       </div></div>
@@ -737,17 +737,20 @@ function renderLeads(leads){
   _leadsCache = leads;
   document.getElementById('countLeads').textContent = leads.length+' leads';
   const budgBadge = b => b==='10k+'?'badge-gold':b==='5k-10k'?'badge-blue':'badge-muted';
+  const BLOC_LABEL = {
+    pas_idee:'Pas d\'idée', pas_clients:'Pas de clients',
+    petit_budget:'Petit budget', peur:'Peur de lancer', deja_essaye:'Déjà essayé'
+  };
   document.getElementById('tbLeads').innerHTML = !leads.length
     ? '<tr class="empty-row"><td colspan="7">Aucun lead pour l\'instant.</td></tr>'
     : leads.map((l,i)=>`<tr>
         <td style="font-weight:600">${l.prenom||'—'}</td>
-        <td>${l.whatsapp||'—'}</td>
-        <td>${l.situation||'—'}</td>
-        <td style="color:var(--muted);font-size:12px;max-width:150px">${l.objectif||'—'}</td>
+        <td style="font-size:12px;color:var(--muted)">${l.situation||'—'}</td>
+        <td style="font-size:12px">${BLOC_LABEL[l.blocage]||l.blocage||'—'}</td>
         <td><span class="badge ${budgBadge(l.budget)}">${l.budget||'—'}</span></td>
+        <td>${l.wa_clicked?'<span class="badge badge-ok">✓ WA</span>':'<span class="badge badge-muted">Quiz</span>'}</td>
         <td style="color:var(--muted)">${l.created_at?new Date(l.created_at).toLocaleDateString('fr-FR'):'—'}</td>
         <td style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">
-          ${waBtn(l.whatsapp)}
           <button class="btn-convert-sm" onclick="openConvertModal(${i})">Convertir →</button>
           <button class="btn-action-sm btn-del-sm" onclick="deleteQuizLead(${i})">✕</button>
         </td>
@@ -772,10 +775,10 @@ function openConvertModal(idx){
   const l = _leadsCache[idx] || {};
   document.getElementById('cvLeadInfo').innerHTML = [
     {label:'Prénom',   val:l.prenom    ||'—'},
-    {label:'WhatsApp', val:l.whatsapp  ||'—'},
     {label:'Budget',   val:l.budget    ||'—'},
     {label:'Profil',   val:l.situation ||'—'},
     {label:'Objectif', val:l.objectif  ||'—'},
+    {label:'Blocage',  val:l.blocage   ||'—'},
   ].map(r=>`<div class="minfo"><div class="minfo-label">${r.label}</div><div class="minfo-val">${r.val}</div></div>`).join('');
 
   const today = new Date().toISOString().slice(0,10);
