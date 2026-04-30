@@ -273,18 +273,11 @@ function showResult(){
       <!-- COLLECTE LEAD -->
       <div style="background:rgba(201,168,76,0.06);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px">
         <div style="font-size:13px;font-weight:600;color:#e8e0cc;margin-bottom:4px">📲 Reçois ton offre adaptée</div>
-        <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Laisse ton prénom et ton WhatsApp — Coach Redouane te répond personnellement.</div>
-        <input id="leadPrenom" type="text" placeholder="Ton prénom *" autocomplete="given-name"
-          style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid var(--border);background:rgba(255,255,255,0.04);color:#e8e0cc;font-size:14px;outline:none;margin-bottom:8px;transition:border-color .2s"
-          onfocus="this.style.borderColor='var(--gold)';document.getElementById('leadErr').style.display='none'"
-          onblur="this.style.borderColor='var(--border)'">
-        <input id="leadWa" type="tel" placeholder="WhatsApp * (ex: 221XXXXXXXXX)" autocomplete="tel"
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Dis-moi juste ton prénom — Coach Redouane te répond personnellement sur WhatsApp.</div>
+        <input id="leadPrenom" type="text" placeholder="Ton prénom (optionnel)" autocomplete="given-name"
           style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid var(--border);background:rgba(255,255,255,0.04);color:#e8e0cc;font-size:14px;outline:none;transition:border-color .2s"
-          onfocus="this.style.borderColor='var(--gold)';document.getElementById('leadErr').style.display='none'"
+          onfocus="this.style.borderColor='var(--gold)'"
           onblur="this.style.borderColor='var(--border)'">
-        <div id="leadErr" style="display:none;margin-top:8px;padding:10px 13px;border-radius:9px;background:rgba(224,92,92,0.12);border:1px solid rgba(224,92,92,0.35);color:#ef9a9a;font-size:12.5px;line-height:1.5">
-          Merci de remplir ton prénom et ton WhatsApp pour recevoir ton offre adaptée.
-        </div>
       </div>
 
       <a class="btn-wa" href="https://wa.me/${WA}?text=${waMsg}" target="_blank"
@@ -327,38 +320,27 @@ function showDisqualify(){
   `);
 }
 
-// VALIDATION + SAVE — appelé au clic sur le bouton WA
+// SAVE + OPEN WA — prénom optionnel, aucun blocage
 function handleWaClick(offer){
-  const prenomEl = document.getElementById('leadPrenom');
-  const waEl     = document.getElementById('leadWa');
-  const errEl    = document.getElementById('leadErr');
-  const prenom   = prenomEl?.value.trim() || '';
-  const whatsapp = waEl?.value.trim()     || '';
+  const prenom = document.getElementById('leadPrenom')?.value.trim() || '';
 
-  if(!prenom || !whatsapp){
-    errEl.style.display = 'block';
-    if(!prenom) prenomEl.style.borderColor = '#e05c5c';
-    if(!whatsapp) waEl.style.borderColor   = '#e05c5c';
-    prenomEl.scrollIntoView({behavior:'smooth', block:'center'});
-    return false; // bloque l'ouverture de WhatsApp
-  }
-
-  // Champs valides — enregistrement silencieux en arrière-plan
+  // Enregistrement silencieux en arrière-plan (toujours, peu importe le prénom)
   fetch('/api/quiz-lead', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({
-      prenom, whatsapp,
+      prenom: prenom || null,
+      whatsapp: null,
       situation: answers.situation,
       objectif:  answers.objectif,
       budget:    answers.budget
     })
   }).catch(()=>{});
+
   if(typeof fbq !== 'undefined'){
-    fbq('trackCustom','LeadCaptured', {offer, budget: answers.budget});
-    fbq('trackCustom','WhatsAppClick',{pack:'quiz_qualified', offer});
+    fbq('trackCustom','WhatsAppClick',{pack:'quiz_qualified', offer, budget: answers.budget});
   }
-  return true; // laisse le lien ouvrir WhatsApp
+  return true; // ouvre toujours WhatsApp
 }
 
 // START
